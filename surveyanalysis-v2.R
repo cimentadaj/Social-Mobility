@@ -1,9 +1,10 @@
 library(survey)
 library(stargazer)
 library(mail)
+library(beep)
 
 rm(list=ls()[!ls() %in% c("countrylist","usable.country2")])
-setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC")
+setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/Social_mobility_analysis")
 
 Austria <- load('prgautp1.rda')
 USA <- load('prgusap1.rda')
