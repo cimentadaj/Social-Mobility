@@ -1,4 +1,4 @@
-setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/Social_mobility_analysis")
+setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
 ######
 # analyze survey data for free (http://asdfree.com) with the r language
 # programme for the international assessment of adult competencies
