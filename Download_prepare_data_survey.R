@@ -75,7 +75,7 @@ source_url(
  csv.fns <- gsub( "(.*)CSV/(.*)\\.csv\">(.*)" , "\\2" , csv.texts )
 # 
 # # initiate a temporary file on the local computer
-# tf <- tempfile()
+ tf <- tempfile()
 # 
 # # R will exactly match SUDAAN results and Stata with the MSE option results
 # options( survey.replicates.mse = TRUE )
@@ -84,14 +84,14 @@ source_url(
  links <- character(0)
  countrylist <- list()
  for (i in 1:length(csv.fns)) {
-#     links <- c(links, paste0(oecd.csv.website, csv.fns[i], ".csv"))
-#     download.file(links[i], destfile =csv.fns[i])
+     links <- c(links, paste0(oecd.csv.website, csv.fns[i], ".csv"))
+     download.file(links[i], destfile =csv.fns[i])
      countrylist[[i]] <-  read.csv(csv.fns[i], stringsAsFactors = FALSE)
  }
  names(countrylist) <- csv.fns
 #####
-# save(countrylist, file="countrylist.Rda")
-# load("countrylist.Rda")
+ save(countrylist, file="countrylist.Rda")
+ load("countrylist.Rda")
 vars <- c("ISCO1C","J_Q07b","J_Q06b","J_Q08","J_Q07a","J_Q06a","B_Q01a",
           "VEMETHOD","CNTRYID","GENDER_R","AGE_R","AGEG5LFS","I_Q04l","I_Q04j",
           "I_Q04m",paste0(rep("PVNUM",10),1:10),paste0(rep("PVLIT",10),1:10),
