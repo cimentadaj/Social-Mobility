@@ -7,7 +7,7 @@
 
 # and 
 
-# /Users/cimentadaj/Google Drive/Gosta project/PIAAC2/Social_mobility_analysis/surveyanalysis - v2.R
+# /Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Analysis_PIAAC_survey.R
 
 library(dplyr)
 c1 <- as.data.frame(cbind(name=vec1,vec2))
