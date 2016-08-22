@@ -1,10 +1,8 @@
 library(survey)
 library(stargazer)
-library(mail)
-library(beep)
 
 rm(list=ls()[!ls() %in% c("countrylist","usable.country2")])
-setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/Social_mobility_analysis")
+setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
 
 Austria <- load('prgautp1.rda')
 USA <- load('prgusap1.rda')
@@ -86,7 +84,7 @@ for (i in 1:length(countries3)) {
         #     highold <- list(m7[[1]],m9[[1]],m9.1[[1]],m10[[1]],m12[[1]],m12.1[[1]])
         #     
         #     ## Tables for YOUNG service class BOYS
-        #     setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/Social_mobility_analysis")
+        #     setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
         #     all <- stargazer(highyoung, type = "html", title = paste0(names(countries3[i]),"PIAAC-25-45-sons-lowerclass"),
         #                      column.labels = c("1= Lower Class", "1=Lower Class"),
         #                      column.separate = c(3,3),
@@ -137,7 +135,7 @@ for (i in 1:length(countries3)) {
         #       middleold <- list(m7[[1]],m8[[1]],m9[[1]],m10[[1]],m11[[1]],m12[[1]])
         #       
         #       ## Table for YOUNG low class BOYS
-        #       setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/Social_mobility_analysis")
+        #       setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
         #       all <- stargazer(middleyoung, type = "html", title = paste0(names(countries3[i]),"PIAAC-25-45-sons-middleclass"),
         #                        column.labels = c("1= Middle Class", "1= Middle Class"),
         #                        column.separate = c(3,3),
@@ -191,7 +189,7 @@ for (i in 1:length(countries3)) {
         highold <- list(m7[[1]],m8[[1]],m10[[1]],m11[[1]])
         
         ## Tables for YOUNG service class BOYS
-        setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/Social_mobility_analysis")
+        setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
         all <- stargazer(highyoung, type = "html", title = paste0(names(countries3[i]),"PIAAC-25-45-sons-serviceclass"),
                          column.labels = c("1= Service Class", "1=Service Class"),
                          column.separate = c(2,2),
@@ -250,7 +248,7 @@ for (i in 1:length(countries3)) {
         #     highold <- list(m7[[1]],m9[[1]],m9.1[[1]],m10[[1]],m12[[1]],m12.1[[1]])
         #     
         #     ## Tables for YOUNG service class BOYS
-        #     setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/Social_mobility_analysis")
+        #     setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
         #     all <- stargazer(highyoung, type = "html", title = paste0(names(countries3[i]),"PIAAC-25-45-sons-lowerclass"),
         #                      column.labels = c("1= Lower Class", "1=Lower Class"),
         #                      column.separate = c(3,3),
@@ -302,7 +300,7 @@ for (i in 1:length(countries3)) {
         #       middleold <- list(m7[[1]],m8[[1]],m9[[1]],m10[[1]],m11[[1]],m12[[1]])
         #       
         #       ## Table for YOUNG low class BOYS
-        #       setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/Social_mobility_analysis")
+        #       setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
         #       all <- stargazer(middleyoung, type = "html", title = paste0(names(countries3[i]),"PIAAC-25-45-sons-middleclass"),
         #                        column.labels = c("1= Middle Class", "1= Middle Class"),
         #                        column.separate = c(3,3),
@@ -356,7 +354,7 @@ for (i in 1:length(countries3)) {
         highold <- list(m7[[1]],m8[[1]],m10[[1]],m11[[1]])
         
         ## Tables for YOUNG service class BOYS
-        setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/Social_mobility_analysis")
+        setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
         all <- stargazer(highyoung, type = "html", title = paste0(names(countries3[i]),"PIAAC-25-45-sons-serviceclass"),
                          column.labels = c("1= Service Class", "1=Service Class"),
                          column.separate = c(2,2),
@@ -383,8 +381,5 @@ for (i in 1:length(countries3)) {
     }
 }
 
-ls2 <- ls()[grepl("*.design",ls())]
-ls2 <-c(ls2,"countrylist","usable.country2")
 rm(list=ls()[!ls() %in% ls2])
-beep()
 
