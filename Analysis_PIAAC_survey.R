@@ -27,8 +27,7 @@ Poland <- load('prgpolp1.rda')
 Russia <- load('prgrusp1.rda')
 Slovakia <- load('prgsvkp1.rda')
 
-ls2 <- ls()[grepl("*.design",ls())]
-ls2 <-c(ls2,"countrylist","usable.country2")
+ls2 <- c(ls()[grepl("*.design",ls())], "countrylist","usable.country2")
 rm(list=ls()[!ls() %in% ls2])
 
 
