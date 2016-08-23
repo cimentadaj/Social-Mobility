@@ -4,7 +4,6 @@ library(stargazer)
 setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
 
 data <- grep(".rda", list.files(), value=T)
-
 for (i in 1:length(data)) {
     load(data[i])
 }
@@ -21,49 +20,51 @@ countries3 <- list(Austria=prgautp1.design,USA=prgusap1.design,Belgium=prgbelp1.
                    Norway=prgnorp1.design,Poland=prgpolp1.design, Russia=prgrusp1.design, Slovakia=prgsvkp1.design)
 
 
-## Section - calculates the share of service class jobs in the PIAAC and the IALS and then the difference ##
+### Experimental section ###
+### Calculates the share of service class jobs in the PIAAC and the IALS and then the difference ####
 
-# PIAAC share of service class jobs
-piaac.share <- unlist(lapply(countries3, function(x) with(x,svymean(~serviceclass, na.rm=T,
-                                     rho=NULL,return.replicates=FALSE, deff=FALSE))[[1]][1]))
-names(piaac.share) <- names(countries3)
+# # PIAAC share of service class jobs
+# piaac.share <- unlist(lapply(countries3, function(x) with(x,svymean(~serviceclass, na.rm=T,
+#                                      rho=NULL,return.replicates=FALSE, deff=FALSE))[[1]][1]))
+# names(piaac.share) <- names(countries3)
+# 
+# # IALS share of service class jobs
+# ials <- as.data.frame(read_sas("/Users/cimentadaj/Google Drive/Gosta project/ials/data/microf.sas7bdat"))
+# ials$serviceclass <- recode(ials$ISCOR, "c('','.', 0,98,99)=NA; c(1,2)=1; c(3,4,5,6,7,8,9)=0")
+# ials$cntrid <- factor(ials$CNTRID, c(1,3,5,6,7,8,9,11,13,14,16,17,18,20,21,23,24,25,29),
+#                        labels = c("Canada","Switzerland","Germany","USA","Ireland","Netherlands",
+#                                   "Poland","Sweden","New Zealand","UK","Belgium(flanders)",
+#                                   "Italy","Norway","Slovenia","Czech","Denmark","Finland","Hungary",
+#                                   "Chile"))
+# 
+# weightsurvey1 <- svrepdesign ( 	
+#     weights = ~WEIGHT, 
+#     repweights = ials[ ,356:385] ,
+#     scale = 1 ,
+#     rscales = rep( 1 , 30 ) ,
+#     type = 'JKn' ,
+#     data = ials ,
+#     mse = TRUE
+# )
+# 
+# ials.share <- setNames(as.numeric(svyby(~serviceclass, ~cntrid, weightsurvey1, svymean, na.rm=T,
+#               rho=NULL, return.replicates=FALSE, deff=FALSE)[, 2]), na.omit(unique(ials$cntrid)))
+# 
+# ## Difference between PIAAC and IALS ##
+# ## REMEBER BELGIUM IS FLANDERS IN IALS WHEREAS IN PIAAC ITS BELGIUM AS A WHOLE - INCOMPARABLE
+# country.names <- intersect(names(ials.share), names(piaac.share))
+# piaac.share <- piaac.share[country.names]; ials.share <- ials.share[country.names]
+# 
+# diff <- piaac.share - ials.share
+# 
+# 
+# # This line is still incomplete. You can't figure out how to add a different number
+# # to each list object from the diff vector in line 82(diff=).
+# # sapply(names(countries3), function(x) ifelse(x %in% names(diff),
+# #                           lapply(countries3, function(x) update(x, diff=)),
+# #                           lapply(countries3, function(x) update(x, diff=NA))), simplify = F)
 
-# IALS share of service class jobs
-ials <- as.data.frame(read_sas("/Users/cimentadaj/Google Drive/Gosta project/ials/data/microf.sas7bdat"))
-ials$serviceclass <- recode(ials$ISCOR, "c('','.', 0,98,99)=NA; c(1,2)=1; c(3,4,5,6,7,8,9)=0")
-ials$cntrid <- factor(ials$CNTRID, c(1,3,5,6,7,8,9,11,13,14,16,17,18,20,21,23,24,25,29),
-                       labels = c("Canada","Switzerland","Germany","USA","Ireland","Netherlands",
-                                  "Poland","Sweden","New Zealand","UK","Belgium(flanders)",
-                                  "Italy","Norway","Slovenia","Czech","Denmark","Finland","Hungary",
-                                  "Chile"))
-
-weightsurvey1 <- svrepdesign ( 	
-    weights = ~WEIGHT, 
-    repweights = ials[ ,356:385] ,
-    scale = 1 ,
-    rscales = rep( 1 , 30 ) ,
-    type = 'JKn' ,
-    data = ials ,
-    mse = TRUE
-)
-
-ials.share <- setNames(as.numeric(svyby(~serviceclass, ~cntrid, weightsurvey1, svymean, na.rm=T,
-              rho=NULL, return.replicates=FALSE, deff=FALSE)[, 2]), na.omit(unique(ials$cntrid)))
-
-## Difference between PIAAC and IALS ##
-## REMEBER BELGIUM IS FLANDERS IN IALS WHEREAS IN PIAAC ITS BELGIUM AS A WHOLE - INCOMPARABLE
-country.names <- intersect(names(ials.share), names(piaac.share))
-piaac.share <- piaac.share[country.names]; ials.share <- ials.share[country.names]
-
-diff <- piaac.share - ials.share
-
-
-# This line is still incomplete. You can't figure out how to add a different number
-# to each list object from the diff vector in line 82(diff=).
-# sapply(names(countries3), function(x) ifelse(x %in% names(diff),
-#                           lapply(countries3, function(x) update(x, diff=)),
-#                           lapply(countries3, function(x) update(x, diff=NA))), simplify = F)
-
+###############
 
 for (i in 1:length(countries3)) {
     
