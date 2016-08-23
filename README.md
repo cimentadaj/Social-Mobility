@@ -29,3 +29,6 @@ _Note that each time you run this file it will download each file again, and thi
  
 #### Analysing PIAAC data
 In this [script](https://github.com/cimentadaj/social_mobility_analysis/blob/master/Analysis_PIAAC_survey.R), I do all of the analysis on the PIAAC data set. This section loads the .Rda data from your working directory and runs logistic regressions for each country separately, taking into account its complex design. The output is two html tables per country saved to your working directory containing the logistic regression results.
+
+***
+If you open the .Rproj from the repository zip, you will have both scripts opened.
