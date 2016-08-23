@@ -1,45 +1,21 @@
-setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
-######
+
+# This script was originally from anthony joseph damico - ajdamico@gmail.com
+# If you want to find out more, please visit:
 # analyze survey data for free (http://asdfree.com) with the r language
-# programme for the international assessment of adult competencies
 # each and every available file hooray
 
-# # # # # # # # # # # # # # # # #
-# # block of code to run this # #
-# # # # # # # # # # # # # # # # #
-# library(downloader)
-# setwd( "C:/My Directory/PIAAC/" )
-# source_url( "https://raw.githubusercontent.com/ajdamico/asdfree/master/Programme%20for%20the%20International%20Assessment%20of%20Adult%20Competencies/download%20import%20and%20design.R" , prompt = FALSE , echo = TRUE )
-# # # # # # # # # # # # # # #
-# # end of auto-run block # #
-# # # # # # # # # # # # # # #
-
-# contact me directly for free help or for paid consulting work
-
-# anthony joseph damico
-# ajdamico@gmail.com
-#####################################################################################
-# get all programme for the international assessment of adult competencies files at #
-# the organisation for economic co-operation and development's website, then import #
-# each file and make a multiply-imputed complex sample svrepdesign object with r!   #
-#####################################################################################
-
-
 # remove the # in order to run this install.packages line only once
-# install.packages( c( "survey" , "mitools" , "downloader" , "digest" ) )
-
+# install.packages( c( "survey" , "mitools" , "downloader" , "digest", "dplyr", "car", "psych", "matrixStats" ) )
 
 # set your PIAAC data directory
 # after downloading and importing
 # all multiply-imputed, replicate-weighted complex-sample survey designs
 # will be stored here
 # use forward slashes instead of back slashes
-#############################################
-# no need to edit anything below this line #
 
-# # # # # # # # #
-# program start #
-# # # # # # # # #
+### THIS IS WHERE YOU INTRODUCE YOUR WORKING DIRECTORY ###
+setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
+
 
 library(survey)			# load survey package (analyzes complex design surveys)
 library(mitools) 		# load mitools package (analyzes multiply-imputed data)
