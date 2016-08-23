@@ -344,6 +344,8 @@ pvals <- c( 'pvlit' , 'pvnum' , 'pvpsl' )
 # remove the temporary file - where everything's been downloaded - from the hard disk
 file.remove( tf )
 
+rm(list=ls())
+
 # the current working directory should now contain one r data file (.rda)
 # for each multiply-imputed, replicate-weighted complex-sample survey design object
 # that's one for each available country
