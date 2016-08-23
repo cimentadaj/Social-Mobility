@@ -1,33 +1,15 @@
 library(survey)
 library(stargazer)
-
-rm(list=ls()[!ls() %in% c("countrylist","usable.country2")])
+###### THIS IS WHERE YOU CHANGE YOUR WORKING DIRECTORY ##############
 setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
 
-Austria <- load('prgautp1.rda')
-USA <- load('prgusap1.rda')
-Belgium <- load('prgbelp1.rda')
-Germany <- load('prgdeup1.rda')
-Canada <- load('prgcanp1.rda')
-Italy <- load('prgitap1.rda')
-Netherlands <- load('prgnldp1.rda')
-Denmark <- load('prgdnkp1.rda')
-Sweden <- load('prgswep1.rda')
-France <- load('prgfrap1.rda')
-UK <- load('prggbrp1.rda')
-Spain <- load('prgespp1.rda')
-Czech <- load('prgczep1.rda')
-Estonia <- load('prgestp1.rda')
-Finland <- load('prgfinp1.rda')
-Ireland <- load('prgfinp1.rda')
-Japan <- load('prgjpnp1.rda')
-Korea <- load('prgkorp1.rda')
-Norway <- load('prgnorp1.rda')
-Poland <- load('prgpolp1.rda')
-Russia <- load('prgrusp1.rda')
-Slovakia <- load('prgsvkp1.rda')
+data <- grep(".rda", list.files(), value=T)
 
-ls2 <- c(ls()[grepl("*.design",ls())], "countrylist","usable.country2", "ls2")
+for (i in 1:length(data)) {
+    load(data[i])
+}
+
+ls2 <- c(ls()[grepl("*.design",ls())], "ls2")
 rm(list= c(ls()[!ls() %in% ls2]))
 
 
@@ -79,8 +61,8 @@ diff <- piaac.share - ials.share
 # This line is still incomplete. You can't figure out how to add a different number
 # to each list object from the diff vector in line 82(diff=).
 # sapply(names(countries3), function(x) ifelse(x %in% names(diff),
-#                                             lapply(countries3, function(x) update(x, diff=)),
-#                                             lapply(countries3, function(x) update(x, diff=NA))), simplify = F)
+#                           lapply(countries3, function(x) update(x, diff=)),
+#                           lapply(countries3, function(x) update(x, diff=NA))), simplify = F)
 
 
 for (i in 1:length(countries3)) {
