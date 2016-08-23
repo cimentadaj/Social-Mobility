@@ -6,7 +6,7 @@ This is a project I've been working at the Pompeu Fabra University on the estima
 #### Downloading and preparing the data
 Let's start with the files you will need. This analysis consists of two scripts: one in which the data is downloaded and prepared for analysis and another in which I carry out the analysis. Until this point in time, nearly all of the analysis has been done for the PIAAC dataset and not on the IALS data.
 
-The script that downloads and prepares the data is an adaption of a [script](https://github.com/ajdamico/asdfree/blob/master/Programme%20for%20the%20International%20Assessment%20of%20Adult%20Competencies/download%20import%20and%20design.R) by [@adjdamico](https://github.com/ajdamico) and its called "Download_prepare_data_survey.R" ([acces it here])(https://github.com/cimentadaj/social_mobility_analysis/blob/master/Download_prepare_data_survey.R).
+The script that downloads and prepares the data is an adaption of a [script](https://github.com/ajdamico/asdfree/blob/master/Programme%20for%20the%20International%20Assessment%20of%20Adult%20Competencies/download%20import%20and%20design.R) by [@adjdamico](https://github.com/ajdamico) and its called "Download_prepare_data_survey.R". You can [acces it here](https://github.com/cimentadaj/social_mobility_analysis/blob/master/Download_prepare_data_survey.R).
 
 This script acceses the OECD website, downloads the PIAAC data separetely for each country, does a lot of data manipulation over each dataset, and finally, creates a complex survey object with the data and its weights.  
 
