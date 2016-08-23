@@ -1,4 +1,3 @@
-
 # This script was originally from anthony joseph damico - ajdamico@gmail.com
 # If you want to find out more, please visit:
 # analyze survey data for free (http://asdfree.com) with the r language
@@ -25,7 +24,7 @@ library(car)
 library(psych)
 library(matrixStats)
 
-# 
+
 # # # load the download_cached and related functions
 # # # to prevent re-downloading of files once they've been downloaded.
 source_url( 
@@ -33,8 +32,8 @@ source_url(
     prompt = FALSE , 
     echo = FALSE 
 )
-# 
-# 
+ 
+ 
 # # designate the oecd public use file page
  oecd.csv.website <- 'http://vs-web-fs-1.oecd.org/piaac/puf-data/CSV/'
 # 
@@ -53,31 +52,36 @@ source_url(
 # # initiate a temporary file on the local computer
  tf <- tempfile()
 # 
-# # R will exactly match SUDAAN results and Stata with the MSE option results
-# options( survey.replicates.mse = TRUE )
-# # otherwise if it is commented out or set to FALSE
-#######
+
+ ####### downloads the data to your working directory and stores each data file in a list
  links <- character(0)
- countrylist <- list()
+ countrylist <- rep(list(list()), length(csv.fns))
  for (i in 1:length(csv.fns)) {
      links <- c(links, paste0(oecd.csv.website, csv.fns[i], ".csv"))
      download.file(links[i], destfile =csv.fns[i])
      countrylist[[i]] <-  read.csv(csv.fns[i], stringsAsFactors = FALSE)
  }
+ #########################################################################################
+
  names(countrylist) <- csv.fns
-#####
- save(countrylist, file="countrylist.Rda")
- load("countrylist.Rda")
+ save(countrylist, file="countrylist.Rda") # list contains all the country data frames
+ load("countrylist.Rda") # if you commented out the download section, you should have this file
+ # in your working directory
+
+ ##### Data management section ####
+
 vars <- c("ISCO1C","J_Q07b","J_Q06b","J_Q08","J_Q07a","J_Q06a","B_Q01a",
           "VEMETHOD","CNTRYID","GENDER_R","AGE_R","AGEG5LFS","I_Q04l","I_Q04j",
           "I_Q04m",paste0(rep("PVNUM",10),1:10),paste0(rep("PVLIT",10),1:10),
           paste0(rep("PVPSL",10),1:10), paste0(rep("SPFWT",80),0:80))
+## These are all the variables I will be using
 
-sapply(countrylist, function(x) setdiff(vars, colnames(x)))
+sapply(countrylist, function(x) setdiff(vars, colnames(x))) # check if they're all in each data frame
 
+# This function contains all the data management and will be applied over all data frames in the list
 data.management <- function(x) {
     
-    x <- x[vars]
+    x <- x[vars] # subsetting the variables
     x <- tbl_df(x) %>% rename(isco=ISCO1C,dadedu=J_Q07b,momedu=J_Q06b,
                   numbooks=J_Q08,dadimmigrant=J_Q07a,
                   momimmigrant=J_Q06a,
@@ -86,31 +90,43 @@ data.management <- function(x) {
                   bottomthings=I_Q04j, differentideas=I_Q04l,
                   additinfo=I_Q04m)
 
-numtrans <- function(x) {
+# this function does two things: if specified character, it will coerce the vector
+# to a character and if specified factor it will coerce the vector to a numeric.
+# It does it so it coerces factors, as well as numeric and character.
+numtrans <- function(x, type=c("character","factor")) {
+    if (type == "character") {
+    x <- as.character(x)
+    } else {
     x <- as.numeric(as.character(x))
+    }
+    return(x)
 }
 
 vars <- c("bottomthings","differentideas","additinfo","isco",
-          "momedu","dadedu","numbooks","dadimmigrant","eduattain")
-
-x[,vars] <- lapply(x[,vars], numtrans)
-
-factor <- fa(x[,c("bottomthings","differentideas","additinfo")], nfactors = 1,rotate="none", fm="pa", score=T)
+          "momedu","dadedu","numbooks","dadimmigrant","eduattain",
+          "age","gender")
+x[,vars] <- lapply(x[,vars], numtrans, type="numeric")
 
 x$VEMETHOD <- as.character(x$VEMETHOD)
+
+# Factor loading the three non-cognitive variables
+factor <- fa(x[, c("bottomthings","differentideas","additinfo")],
+              nfactors = 1,rotate="none", fm="pa", score=T)
+
 x$non.cognitive <- as.numeric(factor$scores)
 
-quant <- quantile(scale(x$PVNUM1), probs = c(0.25,0.75), na.rm=T)
-quant2 <- quantile(scale(x$non.cognitive), probs = c(0.25,0.75), na.rm=T)
+quant <- quantile(scale(x$PVNUM1), probs = c(0.25,0.75), na.rm=T) # get the top and bottom quantile of the cognitive score
+quant2 <- quantile(scale(x$non.cognitive), probs = c(0.25,0.75), na.rm=T) # get the top and bottom quantile of non-cognitive score
 
 
-x$highab <- as.numeric(scale(x$PVNUM1) >= quant[2][[1]] & scale(x$non.cognitive) >= quant2[2][[1]]) ## Both high quantiles of cognitive and non-cognitive
-x$lowab <- as.numeric(scale(x$PVNUM1) <= quant[1][[1]] & scale(x$non.cognitive) <= quant2[1][[1]]) ## Both low quantiles of cognitive and non-cognitive
+# create a dummy variables with all possible combination of quantiles
+x$highab <- as.numeric(scale(x$PVNUM1) >= quant[2][[1]] & scale(x$non.cognitive) >= quant2[2][[1]]) ## High quantile of cognitive and non-cognitive
+x$lowab <- as.numeric(scale(x$PVNUM1) <= quant[1][[1]] & scale(x$non.cognitive) <= quant2[1][[1]]) ## Low quantiles of cognitive and non-cognitive
 x$midcoghigh <- as.numeric(scale(x$PVNUM1) >= quant[2][[1]] & scale(x$non.cognitive) <= quant2[1][[1]]) ## High cognitive, low non-cognitive
 x$midnonhigh <- as.numeric(scale(x$PVNUM1) <= quant[1][[1]] & scale(x$non.cognitive) >= quant2[2][[1]])## Low cognitive, high non-cognitive
 
-x$age <- as.numeric(x$age)
-x <- as.data.frame(x)
+x <- as.data.frame(x) # Transforming back into class data frame
+
 ## Recoding dependent var into dummy: 1= service class, 0 = all else,
 ## I exclude ppl who didn't work in the last 5 years(code 9)
 
@@ -130,69 +146,76 @@ x <- as.data.frame(x)
 #         Refused	                                        9998
 #         Not stated or inferred	                        9999
 
-
-x$isco <- recode(x$isco, "c(9995,9996,9997,9998,9999,0)=NA")
+# Service class dummy - for any doubs on the classification coding see above
+x$isco <- recode(x$isco, "c(9995,9996,9997,9998,9999,0) = NA")
 x$serviceclass <- as.numeric(as.character(x$isco))
-x$serviceclass <- recode(x$serviceclass, "c(1,2)=1; c(3,4,5,6,7,8,9)=0")
+x$serviceclass <- recode(x$serviceclass, "1:2 = 1; 3:9 = 0")
 
+# Middle class dummy - for any doubs on the classification coding see above
 x$middleclass <- 0
 x$middleclass[x$isco %in% c(3,4,5)] <- 1
 x$lowerclass <- as.numeric(x$isco %in% c(6,7,8,9))
 
-## Recoding fathers education into two levels instead of 3
-x$origin12 <- x$dadedu
+## Recoding father's education into dummies
+## 1 = ISCED 1 & 2, 0 = all else
 x$origin12 <- as.numeric(x$dadedu == 1)
-## Recoding fathers education into two levels instead of 3
-x$origin56 <- as.numeric(x$dadedu == 3)
-x$lowmidisced <- as.numeric(x$dadedu %in% c(2,1))
-## Education homogamy dummies
-x$highorigin <- as.numeric(x$dadedu == 3 & x$momedu == 3)
-x$loworigin <- as.numeric(x$dadedu == 1 & x$momedu == 1)
 
-## recoding dad and mother immigration
+## 1 = ISCED 5 & 6, 0 = all else
+x$origin56 <- as.numeric(x$dadedu == 3)
+
+## 1 = ISCED 1,2,3 and 4, 0 = all else
+x$lowmidisced <- as.numeric(x$dadedu %in% c(2,1))
+
+
+## Education homogamy dummies
+x$highorigin <- as.numeric(x$dadedu == 3 & x$momedu == 3) # Mom and Dad are ISCED 5 and 6
+x$loworigin <- as.numeric(x$dadedu == 1 & x$momedu == 1) # Mom and Dad are ISCED 1 and 2
+
+
 ## Was your father or male guardian born in #CountryName? 1=Yes 2=No
 x$dadimmigrant <- recode(x$dadimmigrant,"1=0;2=1")
 
-#x$momimmigrant <- recode(x$momimmigrant,"'2'='1';'1'=0;c('','V','D','R','N')=NA")
-#x$momimmigrant <- as.numeric(as.character(x$momimmigrant))
+# x$momimmigrant <- recode(x$momimmigrant,"'2'='1';'1'=0;c('','V','D','R','N')=NA")
+# x$momimmigrant <- as.numeric(as.character(x$momimmigrant))
 
 ## standardizing cognitive score
 #x$cognitive <- scale(x$cognitive)
 
-## recoding gender, 1=men 0=women
-x$gender <- as.numeric(x$gender)
+## Recoding gender, 1 = men 0 = women
 x$gender <- recode(x$gender, "2=0")
-x <- x[!is.na(x$gender),]
+x <- x[!is.na(x$gender), ]
 
-# recoded the education into three levels: low, mid, high
+# Recoded the education into three levels: low, mid, high
 x$eduattain <- recode(x$eduattain, "1:3 = 1; 4:10=2; 11:16=3")
 
-## Recoding the DV(3 levels) into two levels. Comparing the highly educated
+## Recoding the DV (3 levels) into two levels. Comparing the highly educated
 ## vs the middly and low educated
-x$dest56 <- x$eduattain
-x$dest56 <- recode(x$dest56, "3=1; c(2,1)=0")
+x$dest56 <- recode(x$eduattain, "3=1; c(2,1)=0")
 
 ## Creating of highest education indicator
-## This evaluates both parents education and takes the highest
+## Out of both parents education, it picks the highest education of the household
 
+# NA's are now 0 because rowMaxs has a problem with NA
 x$dadedu[is.na(x$dadedu)] <- 0
 x$momedu[is.na(x$momedu)] <- 0
 
 x$highedu <- rowMaxs(as.matrix(x[c("dadedu","momedu")]))
 
+# Recode them back to NA
 x$dadedu[x$dadedu == 0] <- NA
 x$momedu[x$momedu == 0] <- NA
 x$highedu[x$highedu == 0] <- NA
 
 x$highisced <- as.numeric(x$highedu == 3)
 x$lowisced  <- as.numeric(x$highedu == 1)
-x$lowmidisced2 <- as.numeric(x$highedu == 1 | x$highedu == 2) ## For the USA
+x$lowmidisced2 <- as.numeric(x$highedu %in% c(1,2)) # For the USA
+
 return(x)
 }
 
 usable.country2 <- lapply(countrylist, data.management)
 
-rm(list=ls()[!ls() %in% c("countrylist","usable.country2", "csv.fns","csv.links","csv.page","csv.texts")])
+rm(list=ls()[!ls() %in% c("countrylist","usable.country2", "csv.fns","csv.links","csv.page","csv.texts", "tf")])
 
 
 # specify which variables are plausible values (i.e. multiply-imputed)
@@ -286,6 +309,10 @@ pvals <- c( 'pvlit' , 'pvnum' , 'pvpsl' )
         if ( jk.method == 'JK2' ) jk.method <- 'JKn'
         
         # construct the full multiply-imputed, replicate-weighted, complex-sample survey design object
+        
+        # # R will exactly match SUDAAN results and Stata with the MSE option results
+        # options( survey.replicates.mse = TRUE )
+        # # otherwise if it is commented out or set to FALSE
         z <-
             svrepdesign( 	
                 weights = ~spfwt0 , 
@@ -316,7 +343,6 @@ pvals <- c( 'pvlit' , 'pvnum' , 'pvpsl' )
 
 # remove the temporary file - where everything's been downloaded - from the hard disk
 file.remove( tf )
-
 
 # the current working directory should now contain one r data file (.rda)
 # for each multiply-imputed, replicate-weighted complex-sample survey design object
