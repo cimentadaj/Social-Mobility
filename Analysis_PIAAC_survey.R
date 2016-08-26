@@ -194,8 +194,8 @@ for (i in 1:length(countries3)) {
         #################################### Models for service class ######################################################
         
         
-        high1 <- models("serviceclass",c("highisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[1]], gender == 1 & age_categories < 10))
-        high2 <- models("serviceclass",c("lowmidisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[1]], gender == 1 & age_categories < 10))
+        high1 <- models("serviceclass",c("highisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[2]], gender == 1 & age_categories < 10))
+        high2 <- models("serviceclass",c("lowmidisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[2]], gender == 1 & age_categories < 10))
         
         high.models <- append(high1, high2)
         
@@ -207,7 +207,7 @@ for (i in 1:length(countries3)) {
                          column.separate = c(3,3),
                          dep.var.labels.include = FALSE,
                          order = c(1,4),
-                         covariate.labels = c("Highest ISCED","DadISCED1-2",
+                         covariate.labels = c("Highest ISCED","DadISCED1-4",
                                               "Cognitivecntrl","Noncognitivecntrl"),
                          apply.coef = exp,
                          apply.ci = exp, digits = 2
