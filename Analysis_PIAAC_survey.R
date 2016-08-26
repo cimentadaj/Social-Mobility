@@ -87,60 +87,25 @@ for (i in 1:length(countries3)) {
     if (names(countries3[i]) == "USA") {
         #################################### Models for lower class ##############################################
         
-        #     ## Models for MEN from the 25-45 cohort
-        #     m1 <- with(workdataset3, svyglm(lowerclass ~ highisced  , family = quasibinomial()))
-        #     #m2 <- with(workdataset3, svyglm(lowerclass ~ highisced  + numbooks, family = quasibinomial()))
-        #     m3 <- with(workdataset3, svyglm(lowerclass ~ highisced   + scale(pvnum), family = quasibinomial()))
-        #     m3.1 <- with(workdataset3, svyglm(lowerclass ~ highisced   + scale(pvnum) + scale(non.cognitive), family = quasibinomial()))
-        #     
-        #     m4 <- with(workdataset3, svyglm(lowerclass ~ lowmidisced  , family = quasibinomial()))
-        #     #m5 <- with(workdataset3, svyglm(lowerclass ~ lowmidisced  + numbooks , family = quasibinomial()))
-        #     m6 <- with(workdataset3, svyglm(lowerclass ~ lowmidisced   + scale(pvnum), family = quasibinomial()))
-        #     m6.1 <- with(workdataset3, svyglm(lowerclass ~ lowmidisced   + scale(pvnum) + scale(non.cognitive), family = quasibinomial()))
-        #     
-        #     ## Models for MEN from 45-65
-        #     m7 <- with(workdataset4, svyglm(lowerclass ~ highisced  , family = quasibinomial()))
-        #     #m8 <- with(workdataset4, svyglm(lowerclass ~ highisced  + numbooks, family = quasibinomial()))
-        #     m9 <- with(workdataset4, svyglm(lowerclass ~ highisced   + scale(pvnum), family = quasibinomial()))
-        #     m9.1 <- with(workdataset4, svyglm(lowerclass ~ highisced   + scale(pvnum) + scale(non.cognitive), family = quasibinomial()))
-        #     
-        #     
-        #     m10 <- with(workdataset4, svyglm(lowerclass ~ lowmidisced  , family = quasibinomial()))
-        #     #m11 <- with(workdataset4, svyglm(lowerclass ~ lowmidisced  + numbooks , family = quasibinomial()))
-        #     m12 <- with(workdataset4, svyglm(lowerclass ~ lowmidisced   + scale(pvnum), family = quasibinomial()))
-        #     m12.1 <- with(workdataset4, svyglm(lowerclass ~ lowmidisced   + scale(pvnum) + scale(non.cognitive), family = quasibinomial()))
-        #     
-        #     
-        #     highyoung <- list(m1[[1]],m3[[1]],m3.1[[1]],m4[[1]],m6[[1]],m6.1[[1]])
-        #     highold <- list(m7[[1]],m9[[1]],m9.1[[1]],m10[[1]],m12[[1]],m12.1[[1]])
-        #     
-        #     ## Tables for YOUNG service class BOYS
-        #     setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
-        #     all <- stargazer(highyoung, type = "html", title = paste0(names(countries3[i]),"PIAAC-25-45-sons-lowerclass"),
-        #                      column.labels = c("1= Lower Class", "1=Lower Class"),
-        #                      column.separate = c(3,3),
-        #                      dep.var.labels.include = FALSE,
-        #                      order = c(1,4),
-        #                      covariate.labels = c("Highest ISCED","DadISCED1-4",
-        #                                           "Cognitivecntrl","Noncognitivecntrl"),
-        #                      apply.coef = exp,
-        #                      apply.ci = exp, digits = 2
-        #                      , out = paste0(names(countries3[i]),"PIAAC-25-45-sons-lowerclass.html"
-        #                      )
-        #     )
-        #     
-        #     ## Tables for old service class BOYS
-        #     all <- stargazer(highold, type = "html", title = paste0(names(countries3[i]),"PIAAC-45-65-sons-lowerclass"),
-        #                      column.labels = c("1= Lower Class", "1=Lower Class"),
-        #                      column.separate = c(3,3),
-        #                      dep.var.labels.include = FALSE,
-        #                      order = c(1,4),
-        #                      covariate.labels = c("Highest ISCED","DadISCED1-4",
-        #                                           "Cognitivecntrl","Noncognitivecntrl"),
-        #                      apply.coef = exp,
-        #                      apply.ci = exp, digits = 2
-        #                      , out = paste0(names(countries3[i]),"PIAAC-45-65-sons-lowerclass.html")
-        #     )
+        lower1 <- models("lowerclass", c("highisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[2]], gender == 1 & age_categories < 10))
+        lower2 <- models("lowerclass", c("lowmidisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[2]], gender == 1 & age_categories < 10))
+        
+        lower.models <- append(lower1, lower2)
+        
+        ## Tables
+        setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
+        all <- stargazer(lower.models, type = "html", title = paste0(names(countries3[2]),"PIAAC-sons-lowerclass"),
+                         column.labels = c("1= Lower Class", "1=Lower Class"),
+                         column.separate = c(3,3),
+                         dep.var.labels.include = FALSE,
+                         order = c(1,4),
+                         covariate.labels = c("Highest ISCED","DadISCED1-4",
+                                              "Cognitivecntrl","Noncognitivecntrl"),
+                         apply.coef = exp,
+                         apply.ci = exp, digits = 2
+                         , out = paste0(names(countries3[2]),"PIAAC-sons-lowerclass.html"
+                         )
+        )
         
         #################################### Models for middle class ######################################################
         
