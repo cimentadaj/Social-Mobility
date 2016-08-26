@@ -362,12 +362,6 @@ for (i in 1:length(countries3)) {
         
         repl <- models("serviceclass",c("highisced", "non.cognitive"), workdataset3)
         
-        m1 <- with(workdataset3, svyglm(serviceclass ~ highisced  , family = quasibinomial()))
-        all(repl[[1]]$coefficients == m1[[1]]$coefficients) # coefficients match
-        
-        m2 <- with(workdataset3, svyglm(serviceclass ~ highisced  + non.cognitive, family = quasibinomial()))
-        all(repl[[2]]$coefficients == m2[[2]]$coefficients) # coefficients match
-        
         #m3 <- with(workdataset3, svyglm(serviceclass ~ highisced  + non.cognitive + scale(pvnum), family = quasibinomial()))
         
         
