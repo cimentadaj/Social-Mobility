@@ -80,8 +80,8 @@ models <- function(dv, covariates, data) {
 
 for (i in 1:length(countries3)) {
     
-    workdataset3 <- subset(countries3[[i]], age_categories >= 3 & age_categories <= 6 & gender == 1) ## From 25-45 BOYS
-    workdataset4 <- subset(countries3[[i]], age_categories >= 7 & age_categories <= 10 & gender == 1) ## From 45-60 BOYS
+    workdataset3 <- subset(countries3[[1]], age_categories >= 3 & age_categories <= 6 & gender == 1) ## From 25-45 BOYS
+    workdataset4 <- subset(countries3[[1]], age_categories >= 7 & age_categories <= 10 & gender == 1) ## From 45-60 BOYS
     
     
     if (names(countries3[i]) == "USA") {
@@ -363,14 +363,30 @@ for (i in 1:length(countries3)) {
         m2 <- with(workdataset3, svyglm(serviceclass ~ highisced  + non.cognitive, family = quasibinomial()))
         #m3 <- with(workdataset3, svyglm(serviceclass ~ highisced  + non.cognitive + scale(pvnum), family = quasibinomial()))
         
+        
+        repl <- models("serviceclass",c("lowmidisced2", "non.cognitive"), workdataset3)
         m4 <- with(workdataset3, svyglm(serviceclass ~ lowmidisced2  , family = quasibinomial()))
+        
+        all(repl[[1]]$coefficients == m4[[1]]$coefficients) # coefficients match
+        
+
         m5 <- with(workdataset3, svyglm(serviceclass ~ lowmidisced2  + non.cognitive , family = quasibinomial()))
+        all(repl[[2]]$coefficients == m5[[2]]$coefficients) # coefficients match
+        
         #m6 <- with(workdataset3, svyglm(serviceclass ~ lowmidisced2   + non.cognitive + scale(pvnum), family = quasibinomial()))
         #m6.1 <- with(workdataset3, svyglm(serviceclass ~ lowmidisced2   + non.cognitive + scale(pvnum) + scale(non.cognitive), family = quasibinomial()))
         
         ## Models for MEN from 45-65
+        repl2 <- models("serviceclass",c("highisced", "non.cognitive"), workdataset4)
+        
+        
         m7 <- with(workdataset4, svyglm(serviceclass ~ highisced  , family = quasibinomial()))
+        all(repl2[[1]]$coefficients == m7[[1]]$coefficients) # coefficients match
+        
         m8 <- with(workdataset4, svyglm(serviceclass ~ highisced  + non.cognitive, family = quasibinomial()))
+        all(repl2[[2]]$coefficients == m8[[1]]$coefficients) # coefficients match
+        
+        
         #m9 <- with(workdataset4, svyglm(serviceclass ~ highisced   + non.cognitive + scale(pvnum), family = quasibinomial()))
         #m9.1 <- with(workdataset4, svyglm(serviceclass ~ highisced  + non.cognitive + scale(pvnum) + scale(non.cognitive), family = quasibinomial()))
         
