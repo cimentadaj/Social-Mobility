@@ -1,7 +1,7 @@
 library(survey)
 library(stargazer)
 ###### THIS IS WHERE YOU CHANGE YOUR WORKING DIRECTORY ##############
-setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
+setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Data")
 
 data <- grep(".rda", list.files(), value=T)
 for (i in 1:length(data)) {

@@ -13,7 +13,7 @@
 # use forward slashes instead of back slashes
 
 ### THIS IS WHERE YOU INTRODUCE YOUR WORKING DIRECTORY ###
-setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
+setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Data")
 
 
 library(survey)			# load survey package (analyzes complex design surveys)
