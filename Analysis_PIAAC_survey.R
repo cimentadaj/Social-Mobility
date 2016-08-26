@@ -1,15 +1,14 @@
-
-# This is a try  #
-
 library(survey)
 library(stargazer)
 ###### THIS IS WHERE YOU CHANGE YOUR WORKING DIRECTORY ##############
 setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
 
 data <- grep(".rda", list.files(), value=T)
+
 for (i in 1:length(data)) {
     load(data[i])
 }
+
 
 ls2 <- c(ls()[grepl("*.design",ls())], "ls2")
 rm(list= c(ls()[!ls() %in% ls2]))
@@ -68,6 +67,16 @@ countries3 <- list(Austria=prgautp1.design,USA=prgusap1.design,Belgium=prgbelp1.
 # #                           lapply(countries3, function(x) update(x, diff=NA))), simplify = F)
 
 ###############
+
+models <- function(dv, covariates, data) {
+    dv <- paste(dv, "~ 1")
+    combinations <- lapply(1:length(covariates), function(i) seq(1:i))
+    formulas <- lapply(combinations, function(p) x <- as.formula(paste(c(dv, covariates[p]), collapse=" + ")))
+    results <- lapply(formulas, function(o) with(data, svyglm(o, family = quasibinomial()))[[1]])
+    return(results)
+}
+
+
 
 for (i in 1:length(countries3)) {
     
