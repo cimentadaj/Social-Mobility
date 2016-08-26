@@ -89,7 +89,7 @@ for (i in 1:length(countries3)) {
         lower.models <- append(lower1, lower2)
         
         ## Tables
-        setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
+        setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
         all <- stargazer(lower.models, type = "html", title = paste0(names(countries3[2]),"PIAAC-sons-lowerclass"),
                          column.labels = c("1= Lower Class", "1=Lower Class"),
                          column.separate = c(3,3),
@@ -162,7 +162,7 @@ for (i in 1:length(countries3)) {
         
         
         ## Tables 
-        setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
+        setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
         all <- stargazer(high.models, type = "html", title = paste0(names(countries3[2]),"PIAAC-sons-serviceclass"),
                          column.labels = c("1= Service Class", "1=Service Class"),
                          column.separate = c(3,3),
@@ -186,7 +186,7 @@ for (i in 1:length(countries3)) {
             lower.models <- append(lower1, lower2)
 
             ## Tables
-            setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
+            setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
             all <- stargazer(lower.models, type = "html", title = paste0(names(countries3[1]),"PIAAC-sons-lowerclass"),
                              column.labels = c("1= Lower Class", "1=Lower Class"),
                              column.separate = c(3,3),
@@ -259,7 +259,7 @@ for (i in 1:length(countries3)) {
 
         
         ## Tables 
-        setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
+        setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
         all <- stargazer(high.models, type = "html", title = paste0(names(countries3[1]),"PIAAC-sons-serviceclass"),
                          column.labels = c("1= Service Class", "1=Service Class"),
                          column.separate = c(3,3),
