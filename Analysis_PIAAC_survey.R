@@ -251,14 +251,14 @@ for (i in 1:length(countries3)) {
         
         #################################### Models for lower class ##############################################
         
-            repl <- models("lowerclass", c("highisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[1]], gender == 1 & age_categories > 9))
-            repl1 <- models("lowerclass", c("lowmidisced2","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[1]], gender == 1 & age_categories > 9))
+            lower1 <- models("lowerclass", c("highisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[1]], gender == 1 & age_categories < 10))
+            lower2 <- models("lowerclass", c("lowmidisced2","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[1]], gender == 1 & age_categories < 10))
             
-            all.models <- append(repl, repl1)
+            lower.models <- append(lower1, lower2)
 
-            ## Tables for YOUNG service class BOYS
+            ## Tables
             setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
-            all <- stargazer(all.models, type = "html", title = paste0(names(countries3[1]),"PIAAC-sons-lowerclass"),
+            all <- stargazer(lower.models, type = "html", title = paste0(names(countries3[1]),"PIAAC-sons-lowerclass"),
                              column.labels = c("1= Lower Class", "1=Lower Class"),
                              column.separate = c(3,3),
                              dep.var.labels.include = FALSE,
@@ -267,7 +267,7 @@ for (i in 1:length(countries3)) {
                                                   "Cognitivecntrl","Noncognitivecntrl"),
                              apply.coef = exp,
                              apply.ci = exp, digits = 2
-                             , out = paste0(names(countries3[i]),"PIAAC-sons-lowerclass.html"
+                             , out = paste0(names(countries3[1]),"PIAAC-sons-lowerclass.html"
                              )
             )
         
@@ -323,38 +323,25 @@ for (i in 1:length(countries3)) {
         
         #################################### Models for service class #####
         
-        ## Models for MEN from the 25-45 cohort
-        
-        repl <- models("serviceclass",c("highisced", "non.cognitive"), subset(countries3[[1]], gender == 1 & age_categories > 9))
-        repl1 <- models("serviceclass",c("lowmidisced2", "non.cognitive"), subset(countries3[[1]], gender == 1 & age_categories > 9))
+        high1 <- models("serviceclass",c("highisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[1]], gender == 1 & age_categories < 10))
+        high2 <- models("serviceclass",c("lowmidisced2","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[1]], gender == 1 & age_categories < 10))
 
-        all.models <- append(repl,repl1)
+        high.models <- append(high1, high2)
 
         
-        ## Tables for YOUNG service class BOYS
+        ## Tables 
         setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
-        all <- stargazer(highyoung, type = "html", title = paste0(names(countries3[i]),"PIAAC-25-45-sons-serviceclass"),
+        all <- stargazer(high.models, type = "html", title = paste0(names(countries3[1]),"PIAAC-sons-serviceclass"),
                          column.labels = c("1= Service Class", "1=Service Class"),
-                         column.separate = c(2,2),
+                         column.separate = c(3,3),
                          dep.var.labels.include = FALSE,
-                         order = c(1,3),
-                         covariate.labels = c("Highest ISCED","DadISCED1-2", "Non.cognitive"),
+                         order = c(1,4),
+                         covariate.labels = c("Highest ISCED","DadISCED1-2",
+                                              "Cognitivecntrl","Noncognitivecntrl"),
                          apply.coef = exp,
                          apply.ci = exp, digits = 2
-                         , out = paste0(names(countries3[i]),"-PIAAC-25-45-sons-serviceclass.html"
+                         , out = paste0(names(countries3[1]),"-PIAAC-sons-serviceclass.html"
                          )
-        )
-        
-        ## Tables for old service class BOYS
-        all <- stargazer(highold, type = "html", title = paste0(names(countries3[i]),"PIAAC-45-65-sons-serviceclass"),
-                         column.labels = c("1= Service Class", "1=Service Class"),
-                         column.separate = c(2,2),
-                         dep.var.labels.include = FALSE,
-                         order = c(1,3),
-                         covariate.labels = c("Highest ISCED","DadISCED1-2", "Non.cognitive"),
-                         apply.coef = exp,
-                         apply.ci = exp, digits = 2
-                         , out = paste0(names(countries3[i]),"-PIAAC-45-65-sons-serviceclass.html")
         )
     }
 }
