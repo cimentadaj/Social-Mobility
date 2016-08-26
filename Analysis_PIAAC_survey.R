@@ -193,7 +193,30 @@ for (i in 1:length(countries3)) {
         
         #################################### Models for service class ######################################################
         
+        
+        high1 <- models("serviceclass",c("highisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[1]], gender == 1 & age_categories < 10))
+        high2 <- models("serviceclass",c("lowmidisced2","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[1]], gender == 1 & age_categories < 10))
+        
+        high.models <- append(high1, high2)
+        
+        
+        ## Tables 
+        setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
+        all <- stargazer(high.models, type = "html", title = paste0(names(countries3[1]),"PIAAC-sons-serviceclass"),
+                         column.labels = c("1= Service Class", "1=Service Class"),
+                         column.separate = c(3,3),
+                         dep.var.labels.include = FALSE,
+                         order = c(1,4),
+                         covariate.labels = c("Highest ISCED","DadISCED1-2",
+                                              "Cognitivecntrl","Noncognitivecntrl"),
+                         apply.coef = exp,
+                         apply.ci = exp, digits = 2
+                         , out = paste0(names(countries3[1]),"-PIAAC-sons-serviceclass.html"
+                         )
+        
+        
         ## Models for MEN from the 25-45 cohort
+        models("serviceclass", c("highisced"))
         m1 <- with(workdataset3, svyglm(serviceclass ~ highisced  , family = quasibinomial()))
         m2 <- with(workdataset3, svyglm(serviceclass ~ highisced  + non.cognitive, family = quasibinomial()))
         #m3 <- with(workdataset3, svyglm(serviceclass ~ highisced  + non.cognitive + scale(pvnum), family = quasibinomial()))
