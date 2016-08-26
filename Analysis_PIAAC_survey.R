@@ -362,25 +362,13 @@ for (i in 1:length(countries3)) {
         
         repl <- models("serviceclass",c("highisced", "non.cognitive"), workdataset3)
         
-        #m3 <- with(workdataset3, svyglm(serviceclass ~ highisced  + non.cognitive + scale(pvnum), family = quasibinomial()))
-        
-        
         repl1 <- models("serviceclass",c("lowmidisced2", "non.cognitive"), workdataset3)
-        
-        #m6 <- with(workdataset3, svyglm(serviceclass ~ lowmidisced2   + non.cognitive + scale(pvnum), family = quasibinomial()))
-        #m6.1 <- with(workdataset3, svyglm(serviceclass ~ lowmidisced2   + non.cognitive + scale(pvnum) + scale(non.cognitive), family = quasibinomial()))
         
         ## Models for MEN from 45-65
         repl2 <- models("serviceclass",c("highisced", "non.cognitive"), workdataset4)
         
-        
-        #m9 <- with(workdataset4, svyglm(serviceclass ~ highisced   + non.cognitive + scale(pvnum), family = quasibinomial()))
-        #m9.1 <- with(workdataset4, svyglm(serviceclass ~ highisced  + non.cognitive + scale(pvnum) + scale(non.cognitive), family = quasibinomial()))
-        
         repl3 <- models("serviceclass",c("lowmidisced2", "non.cognitive"), workdataset4)
         
-        #m12 <- with(workdataset4, svyglm(serviceclass ~ lowmidisced2  + non.cognitive + scale(pvnum), family = quasibinomial()))
-        #m12.1 <- with(workdataset4, svyglm(serviceclass ~ lowmidisced2  + non.cognitive + scale(pvnum) + scale(non.cognitive), family = quasibinomial()))
         
         highyoung <- append(repl,repl1)
         highold <- append(repl2, repl3)
