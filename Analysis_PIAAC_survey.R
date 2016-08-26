@@ -366,13 +366,6 @@ for (i in 1:length(countries3)) {
         
         
         repl1 <- models("serviceclass",c("lowmidisced2", "non.cognitive"), workdataset3)
-        m4 <- with(workdataset3, svyglm(serviceclass ~ lowmidisced2  , family = quasibinomial()))
-        
-        all(repl1[[1]]$coefficients == m4[[1]]$coefficients) # coefficients match
-        
-
-        m5 <- with(workdataset3, svyglm(serviceclass ~ lowmidisced2  + non.cognitive , family = quasibinomial()))
-        all(repl1[[2]]$coefficients == m5[[2]]$coefficients) # coefficients match
         
         #m6 <- with(workdataset3, svyglm(serviceclass ~ lowmidisced2   + non.cognitive + scale(pvnum), family = quasibinomial()))
         #m6.1 <- with(workdataset3, svyglm(serviceclass ~ lowmidisced2   + non.cognitive + scale(pvnum) + scale(non.cognitive), family = quasibinomial()))
@@ -381,32 +374,16 @@ for (i in 1:length(countries3)) {
         repl2 <- models("serviceclass",c("highisced", "non.cognitive"), workdataset4)
         
         
-        m7 <- with(workdataset4, svyglm(serviceclass ~ highisced  , family = quasibinomial()))
-        all(repl2[[1]]$coefficients == m7[[1]]$coefficients) # coefficients match
-        
-        m8 <- with(workdataset4, svyglm(serviceclass ~ highisced  + non.cognitive, family = quasibinomial()))
-        all(repl2[[2]]$coefficients == m8[[1]]$coefficients) # coefficients match
-        
-        
         #m9 <- with(workdataset4, svyglm(serviceclass ~ highisced   + non.cognitive + scale(pvnum), family = quasibinomial()))
         #m9.1 <- with(workdataset4, svyglm(serviceclass ~ highisced  + non.cognitive + scale(pvnum) + scale(non.cognitive), family = quasibinomial()))
         
         repl3 <- models("serviceclass",c("lowmidisced2", "non.cognitive"), workdataset4)
         
-        m10 <- with(workdataset4, svyglm(serviceclass ~ lowmidisced2  , family = quasibinomial()))
-        all(repl3[[1]]$coefficients == m10[[1]]$coefficients) # coefficients match
-        
-        m11 <- with(workdataset4, svyglm(serviceclass ~ lowmidisced2  + non.cognitive, family = quasibinomial()))
-        all(repl3[[2]]$coefficients == m11[[1]]$coefficients) # coefficients match
-        
         #m12 <- with(workdataset4, svyglm(serviceclass ~ lowmidisced2  + non.cognitive + scale(pvnum), family = quasibinomial()))
         #m12.1 <- with(workdataset4, svyglm(serviceclass ~ lowmidisced2  + non.cognitive + scale(pvnum) + scale(non.cognitive), family = quasibinomial()))
         
-        y <- append(repl,repl1)
-        h <- append(repl2, repl3)
-        
-        highyoung <- list(m1[[1]],m2[[1]],m4[[1]],m5[[1]])
-        highold <- list(m7[[1]],m8[[1]],m10[[1]],m11[[1]])
+        highyoung <- append(repl,repl1)
+        highold <- append(repl2, repl3)
         
         ## Tables for YOUNG service class BOYS
         setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
