@@ -80,10 +80,6 @@ models <- function(dv, covariates, data) {
 
 for (i in 1:length(countries3)) {
     
-    workdataset3 <- subset(countries3[[1]], age_categories >= 3 & age_categories <= 6 & gender == 1) ## From 25-45 BOYS
-    workdataset4 <- subset(countries3[[1]], age_categories >= 7 & age_categories <= 10 & gender == 1) ## From 45-60 BOYS
-    
-    
     if (names(countries3[i]) == "USA") {
         #################################### Models for lower class ##############################################
         
