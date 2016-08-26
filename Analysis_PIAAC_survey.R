@@ -254,59 +254,21 @@ for (i in 1:length(countries3)) {
         #     ## Models for MEN from the 25-45 cohort
              
             repl <- models("lowerclass", c("highisced","scale(pvnum)","scale(non.cognitive)"), workdataset3)
-            
-            m1 <- with(workdataset3, svyglm(lowerclass ~ highisced  , family = quasibinomial()))
-            #m2 <- with(workdataset3, svyglm(lowerclass ~ highisced  + numbooks, family = quasibinomial()))
-            m3 <- with(workdataset3, svyglm(lowerclass ~ highisced   + scale(pvnum), family = quasibinomial()))
-            m3.1 <- with(workdataset3, svyglm(lowerclass ~ highisced   + scale(pvnum) + scale(non.cognitive), family = quasibinomial()))
-            
-            all(repl[[1]]$coefficients == m1[[1]]$coefficients) ## All coefficients matched
-            all(repl[[2]]$coefficients == m3[[1]]$coefficients) ## All coefficients matched
-            all(repl[[3]]$coefficients == m3.1[[1]]$coefficients) ## All coefficients matched
-            
+
             
             repl1 <- models("lowerclass", c("lowmidisced2","scale(pvnum)","scale(non.cognitive)"), workdataset3)
-            
-            m4 <- with(workdataset3, svyglm(lowerclass ~ lowmidisced2  , family = quasibinomial()))
-            #m5 <- with(workdataset3, svyglm(lowerclass ~ lowmidisced2  + numbooks , family = quasibinomial()))
-            m6 <- with(workdataset3, svyglm(lowerclass ~ lowmidisced2   + scale(pvnum), family = quasibinomial()))
-            m6.1 <- with(workdataset3, svyglm(lowerclass ~ lowmidisced2   + scale(pvnum) + scale(non.cognitive), family = quasibinomial()))
-            
-            all(repl1[[1]]$coefficients == m4[[1]]$coefficients) ## All coefficients matched
-            all(repl1[[2]]$coefficients == m6[[1]]$coefficients) ## All coefficients matched
-            all(repl1[[3]]$coefficients == m6.1[[1]]$coefficients) ## All coefficients matched
             
             
         #     ## Models for MEN from 45-65
             repl2 <- models("lowerclass", c("highisced","scale(pvnum)","scale(non.cognitive)"), workdataset4)
             
-            m7 <- with(workdataset4, svyglm(lowerclass ~ highisced  , family = quasibinomial()))
-            #m8 <- with(workdataset4, svyglm(lowerclass ~ highisced  + numbooks, family = quasibinomial()))
-            m9 <- with(workdataset4, svyglm(lowerclass ~ highisced   + scale(pvnum), family = quasibinomial()))
-            m9.1 <- with(workdataset4, svyglm(lowerclass ~ highisced   + scale(pvnum) + scale(non.cognitive), family = quasibinomial()))
-            
-            all(repl2[[1]]$coefficients == m7[[1]]$coefficients) ## All coefficients matched
-            all(repl2[[2]]$coefficients == m9[[1]]$coefficients) ## All coefficients matched
-            all(repl2[[3]]$coefficients == m9.1[[1]]$coefficients) ## All coefficients matched
-            
+      
             
             repl3 <- models("lowerclass", c("lowmidisced2","scale(pvnum)","scale(non.cognitive)"), workdataset4)
             
-            m10 <- with(workdataset4, svyglm(lowerclass ~ lowmidisced2  , family = quasibinomial()))
-            #m11 <- with(workdataset4, svyglm(lowerclass ~ lowmidisced2  + numbooks , family = quasibinomial()))
-            m12 <- with(workdataset4, svyglm(lowerclass ~ lowmidisced2   + scale(pvnum), family = quasibinomial()))
-            m12.1 <- with(workdataset4, svyglm(lowerclass ~ lowmidisced2   + scale(pvnum) + scale(non.cognitive), family = quasibinomial()))
-            
-            all(repl3[[1]]$coefficients == m10[[1]]$coefficients) ## All coefficients matched
-            all(repl3[[2]]$coefficients == m12[[1]]$coefficients) ## All coefficients matched
-            all(repl3[[3]]$coefficients == m12.1[[1]]$coefficients) ## All coefficients matched
-            
             y <- append(repl, repl1)
             h <- append(repl2, repl3)
-             
-            highyoung <- list(m1[[1]],m3[[1]],m3.1[[1]],m4[[1]],m6[[1]],m6.1[[1]])
-            highold <- list(m7[[1]],m9[[1]],m9.1[[1]],m10[[1]],m12[[1]],m12.1[[1]])
-            
+
             ## Tables for YOUNG service class BOYS
             setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
             all <- stargazer(highyoung, type = "html", title = paste0(names(countries3[i]),"PIAAC-25-45-sons-lowerclass"),
