@@ -251,27 +251,14 @@ for (i in 1:length(countries3)) {
         
         #################################### Models for lower class ##############################################
         
-        #     ## Models for MEN from the 25-45 cohort
-             
-            repl <- models("lowerclass", c("highisced","scale(pvnum)","scale(non.cognitive)"), workdataset3)
-
+            repl <- models("lowerclass", c("highisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[1]], gender == 1 & age_categories > 9))
+            repl1 <- models("lowerclass", c("lowmidisced2","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[1]], gender == 1 & age_categories > 9))
             
-            repl1 <- models("lowerclass", c("lowmidisced2","scale(pvnum)","scale(non.cognitive)"), workdataset3)
-            
-            
-        #     ## Models for MEN from 45-65
-            repl2 <- models("lowerclass", c("highisced","scale(pvnum)","scale(non.cognitive)"), workdataset4)
-            
-      
-            
-            repl3 <- models("lowerclass", c("lowmidisced2","scale(pvnum)","scale(non.cognitive)"), workdataset4)
-            
-            y <- append(repl, repl1)
-            h <- append(repl2, repl3)
+            all.models <- append(repl, repl1)
 
             ## Tables for YOUNG service class BOYS
             setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
-            all <- stargazer(highyoung, type = "html", title = paste0(names(countries3[i]),"PIAAC-25-45-sons-lowerclass"),
+            all <- stargazer(all.models, type = "html", title = paste0(names(countries3[1]),"PIAAC-sons-lowerclass"),
                              column.labels = c("1= Lower Class", "1=Lower Class"),
                              column.separate = c(3,3),
                              dep.var.labels.include = FALSE,
@@ -280,21 +267,8 @@ for (i in 1:length(countries3)) {
                                                   "Cognitivecntrl","Noncognitivecntrl"),
                              apply.coef = exp,
                              apply.ci = exp, digits = 2
-                             , out = paste0(names(countries3[i]),"PIAAC-25-45-sons-lowerclass.html"
+                             , out = paste0(names(countries3[i]),"PIAAC-sons-lowerclass.html"
                              )
-            )
-            
-            ## Tables for old service class BOYS
-            all <- stargazer(highold, type = "html", title = paste0(names(countries3[i]),"PIAAC-45-65-sons-lowerclass"),
-                             column.labels = c("1= Lower Class", "1=Lower Class"),
-                             column.separate = c(3,3),
-                             dep.var.labels.include = FALSE,
-                             order = c(1,4),
-                             covariate.labels = c("Highest ISCED","DadISCED1-2",
-                                                  "Cognitivecntrl","Noncognitivecntrl"),
-                             apply.coef = exp,
-                             apply.ci = exp, digits = 2
-                             , out = paste0(names(countries3[i]),"PIAAC-45-65-sons-lowerclass.html")
             )
         
         
@@ -351,18 +325,11 @@ for (i in 1:length(countries3)) {
         
         ## Models for MEN from the 25-45 cohort
         
-        repl <- models("serviceclass",c("highisced", "non.cognitive"), workdataset3)
-        
-        repl1 <- models("serviceclass",c("lowmidisced2", "non.cognitive"), workdataset3)
-        
-        ## Models for MEN from 45-65
-        repl2 <- models("serviceclass",c("highisced", "non.cognitive"), workdataset4)
-        
-        repl3 <- models("serviceclass",c("lowmidisced2", "non.cognitive"), workdataset4)
-        
-        
-        highyoung <- append(repl,repl1)
-        highold <- append(repl2, repl3)
+        repl <- models("serviceclass",c("highisced", "non.cognitive"), subset(countries3[[1]], gender == 1 & age_categories > 9))
+        repl1 <- models("serviceclass",c("lowmidisced2", "non.cognitive"), subset(countries3[[1]], gender == 1 & age_categories > 9))
+
+        all.models <- append(repl,repl1)
+
         
         ## Tables for YOUNG service class BOYS
         setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis")
