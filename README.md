@@ -35,5 +35,7 @@ In this [script](https://github.com/cimentadaj/social_mobility_analysis/blob/mas
 #### Multilevel models for PIAAC and IALS
 In this [script] (https://github.com/cimentadaj/social_mobility_analysis/blob/master/Multilevel_PIAAC_IALS.R), I pool the IALS and PIAAC countries together(those which are not repeated) into a single data frame. I parse macro level indicators of the size of the welfare state for all countries based on the time of the survey plus the Employment Protection Legislation index (EPL) of each country and the first age at tracking for each country. I start with some basic models and explore relationships(this script is the most disorganized and its still in its early stages. I need to revise it and no conclusions have been made from these analysis).
 
+The IALS data needs to be requested to Statistics Canada separately. _Note: This analysis won't work without the IALS data, you can look at how to donwload the data base [here] (http://www5.statcan.gc.ca/olc-cel/olc.action?ObjId=89M0014X&ObjType=2&lang=en&limit=0)_
+
 ***
 If you open the .Rproj from the repository zip, you will have all the scripts opened together.
