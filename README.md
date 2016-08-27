@@ -36,4 +36,4 @@ In this [script](https://github.com/cimentadaj/social_mobility_analysis/blob/mas
 In this [script] (https://github.com/cimentadaj/social_mobility_analysis/blob/master/Multilevel_PIAAC_IALS.R), I pool the IALS and PIAAC countries together(those which are not repeated) into a single data frame. I parse macro level indicators of the size of the welfare state for all countries based on the time of the survey plus the Employment Protection Legislation index (EPL) of each country and the first age at tracking for each country. I start with some basic models and explore relationships(this script is the most disorganized and its still in its early stages. I need to revise it and no conclusions have been made from these analysis).
 
 ***
-If you open the .Rproj from the repository zip, you will have both scripts opened.
+If you open the .Rproj from the repository zip, you will have all the scripts opened together.
