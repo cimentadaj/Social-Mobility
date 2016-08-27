@@ -84,7 +84,7 @@ for (i in 1:length(countries3)) {
         #################################### Models for lower class ##############################################
         
         lower1 <- models("lowerclass", c("highisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
-        lower2 <- models("lowerclass", c("lowmidisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
+        lower2 <- models("lowerclass", c("lowmidisced2","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
         
         lower.models <- append(lower1, lower2)
         
@@ -105,31 +105,31 @@ for (i in 1:length(countries3)) {
         
         #################################### Models for middle class ######################################################
         
-        middle1 <- models("middleclass", c("highisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
-        middle2 <- models("middleclass", c("lowmidisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
-        
-        middle.models <- append(middle1, middle2)
-        
-        ## Tables
-        setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
-        all <- stargazer(middle.models, type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-middleclass"),
-                         column.labels = c("1= Middle Class", "1=Middle Class"),
-                         column.separate = c(3,3),
-                         dep.var.labels.include = FALSE,
-                         order = c(1,4),
-                         covariate.labels = c("Highest ISCED","DadISCED1-4",
-                                              "Cognitivecntrl","Noncognitivecntrl"),
-                         apply.coef = exp,
-                         apply.ci = exp, digits = 2
-                         , out = paste0(names(countries3[i]),"-PIAAC-sons-middleclass.html"
-                         )
-        )
+#         middle1 <- models("middleclass", c("highisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
+#         middle2 <- models("middleclass", c("lowmidisced2","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
+#         
+#         middle.models <- append(middle1, middle2)
+#         
+#         ## Tables
+#         setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
+#         all <- stargazer(middle.models, type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-middleclass"),
+#                          column.labels = c("1= Middle Class", "1=Middle Class"),
+#                          column.separate = c(3,3),
+#                          dep.var.labels.include = FALSE,
+#                          order = c(1,4),
+#                          covariate.labels = c("Highest ISCED","DadISCED1-4",
+#                                               "Cognitivecntrl","Noncognitivecntrl"),
+#                          apply.coef = exp,
+#                          apply.ci = exp, digits = 2
+#                          , out = paste0(names(countries3[i]),"-PIAAC-sons-middleclass.html"
+#                          )
+#         )
         
         #################################### Models for service class ######################################################
         
         
         high1 <- models("serviceclass",c("highisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
-        high2 <- models("serviceclass",c("lowmidisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
+        high2 <- models("serviceclass",c("lowmidisced2","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
         
         high.models <- append(high1, high2)
         
@@ -154,7 +154,7 @@ for (i in 1:length(countries3)) {
         #################################### Models for lower class ##############################################
         
             lower1 <- models("lowerclass", c("highisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
-            lower2 <- models("lowerclass", c("lowmidisced2","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
+            lower2 <- models("lowerclass", c("lowisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
             
             lower.models <- append(lower1, lower2)
 
@@ -176,30 +176,30 @@ for (i in 1:length(countries3)) {
         
         #################################### Models for middle class ######################################################
         
-            middle1 <- models("middleclass", c("highisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
-            middle2 <- models("middleclass", c("lowmidisced2","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
-            
-            middle.models <- append(middle1, middle2)
-            
-            ## Tables
-            setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
-            all <- stargazer(middle.models, type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-middleclass"),
-                             column.labels = c("1= Middle Class", "1=Middle Class"),
-                             column.separate = c(3,3),
-                             dep.var.labels.include = FALSE,
-                             order = c(1,4),
-                             covariate.labels = c("Highest ISCED","DadISCED1-2",
-                                                  "Cognitivecntrl","Noncognitivecntrl"),
-                             apply.coef = exp,
-                             apply.ci = exp, digits = 2
-                             , out = paste0(names(countries3[i]),"-PIAAC-sons-middleclass.html"
-                             )
-            )
+#             middle1 <- models("middleclass", c("highisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
+#             middle2 <- models("middleclass", c("lowisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
+#             
+#             middle.models <- append(middle1, middle2)
+#             
+#             ## Tables
+#             setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
+#             all <- stargazer(middle.models, type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-middleclass"),
+#                              column.labels = c("1= Middle Class", "1=Middle Class"),
+#                              column.separate = c(3,3),
+#                              dep.var.labels.include = FALSE,
+#                              order = c(1,4),
+#                              covariate.labels = c("Highest ISCED","DadISCED1-2",
+#                                                   "Cognitivecntrl","Noncognitivecntrl"),
+#                              apply.coef = exp,
+#                              apply.ci = exp, digits = 2
+#                              , out = paste0(names(countries3[i]),"-PIAAC-sons-middleclass.html"
+#                              )
+#             )
         
         #################################### Models for service class #####
         
         high1 <- models("serviceclass",c("highisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
-        high2 <- models("serviceclass",c("lowmidisced2","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
+        high2 <- models("serviceclass",c("lowisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
 
         high.models <- append(high1, high2)
 
