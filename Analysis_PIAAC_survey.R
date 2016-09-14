@@ -68,6 +68,8 @@ countries3 <- list(Austria=prgautp1.design,USA=prgusap1.design,Belgium=prgbelp1.
 
 ###############
 
+# this function accepts a dependent variable, a set of covariates and data set
+# it will return a model with the DV and the first IV, then the DV and two IV's and so on.
 models <- function(dv, covariates, data) {
     dv <- paste(dv, "~ 1")
     combinations <- lapply(1:length(covariates), function(i) seq(1:i))
