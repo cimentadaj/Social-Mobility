@@ -4,13 +4,14 @@ library(arm)
 ###### THIS IS WHERE YOU CHANGE YOUR WORKING DIRECTORY ##############
 setwd("/Users/cimentadaj/Downloads/Social_mob_data")
 
-data <- grep(".rda", list.files(), value=T)
+data <- list.files(pattern = ".rda")
 
 for (i in 1:length(data)) {
     load(data[i])
 }
 
 ls2 <- c(ls()[grepl("*.design",ls())], "ls2")
+# Remove everything that is not in ls2 (so the .design )
 rm(list= c(ls()[!ls() %in% ls2]))
 
 countries3 <- list(Austria=prgautp1.design,USA=prgusap1.design,Belgium=prgbelp1.design,
@@ -90,7 +91,7 @@ stargazer2 <- function(model, odd.ratio = F, ...) {
     }
 }
 
-
+digits <- 2
 
 for (i in 1:length(countries3)) {
     
@@ -110,7 +111,7 @@ for (i in 1:length(countries3)) {
                           dep.var.labels.include = FALSE,
                           order = c(1,4),
                           covariate.labels = c("Highest ISCED","DadISCED1-4",
-                                               "Cognitivecntrl","Noncognitivecntrl"), digits = 3,
+                                               "Cognitivecntrl","Noncognitivecntrl"), digits = digits,
                           out = paste0(names(countries3[i]),"-PIAAC-sons-lowerclass.html"
                           )
         )
@@ -130,7 +131,7 @@ for (i in 1:length(countries3)) {
                           dep.var.labels.include = FALSE,
                           order = c(1,4),
                           covariate.labels = c("Highest ISCED","DadISCED1-4",
-                                               "Cognitivecntrl","Noncognitivecntrl"), digits = 3,
+                                               "Cognitivecntrl","Noncognitivecntrl"), digits = digits,
                           out = paste0(names(countries3[i]),"-PIAAC-sons-middleclass.html"
                           )
         )
@@ -152,7 +153,7 @@ for (i in 1:length(countries3)) {
                           dep.var.labels.include = FALSE,
                           order = c(1,4),
                           covariate.labels = c("Highest ISCED","DadISCED1-4",
-                                               "Cognitivecntrl","Noncognitivecntrl"), digits = 3,
+                                               "Cognitivecntrl","Noncognitivecntrl"), digits = digits,
                           out = paste0(names(countries3[i]),"-PIAAC-sons-serviceclass.html"
                           )
         )
@@ -174,7 +175,7 @@ for (i in 1:length(countries3)) {
                           dep.var.labels.include = FALSE,
                           order = c(1,4),
                           covariate.labels = c("Highest ISCED","DadISCED1-2",
-                                               "Cognitivecntrl","Noncognitivecntrl"), digits = 3,
+                                               "Cognitivecntrl","Noncognitivecntrl"), digits = digits,
                           out = paste0(names(countries3[i]),"-PIAAC-sons-lowerclass.html"
                           )
         )
@@ -195,7 +196,7 @@ for (i in 1:length(countries3)) {
                           dep.var.labels.include = FALSE,
                           order = c(1,4),
                           covariate.labels = c("Highest ISCED","DadISCED1-2",
-                                               "Cognitivecntrl","Noncognitivecntrl"), digits = 3,
+                                               "Cognitivecntrl","Noncognitivecntrl"), digits = digits,
                           out = paste0(names(countries3[i]),"-PIAAC-sons-middleclass.html"
                           )
         )
@@ -216,7 +217,7 @@ for (i in 1:length(countries3)) {
                           dep.var.labels.include = FALSE,
                           order = c(1,4),
                           covariate.labels = c("Highest ISCED","DadISCED1-2",
-                                               "Cognitivecntrl","Noncognitivecntrl"), digits = 3,
+                                               "Cognitivecntrl","Noncognitivecntrl"), digits = digits,
                           out = paste0(names(countries3[i]),"-PIAAC-sons-serviceclass.html"
                           )
         )
