@@ -92,10 +92,12 @@ stargazer2 <- function(model, odd.ratio = F, ...) {
 }
 
 digits <- 2
-all_firstcovariates <- c("highisced","scale(pvnum)","scale(non.cognitive)")
+all_firstcovariates <- c("highisced")
 
-usa_secondcovariates <- c("lowmidisced","scale(pvnum)","scale(non.cognitive)")
-all_secondcovariates <- c("lowmidisced2","scale(pvnum)","scale(non.cognitive)")
+usa_secondcovariates <- c("lowmidisced")
+all_secondcovariates <- c("lowmidisced2")
+
+covariate_labels <- c("Highest ISCED","DadISCED1-2")
 
 for (i in 1:length(countries3)) {
     
@@ -114,8 +116,7 @@ for (i in 1:length(countries3)) {
                           column.separate = c(3,3),
                           dep.var.labels.include = FALSE,
                           order = c(1,4),
-                          covariate.labels = c("Highest ISCED","DadISCED1-4",
-                                               "Cognitivecntrl","Noncognitivecntrl"), digits = digits,
+                          covariate.labels = covariate_labels, digits = digits,
                           out = paste0(names(countries3[i]),"-PIAAC-sons-lowerclass.html"
                           )
         )
@@ -134,8 +135,7 @@ for (i in 1:length(countries3)) {
                           column.separate = c(3,3),
                           dep.var.labels.include = FALSE,
                           order = c(1,4),
-                          covariate.labels = c("Highest ISCED","DadISCED1-4",
-                                               "Cognitivecntrl","Noncognitivecntrl"), digits = digits,
+                          covariate.labels = covariate_labels, digits = digits,
                           out = paste0(names(countries3[i]),"-PIAAC-sons-middleclass.html"
                           )
         )
@@ -156,8 +156,7 @@ for (i in 1:length(countries3)) {
                           column.separate = c(3,3),
                           dep.var.labels.include = FALSE,
                           order = c(1,4),
-                          covariate.labels = c("Highest ISCED","DadISCED1-4",
-                                               "Cognitivecntrl","Noncognitivecntrl"), digits = digits,
+                          covariate.labels = covariate_labels, digits = digits,
                           out = paste0(names(countries3[i]),"-PIAAC-sons-serviceclass.html"
                           )
         )
@@ -178,8 +177,7 @@ for (i in 1:length(countries3)) {
                           column.separate = c(3,3),
                           dep.var.labels.include = FALSE,
                           order = c(1,4),
-                          covariate.labels = c("Highest ISCED","DadISCED1-2",
-                                               "Cognitivecntrl","Noncognitivecntrl"), digits = digits,
+                          covariate.labels = covariate_labels, digits = digits,
                           out = paste0(names(countries3[i]),"-PIAAC-sons-lowerclass.html"
                           )
         )
@@ -199,8 +197,7 @@ for (i in 1:length(countries3)) {
                           column.separate = c(3,3),
                           dep.var.labels.include = FALSE,
                           order = c(1,4),
-                          covariate.labels = c("Highest ISCED","DadISCED1-2",
-                                               "Cognitivecntrl","Noncognitivecntrl"), digits = digits,
+                          covariate.labels = covariate_labels, digits = digits,
                           out = paste0(names(countries3[i]),"-PIAAC-sons-middleclass.html"
                           )
         )
@@ -220,8 +217,7 @@ for (i in 1:length(countries3)) {
                           column.separate = c(3,3),
                           dep.var.labels.include = FALSE,
                           order = c(1,4),
-                          covariate.labels = c("Highest ISCED","DadISCED1-2",
-                                               "Cognitivecntrl","Noncognitivecntrl"), digits = digits,
+                          covariate.labels = covariate_labels, digits = digits,
                           out = paste0(names(countries3[i]),"-PIAAC-sons-serviceclass.html"
                           )
         )
