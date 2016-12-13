@@ -157,9 +157,9 @@ x <- as.data.frame(x) # Transforming back into class data frame
 #         Not stated or inferred	                        9999
 
 # Service class dummy - for any doubs on the classification coding see above
-x$isco <- recode(x$isco, "c(9995,9996,9997,9998,9999,0) = NA")
+x$isco <- car::recode(x$isco, "c(9995,9996,9997,9998,9999,0) = NA")
 x$serviceclass <- as.numeric(as.character(x$isco))
-x$serviceclass <- recode(x$serviceclass, "1:2 = 1; 3:9 = 0")
+x$serviceclass <- car::recode(x$serviceclass, "1:2 = 1; 3:9 = 0")
 
 # Middle class dummy - for any doubs on the classification coding see above
 x$middleclass <- 0
@@ -183,24 +183,24 @@ x$loworigin <- as.numeric(x$dadedu == 1 & x$momedu == 1) # Mom and Dad are ISCED
 
 
 ## Was your father or male guardian born in #CountryName? 1=Yes 2=No
-x$dadimmigrant <- recode(x$dadimmigrant,"1 = 0; 2 = 1")
+x$dadimmigrant <- car::recode(x$dadimmigrant,"1 = 0; 2 = 1")
 
-# x$momimmigrant <- recode(x$momimmigrant,"'2'='1';'1'=0;c('','V','D','R','N')=NA")
+# x$momimmigrant <- car::recode(x$momimmigrant,"'2'='1';'1'=0;c('','V','D','R','N')=NA")
 # x$momimmigrant <- as.numeric(as.character(x$momimmigrant))
 
 ## standardizing cognitive score
 #x$cognitive <- scale(x$cognitive)
 
 ## Recoding gender, 1 = men 0 = women
-x$gender <- recode(x$gender, "2=0")
+x$gender <- car::recode(x$gender, "2=0")
 x <- x[!is.na(x$gender), ]
 
 # Recoded the education into three levels: low, mid, high
-x$eduattain <- recode(x$eduattain, "1:3 = 1; 4:10=2; 11:16=3")
+x$eduattain <- car::recode(x$eduattain, "1:3 = 1; 4:10=2; 11:16=3")
 
 ## Recoding the DV (3 levels) into two levels. Comparing the highly educated
 ## vs the middly and low educated
-x$dest56 <- recode(x$eduattain, "3=1; c(2,1)=0")
+x$dest56 <- car::recode(x$eduattain, "3=1; c(2,1)=0")
 
 ## Creating of highest education indicator
 ## Out of both parents education, it picks the highest education of the household
@@ -220,8 +220,10 @@ x$highisced <- as.numeric(x$highedu == 3)
 x$lowisced  <- as.numeric(x$highedu == 1)
 x$lowmidisced2 <- as.numeric(x$highedu %in% c(1,2)) # For the USA
 
-x$adv <- as.numeric(x$highedu == 3 & scale(x$PVNUM1) <= quant[1][[1]])
-x$disadv <- as.numeric(x$highedu == 1 & scale(x$PVNUM1) >= quant[2][[1]])
+quant3 <- quantile(scale(x$PVNUM1), probs = c(0.30,0.70), na.rm=T)
+
+x$adv <- as.numeric(x$highedu == 3 & scale(x$PVNUM1) <= quant3[[1]])
+x$disadv <- as.numeric(x$highedu == 1 & scale(x$PVNUM1) >= quant3[[2]])
 
 return(x)
 }

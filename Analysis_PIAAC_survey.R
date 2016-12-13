@@ -74,7 +74,7 @@ models <- function(dv, covariates, data) {
     dv <- paste(dv, "~ 1")
     combinations <- lapply(1:length(covariates), function(i) seq(1:i))
     formulas <- lapply(combinations, function(p) x <- as.formula(paste(c(dv, covariates[p]), collapse=" + ")))
-    results <- lapply(formulas, function(o) with(data, svyglm(o, family = quasibinomial()))[[1]])
+    results <- lapply(formulas, function(o) with(data, svyglm(o, family = binomial()))[[1]])
     return(results)
 }
 
@@ -261,7 +261,7 @@ for (i in 1:length(countries3)) {
         ## Tables
         setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
         all <- stargazer2(lower.models, odd.ratio = T, type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-lowerclass"),
-                          column.labels = c("1= Lower Class", "1=Lower Class"),
+                          column.labels = c("1= Short lower Class", "1 = Short lower Class"),
                           column.separate = rep(length(all_firstcovariates), 2),
                           dep.var.labels.include = FALSE,
                           order = c(1,4),
@@ -282,7 +282,7 @@ for (i in 1:length(countries3)) {
         ## Tables 
         setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
         all <- stargazer2(high.models, odd.ratio = T, type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-serviceclass"),
-                          column.labels = c("1= Service Class", "1=Service Class"),
+                          column.labels = c("1= Short higher class", "1 = Short higher class"),
                           column.separate = rep(length(all_firstcovariates), 2),
                           dep.var.labels.include = FALSE,
                           order = c(1,4),
@@ -303,7 +303,7 @@ for (i in 1:length(countries3)) {
         ## Tables
         setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
         all <- stargazer2(lower.models, odd.ratio = T,  type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-lowerclass"),
-                          column.labels = c("1= Lower Class", "1=Lower Class"),
+                          column.labels = c("1 = Short lower class", "1 = Short higher class"),
                           column.separate = rep(length(all_firstcovariates), 2),
                           dep.var.labels.include = FALSE,
                           order = c(1,4),
@@ -323,7 +323,7 @@ for (i in 1:length(countries3)) {
         ## Tables 
         setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
         all <- stargazer2(high.models, odd.ratio = T, type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-serviceclass"),
-                          column.labels = c("1= Service Class", "1=Service Class"),
+                          column.labels = c("1 = Short higher class", "1 = Short higher class"),
                           column.separate = rep(length(all_firstcovariates), 2),
                           dep.var.labels.include = FALSE,
                           order = c(1,4),
