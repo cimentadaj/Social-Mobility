@@ -136,12 +136,16 @@ x <- as.data.frame(x) # Transforming back into class data frame
 ## Recoding dependent var into dummy: 1= service class, 0 = all else,
 ## I exclude ppl who didn't work in the last 5 years(code 9)
 
+# Service class
 #         Armed forces	                                    0       EGP
 #         Legislators, senior officials and managers	    1       1
-#         Professionals	                                    2       1    
+#         Professionals	                                    2       1 
+
+# Middle class
 #         Technicians and associate professionals	        3       2
 #         Clerks	                                        4       3
 #         Service workers and shop and market sales workers	5       3
+# Lower class
 #         Skilled agricultural and fishery workers	        6       10
 #         Craft and related trades workers	                7       8
 #         Plant and machine operators and assemblers	    8       9
