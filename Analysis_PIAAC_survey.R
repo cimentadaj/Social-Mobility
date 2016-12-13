@@ -92,14 +92,18 @@ stargazer2 <- function(model, odd.ratio = F, ...) {
 }
 
 digits <- 2
+all_firstcovariates <- c("highisced","scale(pvnum)","scale(non.cognitive)")
+
+usa_secondcovariates <- c("lowmidisced","scale(pvnum)","scale(non.cognitive)")
+all_secondcovariates <- c("lowmidisced2","scale(pvnum)","scale(non.cognitive)")
 
 for (i in 1:length(countries3)) {
     
     if (names(countries3[i]) == "USA") {
         #################################### Models for lower class ##############################################
         
-        lower1 <- models("lowerclass", c("highisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
-        lower2 <- models("lowerclass", c("lowmidisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
+        lower1 <- models("lowerclass", all_firstcovariates, subset(countries3[[i]], gender == 1 & age_categories < 10))
+        lower2 <- models("lowerclass", usa_secondcovariates, subset(countries3[[i]], gender == 1 & age_categories < 10))
         
         lower.models <- append(lower1, lower2)
         
@@ -118,8 +122,8 @@ for (i in 1:length(countries3)) {
         
         #################################### Models for middle class ######################################################
         
-        middle1 <- models("middleclass", c("highisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
-        middle2 <- models("middleclass", c("lowmidisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
+        middle1 <- models("middleclass", all_firstcovariates, subset(countries3[[i]], gender == 1 & age_categories < 10))
+        middle2 <- models("middleclass", usa_secondcovariates, subset(countries3[[i]], gender == 1 & age_categories < 10))
         
         middle.models <- append(middle1, middle2)
         
@@ -139,8 +143,8 @@ for (i in 1:length(countries3)) {
         #################################### Models for service class ######################################################
         
         
-        high1 <- models("serviceclass",c("highisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
-        high2 <- models("serviceclass",c("lowmidisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
+        high1 <- models("serviceclass", all_firstcovariates, subset(countries3[[i]], gender == 1 & age_categories < 10))
+        high2 <- models("serviceclass", usa_secondcovariates, subset(countries3[[i]], gender == 1 & age_categories < 10))
         
         high.models <- append(high1, high2)
         
@@ -162,8 +166,8 @@ for (i in 1:length(countries3)) {
         
         #################################### Models for lower class ##############################################
         
-        lower1 <- models("lowerclass", c("highisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
-        lower2 <- models("lowerclass", c("lowmidisced2","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
+        lower1 <- models("lowerclass", all_firstcovariates, subset(countries3[[i]], gender == 1 & age_categories < 10))
+        lower2 <- models("lowerclass", all_secondcovariates, subset(countries3[[i]], gender == 1 & age_categories < 10))
         
         lower.models <- append(lower1, lower2)
         
@@ -183,8 +187,8 @@ for (i in 1:length(countries3)) {
         
         #################################### Models for middle class ######################################################
         
-        middle1 <- models("middleclass", c("highisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
-        middle2 <- models("middleclass", c("lowmidisced2","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
+        middle1 <- models("middleclass", all_firstcovariates, subset(countries3[[i]], gender == 1 & age_categories < 10))
+        middle2 <- models("middleclass", all_secondcovariates, subset(countries3[[i]], gender == 1 & age_categories < 10))
         
         middle.models <- append(middle1, middle2)
         
@@ -203,8 +207,8 @@ for (i in 1:length(countries3)) {
         
         #################################### Models for service class #####
         
-        high1 <- models("serviceclass",c("highisced","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
-        high2 <- models("serviceclass",c("lowmidisced2","scale(pvnum)","scale(non.cognitive)"), subset(countries3[[i]], gender == 1 & age_categories < 10))
+        high1 <- models("serviceclass", all_firstcovariates, subset(countries3[[i]], gender == 1 & age_categories < 10))
+        high2 <- models("serviceclass", all_secondcovariates, subset(countries3[[i]], gender == 1 & age_categories < 10))
         
         high.models <- append(high1, high2)
         
