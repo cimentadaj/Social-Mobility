@@ -54,18 +54,17 @@ source_url(
 # 
 
  ####### downloads the data to your working directory and stores each data file in a list
- links <- character(0)
- countrylist <- rep(list(list()), length(csv.fns))
- for (i in 1:length(csv.fns)) {
-     links <- c(links, paste0(oecd.csv.website, csv.fns[i], ".csv"))
-     download.file(links[i], destfile =csv.fns[i])
-     countrylist[[i]] <-  read.csv(csv.fns[i], stringsAsFactors = FALSE)
- }
+ # links <- character(0)
+ # countrylist <- rep(list(list()), length(csv.fns))
+ # for (i in 1:length(csv.fns)) {
+ #     links <- c(links, paste0(oecd.csv.website, csv.fns[i], ".csv"))
+ #     download.file(links[i], destfile =csv.fns[i])
+ #     countrylist[[i]] <-  read.csv(csv.fns[i], stringsAsFactors = FALSE)
+ # }
  #########################################################################################
-
- names(countrylist) <- csv.fns
- save(countrylist, file="countrylist.Rda") # list contains all the country data frames
  load("countrylist.Rda") # if you commented out the download section, you should have this file
+ names(countrylist) <- csv.fns
+ # save(countrylist, file="countrylist.Rda") # list contains all the country data frames
  # in your working directory
 
  ##### Data management section ####
@@ -82,13 +81,20 @@ sapply(countrylist, function(x) setdiff(vars, colnames(x))) # check if they're a
 data.management <- function(x) {
     
     x <- x[vars] # subsetting the variables
-    x <- tbl_df(x) %>% rename(isco=ISCO1C,dadedu=J_Q07b,momedu=J_Q06b,
-                  numbooks=J_Q08,dadimmigrant=J_Q07a,
-                  momimmigrant=J_Q06a,
-                  eduattain=B_Q01a,gender=GENDER_R,
-                  age=AGE_R,age_categories=AGEG5LFS,cntry=CNTRYID,
-                  bottomthings=I_Q04j, differentideas=I_Q04l,
-                  additinfo=I_Q04m)
+    x <- tbl_df(x) %>% rename(isco=ISCO1C,
+                              dadedu=J_Q07b,
+                              momedu=J_Q06b,
+                              numbooks=J_Q08,
+                              dadimmigrant=J_Q07a,
+                              momimmigrant=J_Q06a,
+                              eduattain=B_Q01a,
+                              gender=GENDER_R,
+                              age=AGE_R,
+                              age_categories=AGEG5LFS,
+                              cntry=CNTRYID,
+                              bottomthings=I_Q04j,
+                              differentideas=I_Q04l,
+                              additinfo=I_Q04m)
 
 # this function does two things: if specified character, it will coerce the vector
 # to a character and if specified factor it will coerce the vector to a numeric.
@@ -173,7 +179,7 @@ x$loworigin <- as.numeric(x$dadedu == 1 & x$momedu == 1) # Mom and Dad are ISCED
 
 
 ## Was your father or male guardian born in #CountryName? 1=Yes 2=No
-x$dadimmigrant <- recode(x$dadimmigrant,"1=0;2=1")
+x$dadimmigrant <- recode(x$dadimmigrant,"1 = 0; 2 = 1")
 
 # x$momimmigrant <- recode(x$momimmigrant,"'2'='1';'1'=0;c('','V','D','R','N')=NA")
 # x$momimmigrant <- as.numeric(as.character(x$momimmigrant))
@@ -210,18 +216,21 @@ x$highisced <- as.numeric(x$highedu == 3)
 x$lowisced  <- as.numeric(x$highedu == 1)
 x$lowmidisced2 <- as.numeric(x$highedu %in% c(1,2)) # For the USA
 
+x$adv <- as.numeric(x$highedu == 3 & scale(x$PVNUM1) <= quant[1][[1]])
+x$disadv <- as.numeric(x$highedu == 1 & scale(x$PVNUM1) >= quant[2][[1]])
+
 return(x)
 }
 
 usable.country2 <- lapply(countrylist, data.management)
 
-rm(list=ls()[!ls() %in% c("countrylist","usable.country2", "csv.fns","csv.links","csv.page","csv.texts", "tf")])
+rm(list=ls()[!ls() %in% c("countrylist","usable.country2", "csv.fns","csv.links","csv.page","csv.texts")])
 
 
 # specify which variables are plausible values (i.e. multiply-imputed)
 pvals <- c( 'pvlit' , 'pvnum' , 'pvpsl' )
 # loop through each downloadable file..
-    for ( i in 1:length(csv.fns) ) {
+for ( i in 1:length(csv.fns) ) {
         
         # create a filename object, containing the lowercase of the csv filename
         fn <- tolower( csv.fns[i] )
