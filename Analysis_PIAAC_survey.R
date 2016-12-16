@@ -235,6 +235,7 @@ for (i in 1:length(countries3)) {
         
         adv <- c(tidy(lower1[[3]])[2, 2], tidy(middle1[[3]])[2, 2], tidy(high1[[3]])[2, 2])
         disadv <- c(tidy(lower2[[3]])[2, 2], tidy(middle2[[3]])[2, 2], tidy(high2[[3]])[2, 2])
+        
         coefi[coefi$countries == names(countries3)[i], 3] <- c(adv, disadv)
         
         simulation <- simulated_check(simulation, countries3, names(countries3)[i])
@@ -317,12 +318,25 @@ df <- df[order(row.names(df)), ]
 row.names(df) <- 1:nrow(df)
 df$type <- names(repeated_data)
 
+lookup_classes <- c(
+             high1 = "Service class - High low cogn",
+             high2 = "Service class - Low high cogn",
+             middle1 = "Middle class - Higher low cogn",
+             middle2 = "Middle class - Lower high cogn",
+             lower1 = "Lower class - High low cogn",
+             lower2 = "Lower class - Lower high cogn")
+
+df$type <- lookup_classes[df$type]
+coefi$type <- lookup_classes[as.character(coefi$type)]
+
 ggplot(df, aes(country, col1)) +
+    geom_hline(yintercept = 1) +
     geom_point(size = 3) +
     geom_errorbar(aes(ymin = col2, ymax = col3)) +
     facet_wrap(~ type) +
-    ylim(0, 10) +
-    geom_point(data = coefi, aes(countries, exp(coefs), colour = "red"), alpha = 0.5, size = 3)
+    geom_point(data = coefi, aes(countries, exp(coefs), colour = "red"), alpha = 0.5, size = 3) +
+    scale_y_continuous(breaks = 0:10, limits = c(0, 10)) +
+    ylab("Odd ratios") + xlab("Countries")
 
 # for (i in 1:length(countries3)) {
 #     
