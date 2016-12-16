@@ -319,24 +319,25 @@ row.names(df) <- 1:nrow(df)
 df$type <- names(repeated_data)
 
 lookup_classes <- c(
-             high1 = "Service class - High low cogn",
-             high2 = "Service class - Low high cogn",
-             middle1 = "Middle class - Higher low cogn",
-             middle2 = "Middle class - Lower high cogn",
-             lower1 = "Lower class - High low cogn",
-             lower2 = "Lower class - Lower high cogn")
+             high1 = "Service class - High edu low cogn",
+             high2 = "Service class - Low edu high cogn",
+             middle1 = "Middle class - High edu low cogn",
+             middle2 = "Middle class - Low edu high cogn",
+             lower1 = "Lower class - High edu low cogn",
+             lower2 = "Lower class - Low edu high cogn")
 
 df$type <- lookup_classes[df$type]
 coefi$type <- lookup_classes[as.character(coefi$type)]
 
 ggplot(df, aes(country, col1)) +
     geom_hline(yintercept = 1) +
-    geom_point(size = 3) +
+    geom_point(size = 3, alpha = 0.5, colour = 'black') +
     geom_errorbar(aes(ymin = col2, ymax = col3)) +
     facet_wrap(~ type) +
     geom_point(data = coefi, aes(countries, exp(coefs), colour = "red"), alpha = 0.5, size = 3) +
     scale_y_continuous(breaks = 0:10, limits = c(0, 10)) +
-    ylab("Odd ratios") + xlab("Countries")
+    ylab("Odds ratios") + xlab("Countries") +
+    guides(colour = F)
 
 # for (i in 1:length(countries3)) {
 #     
