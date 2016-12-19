@@ -124,21 +124,20 @@ svy_recode <- function(svy_design, old_varname, new_varname, recode) {
 }
 
 ######
-c("highisced", "scale(pvnum)", "scale(non.cognitive)", "age_categories")
-c("lowmidisced2", "scale(pvnum)", "scale(non.cognitive)", "age_categories")
-######
 
 digits <- 2
-all_firstcovariates <- c("adv", "scale(non.cognitive)", "age_categories")
+all_firstcovariates <- c("highisced", "scale(pvnum)", "scale(non.cognitive)", "age_categories")
 
-usa_secondcovariates <- c("disadv", "scale(non.cognitive)", "age_categories")
-all_secondcovariates <- c("disadv", "scale(non.cognitive)", "age_categories")
-covariate_labels <- c("High- low cogn",
-                      "Low- high cogn",
-                      "non.cognitive",
+usa_secondcovariates <- c("lowmidisced2", "scale(pvnum)", "scale(non.cognitive)", "age_categories")
+all_secondcovariates <- c("lowmidisced", "scale(pvnum)", "scale(non.cognitive)", "age_categories")
+
+covariate_labels <- c("High ISCED",
+                      "Low ISCED",
+                      "Cognitive",
+                      "Non.cognitive",
                       "Age")
 
-countries3 <- svy_recode(countries3, 'isco', 'occupation_cont', '1:2 = 1; 3 = 2; 4:7 = 3; 8:9 = 4')
+countries3 <- svy_recode(countries3, 'isco', 'occupation_cont', '1:2 = 4; 3 = 3; 4:7 = 2; 8:9 = 1')
 countries3 <- svy_recode(countries3, 'isco', 'shortupper', "1:5 = 1; NA = NA; else = 0")
 countries3 <- svy_recode(countries3, 'isco', 'shortdown', "1:5 = 1; NA = NA; else = 0")
 
@@ -365,7 +364,7 @@ for (i in 1:length(countries3)) {
                           column.labels = c("1 = Occupation continuous", "1 = Occupation continuous"),
                           column.separate = rep(length(all_firstcovariates), 2),
                           dep.var.labels.include = FALSE,
-                          order = c(1,4),
+                          order = c(1,5),
                           covariate.labels = covariate_labels, digits = digits,
                           out = paste0(names(countries3[i]),"-PIAAC-sons-occupation_cont.html"
                           )
@@ -385,7 +384,7 @@ for (i in 1:length(countries3)) {
                           column.labels = c("1 = Occupation continuous", "1 = Occupation continuous"),
                           column.separate = rep(length(all_firstcovariates), 2),
                           dep.var.labels.include = FALSE,
-                          order = c(1,4),
+                          order = c(1,5),
                           covariate.labels = covariate_labels, digits = digits,
                           out = paste0(names(countries3[i]),"-PIAAC-sons-occupation_cont.html"
                           )
