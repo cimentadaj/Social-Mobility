@@ -3,7 +3,7 @@ library(car)
 library(stargazer)
 library(arm)
 library(broom)
-library(ggplot2)
+library(tidyverse)
 ###### THIS IS WHERE YOU CHANGE YOUR WORKING DIRECTORY ##############
 setwd("/Users/cimentadaj/Downloads/Social_mob_data")
 
@@ -13,7 +13,7 @@ for (i in 1:length(data)) {
     load(data[i])
 }
 
-ls2 <- c(ls()[grepl("*.design",ls())], "ls2")
+ls2 <- c(ls()[grepl("*.design", ls())] , "ls2")
 # Remove everything that is not in ls2 (so the .design )
 rm(list= c(ls()[!ls() %in% ls2]))
 
@@ -139,9 +139,7 @@ countries3 <- lapply(countries3, function(data) {
     data
 })
 
-empty_data <- data.frame(col1 = rep(NA, 1000),
-                         col2 = rep(NA, 1000),
-                         col3 = rep(NA, 1000))
+empty_data <- data.frame(col1 = rep(NA, 1000))
 
 repeated_data <- setNames(replicate(6, empty_data, simplify = F),
                           c("lower1", "lower2", "middle1", "middle2", "high1", "high2"))
@@ -164,8 +162,8 @@ simulated_check <- function(data_simulate, country_list, country_name) {
     dist <- rnorm(1000, tidy_stats[1, 2], tidy_stats[1, 3])
         
     data_simulate[[c(country_name, m)]][,1] <- dist
-    data_simulate[[c(country_name, m)]][,2] <- min(dist)
-    data_simulate[[c(country_name, m)]][,3] <- max(dist)
+    data_simulate[[c(country_name, m)]][,2] <- data_simulate[[c(country_name, m)]][,1] - sd(data_simulate[[c(country_name, m)]][,1])
+    data_simulate[[c(country_name, m)]][,3] <- data_simulate[[c(country_name, m)]][,1] + sd(data_simulate[[c(country_name, m)]][,1])
     }
     
     data_simulate
@@ -311,7 +309,8 @@ for (i in 1:length(countries3)) {
 
 simulated_summary <- lapply(simulation, function(cnt) lapply(cnt, function(vec) exp(colMeans(vec))))
 
-df <- as.data.frame(do.call(rbind, (lapply(1:6, function(i) do.call(rbind, lapply(simulated_summary, `[[`, i))))))
+df <- as.data.frame(do.call(rbind, (lapply(1:6, function(i) do.call(rbind,
+                                                                    lapply(simulated_summary, `[[`, i))))))
 
 df$country <- row.names(df)
 df <- df[order(row.names(df)), ]
@@ -331,10 +330,10 @@ coefi$type <- lookup_classes[as.character(coefi$type)]
 
 ggplot(df, aes(country, col1)) +
     geom_hline(yintercept = 1) +
-    geom_point(size = 3, alpha = 0.5, colour = 'black') +
-    geom_errorbar(aes(ymin = col2, ymax = col3)) +
+    geom_point(size = 2, alpha = 0.5, colour = 'black') +
+    geom_errorbar(aes(ymin = V2, ymax = V3)) +
     facet_wrap(~ type) +
-    geom_point(data = coefi, aes(countries, exp(coefs), colour = "red"), alpha = 0.5, size = 3) +
+    geom_point(data = coefi, aes(countries, exp(coefs), colour = "red"), alpha = 0.5, size = 2) +
     scale_y_continuous(breaks = 0:10, limits = c(0, 10)) +
     ylab("Odds ratios") + xlab("Countries") +
     guides(colour = F)
