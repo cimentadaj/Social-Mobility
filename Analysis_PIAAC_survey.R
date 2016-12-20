@@ -4,6 +4,8 @@ library(stargazer)
 library(arm)
 library(broom)
 library(tidyverse)
+library(visreg)
+
 ###### THIS IS WHERE YOU CHANGE YOUR WORKING DIRECTORY ##############
 setwd("/Users/cimentadaj/Downloads/Social_mob_data")
 
@@ -126,20 +128,53 @@ svy_recode <- function(svy_design, old_varname, new_varname, recode) {
 ######
 
 digits <- 2
-all_firstcovariates <- c("highisced", "scale(pvnum)", "scale(non.cognitive)", "age_categories")
+all_firstcovariates <- c("highisced", "scale(pvnum)", "scale(non.cognitive)",
+                         "age_categories", "scale(pvnum):highisced")
 
-usa_secondcovariates <- c("lowmidisced2", "scale(pvnum)", "scale(non.cognitive)", "age_categories")
-all_secondcovariates <- c("lowmidisced", "scale(pvnum)", "scale(non.cognitive)", "age_categories")
+usa_secondcovariates <- c("lowmidisced2", "scale(pvnum)", "scale(non.cognitive)",
+                          "age_categories", "scale(pvnum):lowmidisced2")
 
-covariate_labels <- c("High ISCED",
-                      "Low ISCED",
-                      "Cognitive",
-                      "Non.cognitive",
-                      "Age")
+all_secondcovariates <- c("lowmidisced", "scale(pvnum)", "scale(non.cognitive)",
+                          "age_categories", "scale(pvnum):lowmidisced")
+
+covariate_labels <- c("High ISCED", "Low ISCED",
+                       "Cognitive", "Non.cognitive",
+                       "Age", "Cognitive * High ISCED",
+                      "Cognitive * Low ISCED")
 
 countries3 <- svy_recode(countries3, 'isco', 'occupation_cont', '1:2 = 4; 3 = 3; 4:7 = 2; 8:9 = 1')
 countries3 <- svy_recode(countries3, 'isco', 'shortupper', "1:5 = 1; NA = NA; else = 0")
 countries3 <- svy_recode(countries3, 'isco', 'shortdown', "1:5 = 1; NA = NA; else = 0")
+
+
+# Change data argument
+# Specify dataframe
+# Specify x and y variables
+# Specify interaction separately
+
+interaction_data <- tidy(mod1[[length(mod1)]])
+intercept <- interaction_data[grep("Intercept", interaction_data), 2] # Intercept for ISCED == 0
+slope <- interaction_data[agrep("^scale(pvnum)$", interaction_data$term)[1], 2]
+
+intercept2 <- intercept + interaction_data[grep("highisced", interaction_data$term)[1], 2]
+slope2 <- slope + interaction_data[grep("highisced", interaction_data$term)[2], 2]
+
+coef_interactions <- data.frame(intercept = c(intercept, intercept2),
+                                slopes = c(slope, slope2),
+                                linetypes = c(1, 2),
+                                category = c("Low ISCED", "High ISCED"))
+
+new_data <- data.frame(highisced = rep(c(3, 1), each = 3),
+                       "pvnum"= rep(c(-0.62, 0.04, 0.70), times = 2),
+                       'non.cognitive' = 0,
+                       age_categories = 0)
+
+predict(mod1[[5]], new_data)
+
+ggplot(mod1[[length(mod1)]]$survey.design$variables, aes(scale(pvnum), occupation_cont)) +
+    geom_point() +
+    geom_abline(data = coef_interactions, aes(intercept = intercept, slope = slope))
+
 
 
 # ##### Data preparation for simulation #######
@@ -364,7 +399,7 @@ for (i in 1:length(countries3)) {
                           column.labels = c("1 = Occupation continuous", "1 = Occupation continuous"),
                           column.separate = rep(length(all_firstcovariates), 2),
                           dep.var.labels.include = FALSE,
-                          order = c(1,5),
+                          order = c(1,7),
                           covariate.labels = covariate_labels, digits = digits,
                           out = paste0(names(countries3[i]),"-PIAAC-sons-occupation_cont.html"
                           )
@@ -384,7 +419,7 @@ for (i in 1:length(countries3)) {
                           column.labels = c("1 = Occupation continuous", "1 = Occupation continuous"),
                           column.separate = rep(length(all_firstcovariates), 2),
                           dep.var.labels.include = FALSE,
-                          order = c(1,5),
+                          order = c(1,7),
                           covariate.labels = covariate_labels, digits = digits,
                           out = paste0(names(countries3[i]),"-PIAAC-sons-occupation_cont.html"
                           )
