@@ -147,6 +147,7 @@ countries3 <- svy_recode(countries3, 'isco', 'shortupper', "1:5 = 1; NA = NA; el
 countries3 <- svy_recode(countries3, 'isco', 'shortdown', "1:5 = 1; NA = NA; else = 0")
 
 ##### Data preparation for interaction visualization #####
+
 # Change data argument
 # Specify dataframe
 # Specify x and y variables
@@ -155,27 +156,54 @@ countries3 <- svy_recode(countries3, 'isco', 'shortdown', "1:5 = 1; NA = NA; els
 # interaction_data <- tidy(mod1[[length(mod1)]])
 # intercept <- interaction_data[grep("Intercept", interaction_data), 2] # Intercept for ISCED == 0
 # slope <- interaction_data[agrep("^scale(pvnum)$", interaction_data$term)[1], 2]
-# 
+#
 # intercept2 <- intercept + interaction_data[grep("highisced", interaction_data$term)[1], 2]
 # slope2 <- slope + interaction_data[grep("highisced", interaction_data$term)[2], 2]
-# 
+#
 # coef_interactions <- data.frame(intercept = c(intercept, intercept2),
 #                                 slopes = c(slope, slope2),
 #                                 linetypes = c(1, 2),
 #                                 category = c("Low ISCED", "High ISCED"))
-# 
+#
 # new_data <- data.frame(highisced = rep(c(3, 1), each = 3),
 #                        "pvnum"= rep(c(-0.62, 0.04, 0.70), times = 2),
 #                        'non.cognitive' = 0,
 #                        age_categories = 0)
-# 
+#
 # predict(mod1[[5]], new_data)
-# 
+#
 # ggplot(mod1[[length(mod1)]]$survey.design$variables, aes(scale(pvnum), occupation_cont)) +
 #     geom_point() +
 #     geom_abline(data = coef_interactions, aes(intercept = intercept, slope = slope))
-#####
+###############
 
+svy_data <- lower2[[5]]$model
+qua <- quantile(svy_data[, "scale(pvnum)", drop = T], probs = c(0.25, 0.5, 0.75))
+
+df <- data.frame(lowmidisced2 = rep(c(1, 0), each = 3),
+                 pvnum = rep(qua, times = 2),
+                 non.cognitive = mean(svy_data$`scale(non.cognitive)`[[1]]),
+                 age_categories = 5)
+
+contra <- c(lowmidisced2 = 1,
+            pvnum = -0.66,
+            non.cognitive = 0.03,
+            age_categories = 5,
+            "lowmidisced2:scale(pvnum)" = 2)
+svycontrast(lower2[[5]], contra)
+
+list(avg1 = setNames(as.numeric(df[1, ]), names(df)),
+     avg2 = setNames(as.numeric(df[2, ]), names(df)),
+     avg3 = setNames(as.numeric(df[3, ]), names(df)),
+     avg4 = setNames(as.numeric(df[4, ]), names(df)),
+     avg5 = setNames(as.numeric(df[5, ]), names(df)),
+     avg6 = setNames(as.numeric(df[6, ]), names(df)))
+
+predict(lower2[[5]],
+        newdata = df,
+        type = "link",
+        se.fit = T,
+        vcov = T)
 
 # ##### Data preparation for simulation #######
 # empty_data <- data.frame(col1 = rep(NA, 1000))
