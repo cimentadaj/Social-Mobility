@@ -11,9 +11,7 @@ setwd("/Users/cimentadaj/Downloads/Social_mob_data")
 
 data <- list.files(pattern = ".rda")
 
-for (i in 1:length(data)) {
-    load(data[i])
-}
+walk(data, load, .GlobalEnv)
 
 ls2 <- c(ls()[grepl("*.design", ls())] , "ls2")
 # Remove everything that is not in ls2 (so the .design )
@@ -128,14 +126,14 @@ svy_recode <- function(svy_design, old_varname, new_varname, recode) {
 ######
 
 digits <- 2
-all_firstcovariates <- c("highisced", "scale(pvnum)", "scale(non.cognitive)",
-                         "age_categories", "scale(pvnum):highisced")
+all_firstcovariates <- c("highisced", "pvnum", "non.cognitive",
+                         "age_categories", "pvnum:highisced")
 
-usa_secondcovariates <- c("lowmidisced2", "scale(pvnum)", "scale(non.cognitive)",
-                          "age_categories", "scale(pvnum):lowmidisced2")
+usa_secondcovariates <- c("lowmidisced2", "pvnum", "non.cognitive",
+                          "age_categories", "pvnum:lowmidisced2")
 
-all_secondcovariates <- c("lowmidisced", "scale(pvnum)", "scale(non.cognitive)",
-                          "age_categories", "scale(pvnum):lowmidisced")
+all_secondcovariates <- c("lowmidisced", "pvnum", "non.cognitive",
+                          "age_categories", "pvnum:lowmidisced")
 
 covariate_labels <- c("High ISCED", "Low ISCED",
                        "Cognitive", "Non.cognitive",
@@ -145,65 +143,6 @@ covariate_labels <- c("High ISCED", "Low ISCED",
 countries3 <- svy_recode(countries3, 'isco', 'occupation_cont', '1:2 = 4; 3 = 3; 4:7 = 2; 8:9 = 1')
 countries3 <- svy_recode(countries3, 'isco', 'shortupper', "1:5 = 1; NA = NA; else = 0")
 countries3 <- svy_recode(countries3, 'isco', 'shortdown', "1:5 = 1; NA = NA; else = 0")
-
-##### Data preparation for interaction visualization #####
-
-# Change data argument
-# Specify dataframe
-# Specify x and y variables
-# Specify interaction separately
-
-# interaction_data <- tidy(mod1[[length(mod1)]])
-# intercept <- interaction_data[grep("Intercept", interaction_data), 2] # Intercept for ISCED == 0
-# slope <- interaction_data[agrep("^scale(pvnum)$", interaction_data$term)[1], 2]
-#
-# intercept2 <- intercept + interaction_data[grep("highisced", interaction_data$term)[1], 2]
-# slope2 <- slope + interaction_data[grep("highisced", interaction_data$term)[2], 2]
-#
-# coef_interactions <- data.frame(intercept = c(intercept, intercept2),
-#                                 slopes = c(slope, slope2),
-#                                 linetypes = c(1, 2),
-#                                 category = c("Low ISCED", "High ISCED"))
-#
-# new_data <- data.frame(highisced = rep(c(3, 1), each = 3),
-#                        "pvnum"= rep(c(-0.62, 0.04, 0.70), times = 2),
-#                        'non.cognitive' = 0,
-#                        age_categories = 0)
-#
-# predict(mod1[[5]], new_data)
-#
-# ggplot(mod1[[length(mod1)]]$survey.design$variables, aes(scale(pvnum), occupation_cont)) +
-#     geom_point() +
-#     geom_abline(data = coef_interactions, aes(intercept = intercept, slope = slope))
-###############
-
-svy_data <- lower2[[5]]$model
-qua <- quantile(svy_data[, "scale(pvnum)", drop = T], probs = c(0.25, 0.5, 0.75))
-
-df <- data.frame(lowmidisced2 = rep(c(1, 0), each = 3),
-                 pvnum = rep(qua, times = 2),
-                 non.cognitive = mean(svy_data$`scale(non.cognitive)`[[1]]),
-                 age_categories = 5)
-
-contra <- c(lowmidisced2 = 1,
-            pvnum = -0.66,
-            non.cognitive = 0.03,
-            age_categories = 5,
-            "lowmidisced2:scale(pvnum)" = 2)
-svycontrast(lower2[[5]], contra)
-
-list(avg1 = setNames(as.numeric(df[1, ]), names(df)),
-     avg2 = setNames(as.numeric(df[2, ]), names(df)),
-     avg3 = setNames(as.numeric(df[3, ]), names(df)),
-     avg4 = setNames(as.numeric(df[4, ]), names(df)),
-     avg5 = setNames(as.numeric(df[5, ]), names(df)),
-     avg6 = setNames(as.numeric(df[6, ]), names(df)))
-
-predict(lower2[[5]],
-        newdata = df,
-        type = "link",
-        se.fit = T,
-        vcov = T)
 
 # ##### Data preparation for simulation #######
 # empty_data <- data.frame(col1 = rep(NA, 1000))
@@ -375,6 +314,9 @@ for (i in 1:length(countries3)) {
      # simulation <- simulated_check(simulation, countries3, names(countries3)[i])
     }
 }
+
+quant <- quantile(countries3[[6]]$designs[[1]]$variables$pvnum, na.rm = T, probs = c(0.20, 0.80))
+visreg(lower1[[5]], "highisced", "pvnum", breaks = quant, overlay = T)
 
 # 
 # ##### Data preparation for simulation #####
