@@ -9,9 +9,7 @@ library(visreg)
 ###### THIS IS WHERE YOU CHANGE YOUR WORKING DIRECTORY ##############
 setwd("/Users/cimentadaj/Downloads/Social_mob_data")
 
-data <- list.files(pattern = ".rda")
-
-walk(data, load, .GlobalEnv)
+walk(list.files(pattern = ".rda"), load, .GlobalEnv)
 
 ls2 <- c(ls()[grepl("*.design", ls())] , "ls2")
 # Remove everything that is not in ls2 (so the .design )
@@ -132,7 +130,7 @@ all_firstcovariates <- c("highisced", "pvnum", "non.cognitive",
 usa_secondcovariates <- c("lowmidisced2", "pvnum", "non.cognitive",
                           "age_categories", "pvnum:lowmidisced2")
 
-all_secondcovariates <- c("lowmidisced", "pvnum", "non.cognitive",
+all_secondcovariates <- c("lowisced", "pvnum", "non.cognitive",
                           "age_categories", "pvnum:lowmidisced")
 
 covariate_labels <- c("High ISCED", "Low ISCED",
@@ -177,148 +175,147 @@ countries3 <- svy_recode(countries3, 'isco', 'shortdown', "1:5 = 1; NA = NA; els
 #
 # ######
 
-for (i in 1:length(countries3)) {
 
-    if (names(countries3[i]) == "USA") {
-        #################################### Models for lower class ##############################################
-
-        lower1 <- models("lowerclass", all_firstcovariates, subset(countries3[[i]], gender == 1 ))
-        lower2 <- models("lowerclass", usa_secondcovariates, subset(countries3[[i]], gender == 1 ))
-
-        lower.models <- append(lower1, lower2)
-
-        ## Tables
-        setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
-        all <- stargazer2(lower.models, odd.ratio = T, type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-lowerclass"),
-                          column.labels = c("1= Lower Class", "1=Lower Class"),
-                          column.separate = rep(length(all_firstcovariates), 2),
-                          dep.var.labels.include = FALSE,
-                          order = c(1,7),
-                          covariate.labels = covariate_labels, digits = digits,
-                          out = paste0(names(countries3[i]),"-PIAAC-sons-lowerclass.html"
-                          )
-        )
-
-        #################################### Models for middle class ######################################################
-
-        middle1 <- models("middleclass", all_firstcovariates, subset(countries3[[i]], gender == 1 ))
-        middle2 <- models("middleclass", usa_secondcovariates, subset(countries3[[i]], gender == 1 ))
-
-        middle.models <- append(middle1, middle2)
-
-        ## Tables
-        setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
-        all <- stargazer2(middle.models, odd.ratio = T, type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-middleclass"),
-                          column.labels = c("1= Middle Class", "1=Middle Class"),
-                          column.separate = rep(length(all_firstcovariates), 2),
-                          dep.var.labels.include = FALSE,
-                          order = c(1,7),
-                          covariate.labels = covariate_labels, digits = digits,
-                          out = paste0(names(countries3[i]),"-PIAAC-sons-middleclass.html"
-                          )
-        )
-
-        #################################### Models for service class ######################################################
-
-
-        high1 <- models("serviceclass", all_firstcovariates, subset(countries3[[i]], gender == 1 ))
-        high2 <- models("serviceclass", usa_secondcovariates, subset(countries3[[i]], gender == 1 ))
-
-        high.models <- append(high1, high2)
-
-
-        ## Tables
-        setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
-        all <- stargazer2(high.models, odd.ratio = T, type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-serviceclass"),
-                          column.labels = c("1= Service Class", "1=Service Class"),
-                          column.separate = rep(length(all_firstcovariates), 2),
-                          dep.var.labels.include = FALSE,
-                          order = c(1,7),
-                          covariate.labels = covariate_labels, digits = digits,
-                          out = paste0(names(countries3[i]),"-PIAAC-sons-serviceclass.html"
-                          )
-        )
-
-        # adv <- c(tidy(lower1[[3]])[2, 2], tidy(middle1[[3]])[2, 2], tidy(high1[[3]])[2, 2])
-        # disadv <- c(tidy(lower2[[3]])[2, 2], tidy(middle2[[3]])[2, 2], tidy(high2[[3]])[2, 2])
-        # 
-        # coefi[coefi$countries == names(countries3)[i], 3] <- c(adv, disadv)
-        # 
-        # simulation <- simulated_check(simulation, countries3, names(countries3)[i])
-
-    } else {
-
-        #################################### Models for lower class ##############################################
-
-        lower1 <- models("lowerclass", all_firstcovariates, subset(countries3[[i]], gender == 1 ))
-        lower2 <- models("lowerclass", all_secondcovariates, subset(countries3[[i]], gender == 1 ))
-
-        lower.models <- append(lower1, lower2)
-
-        ## Tables
-        setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
-        all <- stargazer2(lower.models, odd.ratio = T,  type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-lowerclass"),
-                          column.labels = c("1= Lower Class", "1=Lower Class"),
-                          column.separate = rep(length(all_firstcovariates), 2),
-                          dep.var.labels.include = FALSE,
-                          order = c(1,7),
-                          covariate.labels = covariate_labels, digits = digits,
-                          out = paste0(names(countries3[i]),"-PIAAC-sons-lowerclass.html"
-                          )
-        )
-
-
-        #################################### Models for middle class ######################################################
-
-        middle1 <- models("middleclass", all_firstcovariates, subset(countries3[[i]], gender == 1 ))
-        middle2 <- models("middleclass", all_secondcovariates, subset(countries3[[i]], gender == 1 ))
-
-        middle.models <- append(middle1, middle2)
-
-        ## Tables
-        setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
-        all <- stargazer2(middle.models, odd.ratio = T, type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-middleclass"),
-                          column.labels = c("1= Middle Class", "1=Middle Class"),
-                          column.separate = rep(length(all_firstcovariates), 2),
-                          dep.var.labels.include = FALSE,
-                          order = c(1,7),
-                          covariate.labels = covariate_labels, digits = digits,
-                          out = paste0(names(countries3[i]),"-PIAAC-sons-middleclass.html"
-                          )
-        )
-
-        #################################### Models for service class #####
-
-        high1 <- models("serviceclass", all_firstcovariates, subset(countries3[[i]], gender == 1 ))
-        high2 <- models("serviceclass", all_secondcovariates, subset(countries3[[i]], gender == 1 ))
-
-        high.models <- append(high1, high2)
-
-
-        ## Tables
-        setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
-        all <- stargazer2(high.models, odd.ratio = T, type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-serviceclass"),
-                          column.labels = c("1= Service Class", "1=Service Class"),
-                          column.separate = rep(length(all_firstcovariates), 2),
-                          dep.var.labels.include = FALSE,
-                          order = c(1,7),
-                          covariate.labels = covariate_labels, digits = digits,
-                          out = paste0(names(countries3[i]),"-PIAAC-sons-serviceclass.html"
-                          )
-        )
-
-     # adv <- c(tidy(lower1[[3]])[2, 2], tidy(middle1[[3]])[2, 2], tidy(high1[[3]])[2, 2])
-     # disadv <- c(tidy(lower2[[3]])[2, 2], tidy(middle2[[3]])[2, 2], tidy(high2[[3]])[2, 2])
-     # coefi[coefi$countries == names(countries3)[i], 3] <- c(adv, disadv)
-     # 
-     # simulation <- simulated_check(simulation, countries3, names(countries3)[i])
-    }
-}
-
-quant <- quantile(countries3[[6]]$designs[[1]]$variables$pvnum, na.rm = T, probs = c(0.20, 0.80))
-visreg(lower1[[5]], "highisced", "pvnum", breaks = quant, overlay = T)
-
+# for (i in 1:length(countries3)) {
 # 
+#     if (names(countries3[i]) == "USA") {
+#         #################################### Models for lower class ##############################################
+# 
+#         lower1 <- models("lowerclass", all_firstcovariates, subset(countries3[[i]], gender == 1 ))
+#         lower2 <- models("lowerclass", usa_secondcovariates, subset(countries3[[i]], gender == 1 ))
+# 
+#         lower.models <- append(lower1, lower2)
+# 
+#         ## Tables
+#         setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
+#         all <- stargazer2(lower.models, odd.ratio = T, type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-lowerclass"),
+#                           column.labels = c("1= Lower Class", "1=Lower Class"),
+#                           column.separate = rep(length(all_firstcovariates), 2),
+#                           dep.var.labels.include = FALSE,
+#                           order = c(1,7),
+#                           covariate.labels = covariate_labels, digits = digits,
+#                           out = paste0(names(countries3[i]),"-PIAAC-sons-lowerclass.html"
+#                           )
+#         )
+# 
+#         #################################### Models for middle class ######################################################
+# 
+#         middle1 <- models("middleclass", all_firstcovariates, subset(countries3[[i]], gender == 1 ))
+#         middle2 <- models("middleclass", usa_secondcovariates, subset(countries3[[i]], gender == 1 ))
+# 
+#         middle.models <- append(middle1, middle2)
+# 
+#         ## Tables
+#         setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
+#         all <- stargazer2(middle.models, odd.ratio = T, type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-middleclass"),
+#                           column.labels = c("1= Middle Class", "1=Middle Class"),
+#                           column.separate = rep(length(all_firstcovariates), 2),
+#                           dep.var.labels.include = FALSE,
+#                           order = c(1,7),
+#                           covariate.labels = covariate_labels, digits = digits,
+#                           out = paste0(names(countries3[i]),"-PIAAC-sons-middleclass.html"
+#                           )
+#         )
+# 
+#         #################################### Models for service class ######################################################
+# 
+# 
+#         high1 <- models("serviceclass", all_firstcovariates, subset(countries3[[i]], gender == 1 ))
+#         high2 <- models("serviceclass", usa_secondcovariates, subset(countries3[[i]], gender == 1 ))
+# 
+#         high.models <- append(high1, high2)
+# 
+# 
+#         ## Tables
+#         setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
+#         all <- stargazer2(high.models, odd.ratio = T, type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-serviceclass"),
+#                           column.labels = c("1= Service Class", "1=Service Class"),
+#                           column.separate = rep(length(all_firstcovariates), 2),
+#                           dep.var.labels.include = FALSE,
+#                           order = c(1,7),
+#                           covariate.labels = covariate_labels, digits = digits,
+#                           out = paste0(names(countries3[i]),"-PIAAC-sons-serviceclass.html"
+#                           )
+#         )
+# 
+#         # adv <- c(tidy(lower1[[3]])[2, 2], tidy(middle1[[3]])[2, 2], tidy(high1[[3]])[2, 2])
+#         # disadv <- c(tidy(lower2[[3]])[2, 2], tidy(middle2[[3]])[2, 2], tidy(high2[[3]])[2, 2])
+#         # 
+#         # coefi[coefi$countries == names(countries3)[i], 3] <- c(adv, disadv)
+#         # 
+#         # simulation <- simulated_check(simulation, countries3, names(countries3)[i])
+# 
+#     } else {
+# 
+#         #################################### Models for lower class ##############################################
+# 
+#         lower1 <- models("lowerclass", all_firstcovariates, subset(countries3[[i]], gender == 1 ))
+#         lower2 <- models("lowerclass", all_secondcovariates, subset(countries3[[i]], gender == 1 ))
+# 
+#         lower.models <- append(lower1, lower2)
+# 
+#         ## Tables
+#         setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
+#         all <- stargazer2(lower.models, odd.ratio = T,  type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-lowerclass"),
+#                           column.labels = c("1= Lower Class", "1=Lower Class"),
+#                           column.separate = rep(length(all_firstcovariates), 2),
+#                           dep.var.labels.include = FALSE,
+#                           order = c(1,7),
+#                           covariate.labels = covariate_labels, digits = digits,
+#                           out = paste0(names(countries3[i]),"-PIAAC-sons-lowerclass.html"
+#                           )
+#         )
+# 
+# 
+#         #################################### Models for middle class ######################################################
+# 
+#         middle1 <- models("middleclass", all_firstcovariates, subset(countries3[[i]], gender == 1 ))
+#         middle2 <- models("middleclass", all_secondcovariates, subset(countries3[[i]], gender == 1 ))
+# 
+#         middle.models <- append(middle1, middle2)
+# 
+#         ## Tables
+#         setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
+#         all <- stargazer2(middle.models, odd.ratio = T, type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-middleclass"),
+#                           column.labels = c("1= Middle Class", "1=Middle Class"),
+#                           column.separate = rep(length(all_firstcovariates), 2),
+#                           dep.var.labels.include = FALSE,
+#                           order = c(1,7),
+#                           covariate.labels = covariate_labels, digits = digits,
+#                           out = paste0(names(countries3[i]),"-PIAAC-sons-middleclass.html"
+#                           )
+#         )
+# 
+#         #################################### Models for service class #####
+# 
+#         high1 <- models("serviceclass", all_firstcovariates, subset(countries3[[i]], gender == 1 ))
+#         high2 <- models("serviceclass", all_secondcovariates, subset(countries3[[i]], gender == 1 ))
+# 
+#         high.models <- append(high1, high2)
+# 
+# 
+#         ## Tables
+#         setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
+#         all <- stargazer2(high.models, odd.ratio = T, type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-serviceclass"),
+#                           column.labels = c("1= Service Class", "1=Service Class"),
+#                           column.separate = rep(length(all_firstcovariates), 2),
+#                           dep.var.labels.include = FALSE,
+#                           order = c(1,7),
+#                           covariate.labels = covariate_labels, digits = digits,
+#                           out = paste0(names(countries3[i]),"-PIAAC-sons-serviceclass.html"
+#                           )
+#         )
+# 
+#      # adv <- c(tidy(lower1[[3]])[2, 2], tidy(middle1[[3]])[2, 2], tidy(high1[[3]])[2, 2])
+#      # disadv <- c(tidy(lower2[[3]])[2, 2], tidy(middle2[[3]])[2, 2], tidy(high2[[3]])[2, 2])
+#      # coefi[coefi$countries == names(countries3)[i], 3] <- c(adv, disadv)
+#      # 
+#      # simulation <- simulated_check(simulation, countries3, names(countries3)[i])
+#     }
+# }
+ 
+
+
 # ##### Data preparation for simulation #####
 # simulated_summary <- lapply(simulation, function(cnt) lapply(cnt, function(vec) exp(colMeans(vec))))
 # 
@@ -354,50 +351,69 @@ visreg(lower1[[5]], "highisced", "pvnum", breaks = quant, overlay = T)
 # 
 # ###################
 
-########
-# for (i in 1:length(countries3)) {
-#     
-#     if (names(countries3[i]) == "USA") {
-#         
-#         mod1 <- models("occupation_cont", all_firstcovariates, subset(countries3[[i]], gender == 1 ))
-#         mod2 <- models("occupation_cont", usa_secondcovariates, subset(countries3[[i]], gender == 1 ))
-#         
-#         all.models <- append(mod1, mod2)
-#         
-#         ## Tables
-#         setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
-#         all <- stargazer2(all.models, odd.ratio = F, type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-serviceclass"),
-#                           column.labels = c("1 = Occupation continuous", "1 = Occupation continuous"),
-#                           column.separate = rep(length(all_firstcovariates), 2),
-#                           dep.var.labels.include = FALSE,
-#                           order = c(1,7),
-#                           covariate.labels = covariate_labels, digits = digits,
-#                           out = paste0(names(countries3[i]),"-PIAAC-sons-occupation_cont.html"
-#                           )
-#         )
-#         
-# 
-#     } else {
-#         
-#         mod1 <- models("occupation_cont", all_firstcovariates, subset(countries3[[i]], gender == 1 ))
-#         mod2 <- models("occupation_cont", usa_secondcovariates, subset(countries3[[i]], gender == 1 ))
-#         
-#         all.models <- append(mod1, mod2)
-#         
-#         ## Tables
-#         setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
-#         all <- stargazer2(all.models, odd.ratio = F, type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-serviceclass"),
-#                           column.labels = c("1 = Occupation continuous", "1 = Occupation continuous"),
-#                           column.separate = rep(length(all_firstcovariates), 2),
-#                           dep.var.labels.include = FALSE,
-#                           order = c(1,7),
-#                           covariate.labels = covariate_labels, digits = digits,
-#                           out = paste0(names(countries3[i]),"-PIAAC-sons-occupation_cont.html"
-#                           )
-#         )
-#     }
-# }
-########
 
+for (i in 1:length(countries3)) {
+
+    if (names(countries3[i]) == "USA") {
+
+        mod1 <- models("occupation_cont", all_firstcovariates, subset(countries3[[i]], gender == 1 ))
+        mod2 <- models("occupation_cont", usa_secondcovariates, subset(countries3[[i]], gender == 1 ))
+
+        all.models <- append(mod1, mod2)
+
+        ## Tables
+        setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
+        all <- stargazer2(all.models, odd.ratio = F, type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-serviceclass"),
+                          column.labels = c("1 = Occupation continuous", "1 = Occupation continuous"),
+                          column.separate = rep(length(all_firstcovariates), 2),
+                          dep.var.labels.include = FALSE,
+                          order = c(1,7),
+                          covariate.labels = covariate_labels, digits = digits,
+                          out = paste0(names(countries3[i]),"-PIAAC-sons-occupation_cont.html"
+                          )
+        )
+        
+        # Code to graph the interactions. This code works but the problem is
+        # that the saved graph is not in a single row of graphs but in columns +
+        # the quality is really bad.
+        
+        # quant <- quantile(countries3[[i]]$designs[[1]]$variables$pvnum,
+        #                   na.rm = T,
+        #                   probs = c(0.20, 0.5, 0.80))
+        # 
+        # plot1 <- visreg(mod1[[5]], "highisced", "pvnum",
+        #               type = "conditional",
+        #               overlay = T,
+        #               plot = F)
+        # 
+        # jpeg(paste0(names(countries3[i]), "_highISCED.png"))
+        # print(plot(plot1,
+        #      ylim = c(1, 4),
+        #      xlab = "High ISCED",
+        #      ylab = "Occupation(1 - 4)"))
+        # dev.off()
+
+    } else {
+
+        mod1 <- models("occupation_cont", all_firstcovariates, subset(countries3[[i]], gender == 1 ))
+        mod2 <- models("occupation_cont", usa_secondcovariates, subset(countries3[[i]], gender == 1 ))
+
+        all.models <- append(mod1, mod2)
+
+        ## Tables
+        setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
+        all <- stargazer2(all.models, odd.ratio = F, type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-serviceclass"),
+                          column.labels = c("1 = Occupation continuous", "1 = Occupation continuous"),
+                          column.separate = rep(length(all_firstcovariates), 2),
+                          dep.var.labels.include = FALSE,
+                          order = c(1,7),
+                          covariate.labels = covariate_labels, digits = digits,
+                          out = paste0(names(countries3[i]),"-PIAAC-sons-occupation_cont.html"
+                          ))
+        quant <- quantile(countries3[[i]]$designs[[1]]$variables$pvnum,
+                          na.rm = T,
+                          probs = c(0.20, 0.5, 0.80))
+    }
+}
 
 rm(list=c(ls()[!ls() %in% ls2]))
