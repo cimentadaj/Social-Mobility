@@ -5,6 +5,7 @@ library(arm)
 library(broom)
 library(tidyverse)
 library(visreg)
+source("http://peterhaschke.com/Code/multiplot.R")
 
 ###### THIS IS WHERE YOU CHANGE YOUR WORKING DIRECTORY ##############
 setwd("/Users/cimentadaj/Downloads/Social_mob_data")
@@ -131,7 +132,7 @@ usa_secondcovariates <- c("lowmidisced2", "pvnum", "non.cognitive",
                           "age_categories", "pvnum:lowmidisced2")
 
 all_secondcovariates <- c("lowisced", "pvnum", "non.cognitive",
-                          "age_categories", "pvnum:lowmidisced")
+                          "age_categories", "pvnum:lowisced")
 
 covariate_labels <- c("High ISCED", "Low ISCED",
                        "Cognitive", "Non.cognitive",
@@ -351,6 +352,37 @@ countries3 <- svy_recode(countries3, 'isco', 'shortdown', "1:5 = 1; NA = NA; els
 # 
 # ###################
 
+graph_pred <- function(df_list, quant_var, model_to_extract, xvar) {
+    
+    df <- df_list[[1]]
+    quant <- quantile(df$designs[[1]]$variables[, quant_var],
+                      na.rm = T,
+                      probs = c(0.20, 0.5, 0.80))
+    
+    plot1 <- visreg(model_to_extract, xvar, quant_var,
+                    type = "conditional",
+                    overlay = T,
+                    plot = F)
+    
+    plot1$fit[, quant_var] <- as.factor(plot1$fit[, quant_var])
+    
+    ggplot(plot1$fit, aes_string(xvar, "visregFit", colour = quant_var)) +
+        geom_point() +
+        scale_x_continuous(breaks = c(0, 1)) +
+        xlab(paste0(ifelse(xvar == "highisced", "High", "Low"), "ISCED = 1")) +
+        ylab("Occupation(1 - 4)") +
+        labs(title = paste0(names(df_list))) +
+        theme(plot.title = element_text(hjust = 0.5)) +
+        scale_color_discrete(name = "Quantile", labels = c("Bottom", "Middle", "High"))
+}
+
+graph_pred_all <-  function(df) {
+    
+    graph1 <- graph_pred(df, "pvnum", mod1[[5]], "highisced")
+    graph2 <- graph_pred(df, "pvnum", mod2[[5]], ifelse(names(df) == "USA","lowmidisced2", "lowisced"))
+    
+    ggsave(paste0(names(df)), multiplot(graph1, graph2, cols = 2), device = "png")
+}
 
 for (i in 1:length(countries3)) {
 
@@ -377,26 +409,12 @@ for (i in 1:length(countries3)) {
         # that the saved graph is not in a single row of graphs but in columns +
         # the quality is really bad.
         
-        # quant <- quantile(countries3[[i]]$designs[[1]]$variables$pvnum,
-        #                   na.rm = T,
-        #                   probs = c(0.20, 0.5, 0.80))
-        # 
-        # plot1 <- visreg(mod1[[5]], "highisced", "pvnum",
-        #               type = "conditional",
-        #               overlay = T,
-        #               plot = F)
-        # 
-        # jpeg(paste0(names(countries3[i]), "_highISCED.png"))
-        # print(plot(plot1,
-        #      ylim = c(1, 4),
-        #      xlab = "High ISCED",
-        #      ylab = "Occupation(1 - 4)"))
-        # dev.off()
+        graph_pred_all(countries3[i])
 
     } else {
 
         mod1 <- models("occupation_cont", all_firstcovariates, subset(countries3[[i]], gender == 1 ))
-        mod2 <- models("occupation_cont", usa_secondcovariates, subset(countries3[[i]], gender == 1 ))
+        mod2 <- models("occupation_cont", all_secondcovariates, subset(countries3[[i]], gender == 1 ))
 
         all.models <- append(mod1, mod2)
 
@@ -410,9 +428,7 @@ for (i in 1:length(countries3)) {
                           covariate.labels = covariate_labels, digits = digits,
                           out = paste0(names(countries3[i]),"-PIAAC-sons-occupation_cont.html"
                           ))
-        quant <- quantile(countries3[[i]]$designs[[1]]$variables$pvnum,
-                          na.rm = T,
-                          probs = c(0.20, 0.5, 0.80))
+        graph_pred_all(countries3[i])
     }
 }
 
