@@ -314,7 +314,6 @@ for (i in 1:length(countries3)) {
      # simulation <- simulated_check(simulation, countries3, names(countries3)[i])
     }
 }
- 
 
 
 # ##### Data preparation for simulation #####
@@ -388,52 +387,66 @@ countries3 <- svy_recode(countries3, 'isco', 'occupation_cont', '1:2 = 4; 3 = 3;
 countries3 <- svy_recode(countries3, 'isco', 'shortupper', "1:5 = 1; NA = NA; else = 0")
 countries3 <- svy_recode(countries3, 'isco', 'shortdown', "1:5 = 1; NA = NA; else = 0")
 
-for (i in 1:length(countries3)) {
-
-    if (names(countries3[i]) == "USA") {
-
-        mod1 <- models("occupation_cont", all_firstcovariates, subset(countries3[[i]], gender == 1 ))
-        mod2 <- models("occupation_cont", usa_secondcovariates, subset(countries3[[i]], gender == 1 ))
-
-        all.models <- append(mod1, mod2)
-
-        ## Tables
-        setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
-        all <- stargazer2(all.models, odd.ratio = F, type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-serviceclass"),
-                          column.labels = c("1 = Occupation continuous", "1 = Occupation continuous"),
-                          column.separate = rep(length(all_firstcovariates), 2),
-                          dep.var.labels.include = FALSE,
-                          order = c(1,5),
-                          covariate.labels = covariate_labels, digits = digits,
-                          out = paste0(names(countries3[i]),"-PIAAC-sons-occupation_cont.html"
-                          )
-        )
+modeling_function <- function(df_list, dv, all_firstcovariates, usa_secondcovariates,
+                              all_secondcovariates, covariate_labels, digits, out_name) {
+    
+    for (i in 1:length(df_list)) {
         
-        # Code to graph the interactions. This code works but the problem is
-        # that the saved graph is not in a single row of graphs but in columns +
-        # the quality is really bad.
-        
-        # graph_pred_all(countries3[i])
-
-    } else {
-
-        mod1 <- models("occupation_cont", all_firstcovariates, subset(countries3[[i]], gender == 1 ))
-        mod2 <- models("occupation_cont", all_secondcovariates, subset(countries3[[i]], gender == 1 ))
-
-        all.models <- append(mod1, mod2)
-
-        ## Tables
-        setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
-        all <- stargazer2(all.models, odd.ratio = F, type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-serviceclass"),
-                          column.labels = c("1 = Occupation continuous", "1 = Occupation continuous"),
-                          column.separate = rep(length(all_firstcovariates), 2),
-                          dep.var.labels.include = FALSE,
-                          order = c(1,5),
-                          covariate.labels = covariate_labels, digits = digits,
-                          out = paste0(names(countries3[i]),"-PIAAC-sons-occupation_cont.html"
-                          ))
-        # graph_pred_all(countries3[i])
+        if (names(df_list[i]) == "USA") {
+            
+            mod1 <- models(dv, all_firstcovariates, subset(df_list[[i]], gender == 1 ))
+            mod2 <- models(dv, usa_secondcovariates, subset(df_list[[i]], gender == 1 ))
+            
+            all.models <- append(mod1, mod2)
+            
+            ## Tables
+            setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
+            all <- stargazer2(all.models, odd.ratio = F, type = "html",
+                              title = paste0(names(df_list[i]),"PIAAC-sons-serviceclass"),
+                              column.labels = c("1 = Occupation continuous", "1 = Occupation continuous"),
+                              column.separate = rep(length(all_firstcovariates), 2),
+                              dep.var.labels.include = FALSE,
+                              order = c(1,5),
+                              covariate.labels = covariate_labels, digits = digits,
+                              out = paste0(names(df_list[i]), out_name)
+            )
+            
+            # Code to graph the interactions. This code works but the problem is
+            # that the saved graph is not in a single row of graphs but in columns +
+            # the quality is really bad.
+            
+            # graph_pred_all(df_list[i])
+            
+        } else {
+            
+            mod1 <- models(dv, all_firstcovariates, subset(df_list[[i]], gender == 1 ))
+            mod2 <- models(dv, all_secondcovariates, subset(df_list[[i]], gender == 1 ))
+            
+            all.models <- append(mod1, mod2)
+            
+            ## Tables
+            setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
+            all <- stargazer2(all.models, odd.ratio = F, type = "html",
+                              title = paste0(names(df_list[i]),"PIAAC-sons-serviceclass"),
+                              column.labels = c("1 = Occupation continuous", "1 = Occupation continuous"),
+                              column.separate = rep(length(all_firstcovariates), 2),
+                              dep.var.labels.include = FALSE,
+                              order = c(1,5),
+                              covariate.labels = covariate_labels, digits = digits,
+                              out = paste0(names(df_list[i]), out_name
+                              ))
+            # graph_pred_all(df_list[i])
+        }
     }
+    
 }
+
+df_list <- countries3
+dv <- "rev(occupation_cont)"
+out_name <- "-PIAAC-sons-occupation_cont_downward.html"
+
+
+modeling_function(df_list, dv, all_firstcovariates, usa_secondcovariates,
+                  all_secondcovariates, covariate_labels, digits, out_name)
 
 rm(list=c(ls()[!ls() %in% ls2]))
