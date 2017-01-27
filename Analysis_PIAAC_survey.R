@@ -5,6 +5,7 @@ library(arm)
 library(broom)
 library(tidyverse)
 library(visreg)
+library(cimentadaj)
 source("http://peterhaschke.com/Code/multiplot.R")
 
 ###### THIS IS WHERE YOU CHANGE YOUR WORKING DIRECTORY ##############
@@ -37,8 +38,6 @@ countries3 <- list(Austria=prgautp1.design,
                    Poland=prgpolp1.design,
                    Russia=prgrusp1.design,
                    Slovakia=prgsvkp1.design)
-
-countries3 <- countries3[c("USA", "Germany", "Italy", "Denmark", "Sweden", "Spain")]
 
 
 ### Experimental section ###
@@ -93,20 +92,6 @@ models <- function(dv, covariates, data) {
     formulas <- lapply(combinations, function(p) x <- as.formula(paste(c(dv, covariates[p]), collapse=" + ")))
     results <- lapply(formulas, function(o) with(data, svyglm(o))[[1]])
     return(results)
-}
-
-stargazer2 <- function(model, odd.ratio = F, ...) {
-    
-    stopifnot(class(model) == "list")
-    if (odd.ratio) {
-        coefOR2 <- lapply(model, function(x) exp(coef(x)))
-        seOR2 <- lapply(model, function(x) exp(coef(x)) * summary(x)$coef[, 2])
-        p2 <- lapply(model, function(x) summary(x)$coefficients[, 4])
-        stargazer(model, coef = coefOR2, se = seOR2, p = p2, ...)
-        
-    } else {
-        stargazer(model, ...)
-    }
 }
 
 svy_recode <- function(svy_design, old_varname, new_varname, recode) {
@@ -383,7 +368,8 @@ graph_pred_all <-  function(df) {
     ggsave(paste0(names(df)), multiplot(graph1, graph2, cols = 2), device = "png")
 }
 
-countries3 <- svy_recode(countries3, 'isco', 'occupation_cont', '1:2 = 4; 3 = 3; 4:7 = 2; 8:9 = 1')
+countries3 <- svy_recode(countries3, 'isco', 'occupation_cont_upward', '1:2 = 4; 3 = 3; 4:7 = 2; 8:9 = 1')
+countries3 <- svy_recode(countries3, 'isco', 'occupation_cont_downward', '1:2 = 1; 3 = 2; 4:7 = 3; 8:9 = 4')
 countries3 <- svy_recode(countries3, 'isco', 'shortupper', "1:5 = 1; NA = NA; else = 0")
 countries3 <- svy_recode(countries3, 'isco', 'shortdown', "1:5 = 1; NA = NA; else = 0")
 
@@ -397,6 +383,10 @@ modeling_function <- function(df_list, dv, all_firstcovariates, usa_secondcovari
             mod1 <- models(dv, all_firstcovariates, subset(df_list[[i]], gender == 1 ))
             mod2 <- models(dv, usa_secondcovariates, subset(df_list[[i]], gender == 1 ))
             
+            # Calculate R squared for each model
+            r2_1 <- c("R squared:", paste0(sapply(mod1, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%"))
+            r2_2 <- paste0(sapply(mod2, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%")
+            
             all.models <- append(mod1, mod2)
             
             ## Tables
@@ -408,8 +398,9 @@ modeling_function <- function(df_list, dv, all_firstcovariates, usa_secondcovari
                               dep.var.labels.include = FALSE,
                               order = c(1,5),
                               covariate.labels = covariate_labels, digits = digits,
-                              out = paste0(names(df_list[i]), out_name)
-            )
+                              out = paste0(names(df_list[i]), out_name),
+                              add.lines = list(c(r2_1, r2_2))
+                              )
             
             # Code to graph the interactions. This code works but the problem is
             # that the saved graph is not in a single row of graphs but in columns +
@@ -422,6 +413,10 @@ modeling_function <- function(df_list, dv, all_firstcovariates, usa_secondcovari
             mod1 <- models(dv, all_firstcovariates, subset(df_list[[i]], gender == 1 ))
             mod2 <- models(dv, all_secondcovariates, subset(df_list[[i]], gender == 1 ))
             
+            # Calculate R squared for each model
+            r2_1 <- c("R squared:", paste0(sapply(mod1, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%"))
+            r2_2 <- paste0(sapply(mod2, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%")
+            
             all.models <- append(mod1, mod2)
             
             ## Tables
@@ -433,8 +428,9 @@ modeling_function <- function(df_list, dv, all_firstcovariates, usa_secondcovari
                               dep.var.labels.include = FALSE,
                               order = c(1,5),
                               covariate.labels = covariate_labels, digits = digits,
-                              out = paste0(names(df_list[i]), out_name
-                              ))
+                              out = paste0(names(df_list[i]), out_name),
+                              add.lines = list(c(r2_1, r2_2))
+                              )
             # graph_pred_all(df_list[i])
         }
     }
@@ -442,9 +438,8 @@ modeling_function <- function(df_list, dv, all_firstcovariates, usa_secondcovari
 }
 
 df_list <- countries3
-dv <- "rev(occupation_cont)"
-out_name <- "-PIAAC-sons-occupation_cont_downward.html"
-
+dv <- "occupation_cont_upward"
+out_name <- "-PIAAC-sons-occupation_cont_upward.html"
 
 modeling_function(df_list, dv, all_firstcovariates, usa_secondcovariates,
                   all_secondcovariates, covariate_labels, digits, out_name)
