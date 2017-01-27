@@ -86,6 +86,8 @@ countries3 <- list(Austria=prgautp1.design,
 
 ###############
 
+# this function accepts a dependent variable, a set of covariates and data set
+# it will return a model with the DV and the first IV, then the DV and two IV's and so on.
 models <- function(dv, covariates, data) {
     dv <- paste(dv, "~ 1")
     combinations <- lapply(1:length(covariates), function(i) seq(1:i))
@@ -163,8 +165,10 @@ for (i in 1:length(countries3)) {
     if (names(countries3[i]) == "USA") {
         #################################### Models for lower class ##############################################
 
+
         lower1 <- models("lowerclass", all_firstcovariates, subset(countries3[[1]], gender == 1 ))
         lower2 <- models("lowerclass", usa_secondcovariates, subset(countries3[[1]], gender == 1 ))
+
 
         lower.models <- append(lower1, lower2)
 
@@ -276,6 +280,8 @@ for (i in 1:length(countries3)) {
         high1 <- models("serviceclass", all_firstcovariates, subset(countries3[[i]], gender == 1 ))
         high2 <- models("serviceclass", all_secondcovariates, subset(countries3[[i]], gender == 1 ))
 
+
+
         high.models <- append(high1, high2)
 
 
@@ -378,6 +384,7 @@ modeling_function <- function(df_list, dv, all_firstcovariates, usa_secondcovari
     
     for (i in 1:length(df_list)) {
         
+
         if (names(df_list[i]) == "USA") {
             
             mod1 <- models(dv, all_firstcovariates, subset(df_list[[i]], gender == 1 ))
@@ -388,9 +395,11 @@ modeling_function <- function(df_list, dv, all_firstcovariates, usa_secondcovari
             r2_2 <- paste0(sapply(mod2, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%")
             
             all.models <- append(mod1, mod2)
+
             
             ## Tables
             setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
+
             all <- stargazer2(all.models, odd.ratio = F, type = "html",
                               title = paste0(names(df_list[i]),"PIAAC-sons-serviceclass"),
                               column.labels = c("1 = Occupation continuous", "1 = Occupation continuous"),
@@ -433,6 +442,7 @@ modeling_function <- function(df_list, dv, all_firstcovariates, usa_secondcovari
                               )
             # graph_pred_all(df_list[i])
         }
+
     }
     
 }
