@@ -54,18 +54,17 @@ source_url(
 # 
 
  ####### downloads the data to your working directory and stores each data file in a list
- links <- character(0)
- countrylist <- rep(list(list()), length(csv.fns))
- for (i in 1:length(csv.fns)) {
-     links <- c(links, paste0(oecd.csv.website, csv.fns[i], ".csv"))
-     download.file(links[i], destfile =csv.fns[i])
-     countrylist[[i]] <-  read.csv(csv.fns[i], stringsAsFactors = FALSE)
- }
+ # links <- character(0)
+ # countrylist <- rep(list(list()), length(csv.fns))
+ # for (i in 1:length(csv.fns)) {
+ #     links <- c(links, paste0(oecd.csv.website, csv.fns[i], ".csv"))
+ #     download.file(links[i], destfile =csv.fns[i])
+ #     countrylist[[i]] <-  read.csv(csv.fns[i], stringsAsFactors = FALSE)
+ # }
  #########################################################################################
-
- names(countrylist) <- csv.fns
- save(countrylist, file="countrylist.Rda") # list contains all the country data frames
  load("countrylist.Rda") # if you commented out the download section, you should have this file
+ names(countrylist) <- csv.fns
+ # save(countrylist, file="countrylist.Rda") # list contains all the country data frames
  # in your working directory
 
  ##### Data management section ####
@@ -82,13 +81,20 @@ sapply(countrylist, function(x) setdiff(vars, colnames(x))) # check if they're a
 data.management <- function(x) {
     
     x <- x[vars] # subsetting the variables
-    x <- tbl_df(x) %>% rename(isco=ISCO1C,dadedu=J_Q07b,momedu=J_Q06b,
-                  numbooks=J_Q08,dadimmigrant=J_Q07a,
-                  momimmigrant=J_Q06a,
-                  eduattain=B_Q01a,gender=GENDER_R,
-                  age=AGE_R,age_categories=AGEG5LFS,cntry=CNTRYID,
-                  bottomthings=I_Q04j, differentideas=I_Q04l,
-                  additinfo=I_Q04m)
+    x <- tbl_df(x) %>% rename(isco=ISCO1C,
+                              dadedu=J_Q07b,
+                              momedu=J_Q06b,
+                              numbooks=J_Q08,
+                              dadimmigrant=J_Q07a,
+                              momimmigrant=J_Q06a,
+                              eduattain=B_Q01a,
+                              gender=GENDER_R,
+                              age=AGE_R,
+                              age_categories=AGEG5LFS,
+                              cntry=CNTRYID,
+                              bottomthings=I_Q04j,
+                              differentideas=I_Q04l,
+                              additinfo=I_Q04m)
 
 # this function does two things: if specified character, it will coerce the vector
 # to a character and if specified factor it will coerce the vector to a numeric.
@@ -130,12 +136,16 @@ x <- as.data.frame(x) # Transforming back into class data frame
 ## Recoding dependent var into dummy: 1= service class, 0 = all else,
 ## I exclude ppl who didn't work in the last 5 years(code 9)
 
+# Service class
 #         Armed forces	                                    0       EGP
 #         Legislators, senior officials and managers	    1       1
-#         Professionals	                                    2       1    
+#         Professionals	                                    2       1 
+
+# Middle class
 #         Technicians and associate professionals	        3       2
 #         Clerks	                                        4       3
 #         Service workers and shop and market sales workers	5       3
+# Lower class
 #         Skilled agricultural and fishery workers	        6       10
 #         Craft and related trades workers	                7       8
 #         Plant and machine operators and assemblers	    8       9
@@ -147,9 +157,9 @@ x <- as.data.frame(x) # Transforming back into class data frame
 #         Not stated or inferred	                        9999
 
 # Service class dummy - for any doubs on the classification coding see above
-x$isco <- recode(x$isco, "c(9995,9996,9997,9998,9999,0) = NA")
+x$isco <- car::recode(x$isco, "c(9995,9996,9997,9998,9999,0) = NA")
 x$serviceclass <- as.numeric(as.character(x$isco))
-x$serviceclass <- recode(x$serviceclass, "1:2 = 1; 3:9 = 0")
+x$serviceclass <- car::recode(x$serviceclass, "1:2 = 1; 3:9 = 0")
 
 # Middle class dummy - for any doubs on the classification coding see above
 x$middleclass <- 0
@@ -173,24 +183,24 @@ x$loworigin <- as.numeric(x$dadedu == 1 & x$momedu == 1) # Mom and Dad are ISCED
 
 
 ## Was your father or male guardian born in #CountryName? 1=Yes 2=No
-x$dadimmigrant <- recode(x$dadimmigrant,"1=0;2=1")
+x$dadimmigrant <- car::recode(x$dadimmigrant,"1 = 0; 2 = 1")
 
-# x$momimmigrant <- recode(x$momimmigrant,"'2'='1';'1'=0;c('','V','D','R','N')=NA")
+# x$momimmigrant <- car::recode(x$momimmigrant,"'2'='1';'1'=0;c('','V','D','R','N')=NA")
 # x$momimmigrant <- as.numeric(as.character(x$momimmigrant))
 
 ## standardizing cognitive score
 #x$cognitive <- scale(x$cognitive)
 
 ## Recoding gender, 1 = men 0 = women
-x$gender <- recode(x$gender, "2=0")
+x$gender <- car::recode(x$gender, "2=0")
 x <- x[!is.na(x$gender), ]
 
 # Recoded the education into three levels: low, mid, high
-x$eduattain <- recode(x$eduattain, "1:3 = 1; 4:10=2; 11:16=3")
+x$eduattain <- car::recode(x$eduattain, "1:3 = 1; 4:10=2; 11:16=3")
 
 ## Recoding the DV (3 levels) into two levels. Comparing the highly educated
 ## vs the middly and low educated
-x$dest56 <- recode(x$eduattain, "3=1; c(2,1)=0")
+x$dest56 <- car::recode(x$eduattain, "3=1; c(2,1)=0")
 
 ## Creating of highest education indicator
 ## Out of both parents education, it picks the highest education of the household
@@ -210,18 +220,23 @@ x$highisced <- as.numeric(x$highedu == 3)
 x$lowisced  <- as.numeric(x$highedu == 1)
 x$lowmidisced2 <- as.numeric(x$highedu %in% c(1,2)) # For the USA
 
+quant3 <- quantile(scale(x$PVNUM1), probs = c(0.30,0.70), na.rm=T)
+
+x$adv <- as.numeric(x$highedu == 3 & scale(x$PVNUM1) <= quant3[[1]])
+x$disadv <- as.numeric(x$highedu == 1 & scale(x$PVNUM1) >= quant3[[2]])
+
 return(x)
 }
 
 usable.country2 <- lapply(countrylist, data.management)
 
-rm(list=ls()[!ls() %in% c("countrylist","usable.country2", "csv.fns","csv.links","csv.page","csv.texts", "tf")])
+rm(list=ls()[!ls() %in% c("countrylist","usable.country2", "csv.fns","csv.links","csv.page","csv.texts")])
 
 
 # specify which variables are plausible values (i.e. multiply-imputed)
 pvals <- c( 'pvlit' , 'pvnum' , 'pvpsl' )
 # loop through each downloadable file..
-    for ( i in 1:length(csv.fns) ) {
+for ( i in 1:length(csv.fns) ) {
         
         # create a filename object, containing the lowercase of the csv filename
         fn <- tolower( csv.fns[i] )
