@@ -11,6 +11,9 @@ source("http://peterhaschke.com/Code/multiplot.R")
 ###### THIS IS WHERE YOU CHANGE YOUR WORKING DIRECTORY ##############
 setwd("/Users/cimentadaj/Downloads/Social_mob_data")
 
+# To save tables
+directory <- "/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/Social-Mobility/Tables"
+
 walk(list.files(pattern = ".rda"), load, .GlobalEnv)
 
 ls2 <- c(ls()[grepl("*.design", ls())] , "ls2")
@@ -85,17 +88,6 @@ countries3 <- list(Austria=prgautp1.design,
 # #                           lapply(countries3, function(x) update(x, diff=NA))), simplify = F)
 
 ###############
-
-# this function accepts a dependent variable, a set of covariates and data set
-# it will return a model with the DV and the first IV, then the DV and two IV's and so on.
-models <- function(dv, covariates, data) {
-    dv <- paste(dv, "~ 1")
-    combinations <- lapply(1:length(covariates), function(i) seq(1:i))
-    formulas <- lapply(combinations, function(p) x <- as.formula(paste(c(dv, covariates[p]), collapse=" + ")))
-    results <- lapply(formulas, function(o) with(data, svyglm(o))[[1]])
-    return(results)
-}
-
 svy_recode <- function(svy_design, old_varname, new_varname, recode) {
     
     svy_design2 <- lapply(svy_design, function(cnt) {
@@ -173,7 +165,7 @@ for (i in 1:length(countries3)) {
         lower.models <- append(lower1, lower2)
 
         ## Tables
-        setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
+        setwd(directory)
         all <- stargazer2(lower.models, odd.ratio = T, type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-lowerclass"),
                           column.labels = c("1= Lower Class", "1=Lower Class"),
                           column.separate = rep(length(all_firstcovariates), 2),
@@ -214,7 +206,7 @@ for (i in 1:length(countries3)) {
 
 
         ## Tables
-        setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
+        setwd(directory)
         all <- stargazer2(high.models, odd.ratio = T, type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-serviceclass"),
                           column.labels = c("1= Service Class", "1=Service Class"),
                           column.separate = rep(length(all_firstcovariates), 2),
@@ -243,7 +235,7 @@ for (i in 1:length(countries3)) {
         lower.models <- append(lower1, lower2)
 
         ## Tables
-        setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
+        setwd(directory)
         all <- stargazer2(lower.models, odd.ratio = T,  type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-lowerclass"),
                           column.labels = c("1= Lower Class", "1=Lower Class"),
                           column.separate = rep(length(all_firstcovariates), 2),
@@ -286,7 +278,7 @@ for (i in 1:length(countries3)) {
 
 
         ## Tables
-        setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
+        setwd(directory)
         all <- stargazer2(high.models, odd.ratio = T, type = "html", title = paste0(names(countries3[i]),"PIAAC-sons-serviceclass"),
                           column.labels = c("1= Service Class", "1=Service Class"),
                           column.separate = rep(length(all_firstcovariates), 2),
@@ -398,7 +390,7 @@ modeling_function <- function(df_list, dv, all_firstcovariates, usa_secondcovari
 
             
             ## Tables
-            setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
+            setwd(directory)
 
             all <- stargazer2(all.models, odd.ratio = F, type = "html",
                               title = paste0(names(df_list[i]),"PIAAC-sons-serviceclass"),
@@ -429,7 +421,7 @@ modeling_function <- function(df_list, dv, all_firstcovariates, usa_secondcovari
             all.models <- append(mod1, mod2)
             
             ## Tables
-            setwd("/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/social_mobility_analysis/Tables")
+            setwd(directory)
             all <- stargazer2(all.models, odd.ratio = F, type = "html",
                               title = paste0(names(df_list[i]),"PIAAC-sons-serviceclass"),
                               column.labels = c("1 = Occupation continuous", "1 = Occupation continuous"),
