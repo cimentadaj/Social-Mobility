@@ -16,7 +16,7 @@ directory <- "/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/Social-Mobilit
 
 walk(list.files(pattern = ".rda"), load, .GlobalEnv)
 
-ls2 <- c(ls()[grepl("*.design", ls())] , "ls2")
+ls2 <- c(ls()[grepl("*.design", ls())] , "ls2", "directory")
 # Remove everything that is not in ls2 (so the .design )
 rm(list= c(ls()[!ls() %in% ls2]))
 
@@ -116,21 +116,6 @@ covariate_labels <- c("High ISCED", "Low ISCED",
                       "Cognitive", "Non.cognitive",
                       "Age", "Cognitive * High ISCED",
                       "Cognitive * Low ISCED")
-######
-
-digits <- 2
-all_firstcovariates <- c("highisced", "scale(pvnum)", "non.cognitive",
-                         "age_categories")
-
-usa_secondcovariates <- c("lowmidisced2", "scale(pvnum)", "non.cognitive",
-                          "age_categories")
-
-all_secondcovariates <- c("lowisced", "scale(pvnum)", "non.cognitive",
-                          "age_categories")
-
-covariate_labels <- c("High ISCED", "Low ISCED",
-                       "Cognitive", "Non.cognitive",
-                       "Age")
 
 # ##### Data preparation for simulation #######
 # empty_data <- data.frame(col1 = rep(NA, 1000))
@@ -347,9 +332,9 @@ for (i in 1:length(countries3)) {
 # 
 # ###################
 
-# df_list <- countries3
+# df_list <- countries3[[1]]
 # quant_var <- "pvnum"
-# model1 <- (mod1 <- models(dv, all_firstcovariates, df_list))
+# model1 <- (mod1 <- models(dv, all_firstcovariates, df_list[[1]]))
 # xvar <- "highisced"
 # df <- countries3[[1]]
 
@@ -385,6 +370,7 @@ graph_pred_all <-  function(df, model1, model2, quant_var) {
         scale_color_discrete(guide = FALSE)
     
     xvar <- ifelse(names(df) == "USA","lowmidisced2", "lowisced")
+    
     graph2 <- graph_pred(df, "pvnum", model2[[5]], xvar)
     
     g2 <- ggplot(graph2, aes_string(xvar, "visregFit", colour = quant_var)) +
@@ -397,7 +383,7 @@ graph_pred_all <-  function(df, model1, model2, quant_var) {
         scale_color_discrete(name = "Quantile",
                              labels = c("Bottom", "Middle", "High"))
     
-    ggsave(paste0(names(df)), multiplot(g1, g2, cols = 2), device = "png")
+    ggsave(paste0(names(df)), multiplot(g1, g2, cols = 2), device = "jpg")
 }
 
 countries3 <- svy_recode(countries3, 'isco', 'occupation_cont_upward', '1:2 = 4; 3 = 3; 4:7 = 2; 8:9 = 1')
@@ -405,8 +391,15 @@ countries3 <- svy_recode(countries3, 'isco', 'occupation_cont_downward', '1:2 = 
 countries3 <- svy_recode(countries3, 'isco', 'shortupper', "1:5 = 1; NA = NA; else = 0")
 countries3 <- svy_recode(countries3, 'isco', 'shortdown', "1:5 = 1; NA = NA; else = 0")
 
-modeling_function <- function(df_list, dv, all_firstcovariates, usa_secondcovariates,
-                              all_secondcovariates, covariate_labels, digits, out_name) {
+modeling_function <- function(df_list,
+                              dv,
+                              firstcovariates,
+                              usa.secondcovariates,
+                              secondcovariates,
+                              covariate_labels,
+                              digits,
+                              out_name,
+                              dir_tables) {
     
     for (i in 1:length(df_list)) {
         
@@ -424,7 +417,7 @@ modeling_function <- function(df_list, dv, all_firstcovariates, usa_secondcovari
 
             
             ## Tables
-            setwd(directory)
+            setwd(dir_tables)
 
             all <- stargazer2(all.models, odd.ratio = F, type = "html",
                               title = paste0(names(df_list[i]),"PIAAC-sons-serviceclass"),
@@ -447,7 +440,6 @@ modeling_function <- function(df_list, dv, all_firstcovariates, usa_secondcovari
             
             mod1 <- models(dv, all_firstcovariates, subset(df_list[[i]], gender == 1 ))
             mod2 <- models(dv, all_secondcovariates, subset(df_list[[i]], gender == 1 ))
-            print(mod1)
             
             # Calculate R squared for each model
             r2_1 <- c("R squared:", paste0(sapply(mod1, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%"))
@@ -456,7 +448,7 @@ modeling_function <- function(df_list, dv, all_firstcovariates, usa_secondcovari
             all.models <- append(mod1, mod2)
             
             ## Tables
-            setwd(directory)
+            setwd(dir_tables)
             all <- stargazer2(all.models, odd.ratio = F, type = "html",
                               title = paste0(names(df_list[i]),"PIAAC-sons-serviceclass"),
                               column.labels = c("1 = Occupation continuous", "1 = Occupation continuous"),
@@ -478,7 +470,14 @@ df_list <- countries3
 dv <- "occupation_cont_upward"
 out_name <- "-PIAAC-sons-occupation_cont_upward.html"
 
-modeling_function(df_list, dv, all_firstcovariates, usa_secondcovariates,
-                  all_secondcovariates, covariate_labels, digits, out_name)
+modeling_function(df_list,
+                  dv,
+                  all_firstcovariates,
+                  usa_secondcovariates,
+                  all_secondcovariates,
+                  covariate_labels,
+                  digits,
+                  out_name,
+                  directory)
 
 rm(list=c(ls()[!ls() %in% ls2]))
