@@ -102,6 +102,20 @@ svy_recode <- function(svy_design, old_varname, new_varname, recode) {
     
 }
 
+digits <- 2
+all_firstcovariates <- c("highisced", "pvnum", "non.cognitive",
+                         "age_categories", "pvnum:highisced")
+
+usa_secondcovariates <- c("lowmidisced2", "pvnum", "non.cognitive",
+                          "age_categories", "pvnum:lowmidisced2")
+
+all_secondcovariates <- c("lowisced", "pvnum", "non.cognitive",
+                          "age_categories", "pvnum:lowisced")
+
+covariate_labels <- c("High ISCED", "Low ISCED",
+                      "Cognitive", "Non.cognitive",
+                      "Age", "Cognitive * High ISCED",
+                      "Cognitive * Low ISCED")
 ######
 
 digits <- 2
@@ -298,7 +312,6 @@ for (i in 1:length(countries3)) {
     }
 }
 
-
 # ##### Data preparation for simulation #####
 # simulated_summary <- lapply(simulation, function(cnt) lapply(cnt, function(vec) exp(colMeans(vec))))
 # 
@@ -334,12 +347,18 @@ for (i in 1:length(countries3)) {
 # 
 # ###################
 
+# df_list <- countries3
+# quant_var <- "pvnum"
+# model1 <- (mod1 <- models(dv, all_firstcovariates, df_list))
+# xvar <- "highisced"
+# df <- countries3[[1]]
+
 graph_pred <- function(df_list, quant_var, model_to_extract, xvar) {
     
     df <- df_list[[1]]
     quant <- quantile(df$designs[[1]]$variables[, quant_var],
                       na.rm = T,
-                      probs = c(0.20, 0.5, 0.80))
+                      probs = c(0.30, 0.5, 0.70))
     
     plot1 <- visreg(model_to_extract, xvar, quant_var,
                     type = "conditional",
@@ -347,23 +366,38 @@ graph_pred <- function(df_list, quant_var, model_to_extract, xvar) {
                     plot = F)
     
     plot1$fit[, quant_var] <- as.factor(plot1$fit[, quant_var])
+    plot1$fit
+}
+
+graph_pred_all <-  function(df, model1, model2, quant_var) {
     
-    ggplot(plot1$fit, aes_string(xvar, "visregFit", colour = quant_var)) +
-        geom_point() +
+    graph1 <- graph_pred(df, "pvnum", model1[[5]], "highisced")
+    xvar <- "highisced"
+    
+    g1 <- ggplot(graph1, aes_string(xvar, "visregFit", colour = quant_var)) +
+        geom_line(size = 1.5, alpha = 0.7) +
         scale_x_continuous(breaks = c(0, 1)) +
         xlab(paste0(ifelse(xvar == "highisced", "High", "Low"), "ISCED = 1")) +
         ylab("Occupation(1 - 4)") +
-        labs(title = paste0(names(df_list))) +
+        ylim(1, 4) +
+        labs(title = paste0(names(df))) +
         theme(plot.title = element_text(hjust = 0.5)) +
-        scale_color_discrete(name = "Quantile", labels = c("Bottom", "Middle", "High"))
-}
-
-graph_pred_all <-  function(df) {
+        scale_color_discrete(guide = FALSE)
     
-    graph1 <- graph_pred(df, "pvnum", mod1[[5]], "highisced")
-    graph2 <- graph_pred(df, "pvnum", mod2[[5]], ifelse(names(df) == "USA","lowmidisced2", "lowisced"))
+    xvar <- ifelse(names(df) == "USA","lowmidisced2", "lowisced")
+    graph2 <- graph_pred(df, "pvnum", model2[[5]], xvar)
     
-    ggsave(paste0(names(df)), multiplot(graph1, graph2, cols = 2), device = "png")
+    g2 <- ggplot(graph2, aes_string(xvar, "visregFit", colour = quant_var)) +
+        geom_line(size = 1.5, alpha = 0.7) +
+        scale_x_continuous(breaks = c(0, 1)) +
+        xlab(paste0(ifelse(xvar == "highisced", "High", "Low"), "ISCED = 1")) +
+        scale_y_continuous(name = NULL, limits = c(1, 4), labels = NULL) +
+        labs(title = paste0(names(df))) +
+        theme(plot.title = element_text(hjust = 0.5)) +
+        scale_color_discrete(name = "Quantile",
+                             labels = c("Bottom", "Middle", "High"))
+    
+    ggsave(paste0(names(df)), multiplot(g1, g2, cols = 2), device = "png")
 }
 
 countries3 <- svy_recode(countries3, 'isco', 'occupation_cont_upward', '1:2 = 4; 3 = 3; 4:7 = 2; 8:9 = 1')
@@ -397,7 +431,7 @@ modeling_function <- function(df_list, dv, all_firstcovariates, usa_secondcovari
                               column.labels = c("1 = Occupation continuous", "1 = Occupation continuous"),
                               column.separate = rep(length(all_firstcovariates), 2),
                               dep.var.labels.include = FALSE,
-                              order = c(1,5),
+                              order = c(1,7),
                               covariate.labels = covariate_labels, digits = digits,
                               out = paste0(names(df_list[i]), out_name),
                               add.lines = list(c(r2_1, r2_2))
@@ -407,12 +441,13 @@ modeling_function <- function(df_list, dv, all_firstcovariates, usa_secondcovari
             # that the saved graph is not in a single row of graphs but in columns +
             # the quality is really bad.
             
-            # graph_pred_all(df_list[i])
+            graph_pred_all(df_list[i], mod1, mod2, "pvnum")
             
         } else {
             
             mod1 <- models(dv, all_firstcovariates, subset(df_list[[i]], gender == 1 ))
             mod2 <- models(dv, all_secondcovariates, subset(df_list[[i]], gender == 1 ))
+            print(mod1)
             
             # Calculate R squared for each model
             r2_1 <- c("R squared:", paste0(sapply(mod1, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%"))
@@ -427,12 +462,12 @@ modeling_function <- function(df_list, dv, all_firstcovariates, usa_secondcovari
                               column.labels = c("1 = Occupation continuous", "1 = Occupation continuous"),
                               column.separate = rep(length(all_firstcovariates), 2),
                               dep.var.labels.include = FALSE,
-                              order = c(1,5),
+                              order = c(1,7),
                               covariate.labels = covariate_labels, digits = digits,
                               out = paste0(names(df_list[i]), out_name),
                               add.lines = list(c(r2_1, r2_2))
                               )
-            # graph_pred_all(df_list[i])
+            graph_pred_all(df_list[i], mod1, mod2, "pvnum")
         }
 
     }
