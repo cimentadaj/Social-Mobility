@@ -16,31 +16,32 @@ directory <- "/Users/cimentadaj/Google Drive/Gosta project/PIAAC2/Social-Mobilit
 
 walk(list.files(pattern = ".rda"), load, .GlobalEnv)
 
-ls2 <- c(ls()[grepl("*.design", ls())] , "ls2", "directory")
+ls2 <- c(ls()[grepl("*.design", ls())] , "ls2", "directory", "multiplot")
 # Remove everything that is not in ls2 (so the .design )
 rm(list= c(ls()[!ls() %in% ls2]))
 
-countries3 <- list(Austria=prgautp1.design,
-                   USA=prgusap1.design,
-                   Belgium=prgbelp1.design,
-                   Germany=prgdeup1.design,
-                   Italy=prgitap1.design,
-                   Netherlands=prgnldp1.design,
-                   Denmark=prgdnkp1.design,
-                   Sweden=prgswep1.design,
-                   France=prgfrap1.design,
-                   UK=prggbrp1.design,
-                   Spain=prgespp1.design,
-                   Canada=prgcanp1.design,
-                   Czech=prgczep1.design,
-                   Estonia=prgestp1.design,
-                   Finland=prgfinp1.design,
-                   Japan=prgjpnp1.design,
-                   Korea=prgkorp1.design,
-                   Norway=prgnorp1.design,
-                   Poland=prgpolp1.design,
-                   Russia=prgrusp1.design,
-                   Slovakia=prgsvkp1.design)
+countries3 <- list(#Austria=prgautp1.design,
+                   # USA=prgusap1.design,
+                   # Belgium=prgbelp1.design,
+                   # Germany=prgdeup1.design,
+                   # Italy=prgitap1.design,
+                   # Netherlands=prgnldp1.design,
+                   Denmark=prgdnkp1.design
+                   # Sweden=prgswep1.design,
+                   # France=prgfrap1.design,
+                   # UK=prggbrp1.design,
+                   # Spain=prgespp1.design
+                   # Canada=prgcanp1.design,
+                   # Czech=prgczep1.design,
+                   # Estonia=prgestp1.design,
+                   # Finland=prgfinp1.design,
+                   # Japan=prgjpnp1.design,
+                   # Korea=prgkorp1.design,
+                   # Norway=prgnorp1.design,
+                   # Poland=prgpolp1.design,
+                   # Russia=prgrusp1.design,
+                   # Slovakia=prgsvkp1.design
+                   )
 
 
 ### Experimental section ###
@@ -103,19 +104,18 @@ svy_recode <- function(svy_design, old_varname, new_varname, recode) {
 }
 
 digits <- 2
-all_firstcovariates <- c("highisced", "pvnum", "non.cognitive",
-                         "age_categories", "pvnum:highisced")
+all_firstcovariates <- c("highisced", "adv", "scale(pvnum)", "non.cognitive",
+                         "age_categories")
 
-usa_secondcovariates <- c("lowmidisced2", "pvnum", "non.cognitive",
-                          "age_categories", "pvnum:lowmidisced2")
+usa_secondcovariates <- c("lowmidisced2", "disadv", "scale(pvnum)","non.cognitive",
+                          "age_categories")
 
-all_secondcovariates <- c("lowisced", "pvnum", "non.cognitive",
-                          "age_categories", "pvnum:lowisced")
+all_secondcovariates <- c("lowisced", "disadv", "scale(pvnum)", "non.cognitive",
+                          "age_categories")
 
-covariate_labels <- c("High ISCED", "Low ISCED",
-                      "Cognitive", "Non.cognitive",
-                      "Age", "Cognitive * High ISCED",
-                      "Cognitive * Low ISCED")
+covariate_labels <- c("High ISCED","High ISCEd - low cogn", "Low ISCED",
+                      "Low ISCED - high cogn","Cognitive",
+                      "Non.cognitive", "Age")
 
 # ##### Data preparation for simulation #######
 # empty_data <- data.frame(col1 = rep(NA, 1000))
@@ -149,7 +149,6 @@ covariate_labels <- c("High ISCED", "Low ISCED",
 # }
 #
 # ######
-
 
 for (i in 1:length(countries3)) {
 
@@ -383,13 +382,20 @@ graph_pred_all <-  function(df, model1, model2, quant_var) {
         scale_color_discrete(name = "Quantile",
                              labels = c("Bottom", "Middle", "High"))
     
-    ggsave(paste0(names(df)), multiplot(g1, g2, cols = 2), device = "jpg")
+    ggsave(paste0(names(df), ".jpeg"), plot = multiplot(g1, g2, cols = 2))
 }
 
-countries3 <- svy_recode(countries3, 'isco', 'occupation_cont_upward', '1:2 = 4; 3 = 3; 4:7 = 2; 8:9 = 1')
-countries3 <- svy_recode(countries3, 'isco', 'occupation_cont_downward', '1:2 = 1; 3 = 2; 4:7 = 3; 8:9 = 4')
-countries3 <- svy_recode(countries3, 'isco', 'shortupper', "1:5 = 1; NA = NA; else = 0")
-countries3 <- svy_recode(countries3, 'isco', 'shortdown', "1:5 = 1; NA = NA; else = 0")
+# countries3 <- svy_recode(countries3, 'isco', 'occupation_cont_upward', '1:2 = 4; 3 = 3; 4:7 = 2; 8:9 = 1')
+# countries3 <- svy_recode(countries3, 'isco', 'occupation_cont_downward', '1:2 = 1; 3 = 2; 4:7 = 3; 8:9 = 4')
+
+
+# New occupation var
+countries3 <- svy_recode(countries3, 'isco', 'occupation_recode', '1:2 = 5; 3 = 4; 4:5 = 3; 6:7 = 2; 8:9 = 1')
+countries3 <- svy_recode(countries3, 'isco', 'occupation_recode_rev', '1:2 = 1; 3 = 2; 4:5 = 3; 6:7 = 4; 8:9 = 5')
+
+# Long distance variables
+countries3 <- svy_recode(countries3, 'occupation_recode', 'up_var', '5:4 = 4; 3 = 3; 2 = 2; 1 = 1')
+countries3 <- svy_recode(countries3, 'occupation_recode', 'down_var', '1:2 = 1; 3 = 2; 4 = 3; 5 = 4')
 
 modeling_function <- function(df_list,
                               dv,
@@ -424,9 +430,10 @@ modeling_function <- function(df_list,
                               column.labels = c("1 = Occupation continuous", "1 = Occupation continuous"),
                               column.separate = rep(length(all_firstcovariates), 2),
                               dep.var.labels.include = FALSE,
-                              order = c(1,7),
-                              covariate.labels = covariate_labels, digits = digits,
-                              out = paste0(names(df_list[i]), out_name),
+                              order = c(1,2,6,7),
+                              covariate.labels = covariate_labels,
+                              digits = digits,
+                              out = paste0(names(df_list[i]), out_name, "dummy_cogn"),
                               add.lines = list(c(r2_1, r2_2))
                               )
             
@@ -434,7 +441,7 @@ modeling_function <- function(df_list,
             # that the saved graph is not in a single row of graphs but in columns +
             # the quality is really bad.
             
-            graph_pred_all(df_list[i], mod1, mod2, "pvnum")
+            # graph_pred_all(df_list[i], mod1, mod2, "pvnum")
             
         } else {
             
@@ -454,12 +461,13 @@ modeling_function <- function(df_list,
                               column.labels = c("1 = Occupation continuous", "1 = Occupation continuous"),
                               column.separate = rep(length(all_firstcovariates), 2),
                               dep.var.labels.include = FALSE,
-                              order = c(1,7),
-                              covariate.labels = covariate_labels, digits = digits,
+                              order = c(1,2,6,7),
+                              covariate.labels = covariate_labels,
+                              digits = digits,
                               out = paste0(names(df_list[i]), out_name),
                               add.lines = list(c(r2_1, r2_2))
                               )
-            graph_pred_all(df_list[i], mod1, mod2, "pvnum")
+            # graph_pred_all(df_list[i], mod1, mod2, "pvnum")
         }
 
     }
@@ -467,8 +475,8 @@ modeling_function <- function(df_list,
 }
 
 df_list <- countries3
-dv <- "occupation_cont_upward"
-out_name <- "-PIAAC-sons-occupation_cont_upward.html"
+dv <- "up_var"
+out_name <- "-PIAAC-sons-occupation_up_var.html"
 
 modeling_function(df_list,
                   dv,
@@ -481,3 +489,16 @@ modeling_function(df_list,
                   directory)
 
 rm(list=c(ls()[!ls() %in% ls2]))
+
+# Continous dependent both for positive DV and negative DV
+# High and Low ISCED, cognitive, non-cognitive, age and constant
+
+# Long distance variable
+# High and Low ISCED, cognitive, non-cognitive, age and constant
+# Same model with and withouth the cognitive
+
+# Continous dependent both for positive DV and negative DV
+# High and Low dummy, cognitive, non-cognitive, age and constant
+# A table for each country with the high andlow coefficients and the impact factor(division by constant)
+
+
