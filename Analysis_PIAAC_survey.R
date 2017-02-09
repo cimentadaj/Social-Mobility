@@ -4,6 +4,7 @@ library(stargazer)
 library(arm)
 library(broom)
 library(tidyverse)
+library(forcats)
 library(visreg)
 library(cimentadaj)
 source("http://peterhaschke.com/Code/multiplot.R")
@@ -20,27 +21,27 @@ ls2 <- c(ls()[grepl("*.design", ls())] , "ls2", "directory", "multiplot")
 # Remove everything that is not in ls2 (so the .design )
 rm(list= c(ls()[!ls() %in% ls2]))
 
-countries3 <- list(#Austria=prgautp1.design,
-                   # USA=prgusap1.design,
-                   # Belgium=prgbelp1.design,
-                   # Germany=prgdeup1.design,
-                   # Italy=prgitap1.design,
-                   # Netherlands=prgnldp1.design,
-                   Denmark=prgdnkp1.design
-                   # Sweden=prgswep1.design,
-                   # France=prgfrap1.design,
-                   # UK=prggbrp1.design,
-                   # Spain=prgespp1.design
-                   # Canada=prgcanp1.design,
-                   # Czech=prgczep1.design,
-                   # Estonia=prgestp1.design,
-                   # Finland=prgfinp1.design,
-                   # Japan=prgjpnp1.design,
-                   # Korea=prgkorp1.design,
-                   # Norway=prgnorp1.design,
-                   # Poland=prgpolp1.design,
-                   # Russia=prgrusp1.design,
-                   # Slovakia=prgsvkp1.design
+countries3 <- list(Austria=prgautp1.design,
+                   USA=prgusap1.design,
+                   Belgium=prgbelp1.design,
+                   Germany=prgdeup1.design,
+                   Italy=prgitap1.design,
+                   Netherlands=prgnldp1.design,
+                   Denmark=prgdnkp1.design,
+                   Sweden=prgswep1.design,
+                   France=prgfrap1.design,
+                   UK=prggbrp1.design,
+                   Spain=prgespp1.design,
+                   Canada=prgcanp1.design,
+                   Czech=prgczep1.design,
+                   Estonia=prgestp1.design,
+                   Finland=prgfinp1.design,
+                   Japan=prgjpnp1.design,
+                   Korea=prgkorp1.design,
+                   Norway=prgnorp1.design,
+                   Poland=prgpolp1.design,
+                   Russia=prgrusp1.design,
+                   Slovakia=prgsvkp1.design
                    )
 
 
@@ -89,6 +90,7 @@ countries3 <- list(#Austria=prgautp1.design,
 # #                           lapply(countries3, function(x) update(x, diff=NA))), simplify = F)
 
 ###############
+
 svy_recode <- function(svy_design, old_varname, new_varname, recode) {
     
     svy_design2 <- lapply(svy_design, function(cnt) {
@@ -103,19 +105,31 @@ svy_recode <- function(svy_design, old_varname, new_varname, recode) {
     
 }
 
-digits <- 2
-all_firstcovariates <- c("highisced", "adv", "scale(pvnum)", "non.cognitive",
+# New occupation var
+countries3 <- svy_recode(countries3, 'isco', 'occupation_recode', '1:2 = 5; 3 = 4; 4:5 = 3; 6:7 = 2; 8:9 = 1')
+countries3 <- svy_recode(countries3, 'isco', 'occupation_recode_rev', '1:2 = 1; 3 = 2; 4:5 = 3; 6:7 = 4; 8:9 = 5')
+
+# Long distance variables
+countries3 <- svy_recode(countries3, 'occupation_recode', 'long_dist_upward', '5:4 = 4; 3 = 3; 2 = 2; 1 = 1')
+countries3 <- svy_recode(countries3, 'occupation_recode', 'long_dist_downward', '1:2 = 1; 3 = 2; 4 = 3; 5 = 4')
+
+##### Model Specification #####
+dv <- "occupation_recode"
+depvar_title <- "Upward-5 categories (top collapsed)"
+out_name <- "-PIAAC-sons-5categories_upward.html"
+
+all_firstcovariates <- c("highisced", "adv","non.cognitive",
                          "age_categories")
 
-usa_secondcovariates <- c("lowmidisced2", "disadv", "scale(pvnum)","non.cognitive",
+usa_secondcovariates <- c("lowmidisced2", "disadv","non.cognitive",
                           "age_categories")
 
-all_secondcovariates <- c("lowisced", "disadv", "scale(pvnum)", "non.cognitive",
+all_secondcovariates <- c("lowisced", "disadv","non.cognitive",
                           "age_categories")
 
-covariate_labels <- c("High ISCED","High ISCEd - low cogn", "Low ISCED",
-                      "Low ISCED - high cogn","Cognitive",
-                      "Non.cognitive", "Age")
+covariate_labels <- c("High ISCED","High ISCED - Low cogn", "Low ISCED - High cogn",
+                      "Low ISCED", "Non.cognitive", "Age")
+digits <- 2
 
 # ##### Data preparation for simulation #######
 # empty_data <- data.frame(col1 = rep(NA, 1000))
@@ -331,12 +345,6 @@ for (i in 1:length(countries3)) {
 # 
 # ###################
 
-# df_list <- countries3[[1]]
-# quant_var <- "pvnum"
-# model1 <- (mod1 <- models(dv, all_firstcovariates, df_list[[1]]))
-# xvar <- "highisced"
-# df <- countries3[[1]]
-
 graph_pred <- function(df_list, quant_var, model_to_extract, xvar) {
     
     df <- df_list[[1]]
@@ -385,18 +393,6 @@ graph_pred_all <-  function(df, model1, model2, quant_var) {
     ggsave(paste0(names(df), ".jpeg"), plot = multiplot(g1, g2, cols = 2))
 }
 
-# countries3 <- svy_recode(countries3, 'isco', 'occupation_cont_upward', '1:2 = 4; 3 = 3; 4:7 = 2; 8:9 = 1')
-# countries3 <- svy_recode(countries3, 'isco', 'occupation_cont_downward', '1:2 = 1; 3 = 2; 4:7 = 3; 8:9 = 4')
-
-
-# New occupation var
-countries3 <- svy_recode(countries3, 'isco', 'occupation_recode', '1:2 = 5; 3 = 4; 4:5 = 3; 6:7 = 2; 8:9 = 1')
-countries3 <- svy_recode(countries3, 'isco', 'occupation_recode_rev', '1:2 = 1; 3 = 2; 4:5 = 3; 6:7 = 4; 8:9 = 5')
-
-# Long distance variables
-countries3 <- svy_recode(countries3, 'occupation_recode', 'up_var', '5:4 = 4; 3 = 3; 2 = 2; 1 = 1')
-countries3 <- svy_recode(countries3, 'occupation_recode', 'down_var', '1:2 = 1; 3 = 2; 4 = 3; 5 = 4')
-
 modeling_function <- function(df_list,
                               dv,
                               firstcovariates,
@@ -405,89 +401,107 @@ modeling_function <- function(df_list,
                               covariate_labels,
                               digits,
                               out_name,
-                              dir_tables) {
+                              dir_tables,
+                              depvar_title) {
     
-    for (i in 1:length(df_list)) {
-        
+last_models <- rep(list(vector("list", 2)), length(df_list))
+names(last_models) <- names(df_list)
 
-        if (names(df_list[i]) == "USA") {
+for (i in 1:length(df_list)) {
+    
+    # The low isced variable for USA combines both low and mid isced
+    # Whenever the country is USA, use a different set of covariates
+    # than with all other countries.
+    if (names(df_list[i]) == "USA") {
+        secondcovariates <- usa_secondcovariates
+    } else {
+        secondcovariates <- all_secondcovariates }
+    
+    mod1 <- models(dv, all_firstcovariates, subset(df_list[[i]], gender == 1 ))
+    mod2 <- models(dv, secondcovariates, subset(df_list[[i]], gender == 1 ))
+    
+    last_models[[i]][[1]] <- tidy(mod1[[length(mod1)]])
+    last_models[[i]][[2]] <- tidy(mod2[[length(mod1)]])
             
-            mod1 <- models(dv, all_firstcovariates, subset(df_list[[i]], gender == 1 ))
-            mod2 <- models(dv, usa_secondcovariates, subset(df_list[[i]], gender == 1 ))
+    # Calculate R squared for each model
+    mod1_r <- c("R squared:", paste0(sapply(mod1, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%"))
+    mod2_r <- paste0(sapply(mod2, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%")
             
-            # Calculate R squared for each model
-            r2_1 <- c("R squared:", paste0(sapply(mod1, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%"))
-            r2_2 <- paste0(sapply(mod2, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%")
+    all.models <- append(mod1, mod2)
             
-            all.models <- append(mod1, mod2)
-
-            
-            ## Tables
-            setwd(dir_tables)
-
-            all <- stargazer2(all.models, odd.ratio = F, type = "html",
-                              title = paste0(names(df_list[i]),"PIAAC-sons-serviceclass"),
-                              column.labels = c("1 = Occupation continuous", "1 = Occupation continuous"),
-                              column.separate = rep(length(all_firstcovariates), 2),
-                              dep.var.labels.include = FALSE,
-                              order = c(1,2,6,7),
-                              covariate.labels = covariate_labels,
-                              digits = digits,
-                              out = paste0(names(df_list[i]), out_name, "dummy_cogn"),
-                              add.lines = list(c(r2_1, r2_2))
-                              )
-            
-            # Code to graph the interactions. This code works but the problem is
-            # that the saved graph is not in a single row of graphs but in columns +
-            # the quality is really bad.
-            
-            # graph_pred_all(df_list[i], mod1, mod2, "pvnum")
-            
-        } else {
-            
-            mod1 <- models(dv, all_firstcovariates, subset(df_list[[i]], gender == 1 ))
-            mod2 <- models(dv, all_secondcovariates, subset(df_list[[i]], gender == 1 ))
-            
-            # Calculate R squared for each model
-            r2_1 <- c("R squared:", paste0(sapply(mod1, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%"))
-            r2_2 <- paste0(sapply(mod2, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%")
-            
-            all.models <- append(mod1, mod2)
-            
-            ## Tables
-            setwd(dir_tables)
-            all <- stargazer2(all.models, odd.ratio = F, type = "html",
-                              title = paste0(names(df_list[i]),"PIAAC-sons-serviceclass"),
-                              column.labels = c("1 = Occupation continuous", "1 = Occupation continuous"),
-                              column.separate = rep(length(all_firstcovariates), 2),
-                              dep.var.labels.include = FALSE,
-                              order = c(1,2,6,7),
-                              covariate.labels = covariate_labels,
-                              digits = digits,
-                              out = paste0(names(df_list[i]), out_name),
-                              add.lines = list(c(r2_1, r2_2))
-                              )
-            # graph_pred_all(df_list[i], mod1, mod2, "pvnum")
-        }
-
+    ## Tables
+    setwd(dir_tables)
+    stargazer2(all.models, odd.ratio = F, type = "html",
+               title = paste0(names(df_list[i]),"-Sons"),
+               column.labels = rep(depvar_title, 2),
+               column.separate = rep(length(all_firstcovariates), 2),
+               dep.var.labels.include = FALSE,
+               order = c(1, 2, 5, 6),
+               covariate.labels = covariate_labels,
+               digits = digits,
+               out = paste0(names(df_list[i]), out_name),
+               add.lines = list(c(mod1_r, mod2_r))
+               )
+    # graph_pred_all(df_list[i], mod1, mod2, "pvnum")
     }
-    
+  last_models
 }
 
-df_list <- countries3
-dv <- "up_var"
-out_name <- "-PIAAC-sons-occupation_up_var.html"
+model_lists <-
+    modeling_function(
+        countries3,
+        dv,
+        all_firstcovariates,
+        usa_secondcovariates,
+        all_secondcovariates,
+        covariate_labels,
+        digits,
+        out_name,
+        directory,
+        depvar_title)
 
-modeling_function(df_list,
-                  dv,
-                  all_firstcovariates,
-                  usa_secondcovariates,
-                  all_secondcovariates,
-                  covariate_labels,
-                  digits,
-                  out_name,
-                  directory)
+summary_models <-
+map(1:length(model_lists), function(country) { # loop through each country in model list
+    
+    map(model_lists[[country]], function(model) { # The loop through each model inside each country
+        ind <- grep("adv|disadv", model$term)
+        new_model <- model[ind, c("term", "estimate", "p.value")]
+        cbind(new_model, impact = new_model[1, 2] / model[1, 2])
+    })
+})
 
+# cbind the two models inside each country
+merged_models <- map(summary_models, function(model) Reduce(rbind, model))
+
+merged_models <-
+    map(1:length(model_lists), function(country_index) {
+    merged_models[[country_index]]$country <- names(model_lists)[country_index]
+    merged_models[[country_index]]
+    })
+
+
+country_df <-
+    merged_models %>%
+    do.call("rbind", .) %>%
+    mutate(term = rep(c("High ISCED - low cogn", "Low ISCED - High cogn"), nrow(.) / 2),
+           p.value = round(p.value, 2),
+           estimate = round(estimate, 2),
+           impact = round(impact, 2)) %>%
+    (function(df) {row.names(df) <- 1:nrow(df); df}) %>%
+    arrange(country)
+
+country_df %>%
+    ggplot(aes(fct_reorder2(country, term, estimate, .desc = F),
+               estimate, shape = term, colour = p.value < 0.05)) +
+    geom_hline(yintercept = 0, alpha = 0.4) +
+    geom_point(size = 2) +
+    coord_flip() +
+    scale_shape_discrete(name = NULL) +
+    scale_y_continuous(breaks = seq(-2, 2, 0.20)) +
+    labs(x = NULL, y = "Estimate")
+
+ggsave("estimates_plot.png")
+    
 rm(list=c(ls()[!ls() %in% ls2]))
 
 # Continous dependent both for positive DV and negative DV
@@ -499,6 +513,6 @@ rm(list=c(ls()[!ls() %in% ls2]))
 
 # Continous dependent both for positive DV and negative DV
 # High and Low dummy, cognitive, non-cognitive, age and constant
-# A table for each country with the high andlow coefficients and the impact factor(division by constant)
+# A table for each country with the high and low coefficients and the impact factor(division by constant)
 
 
