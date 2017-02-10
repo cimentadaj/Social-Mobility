@@ -500,8 +500,31 @@ country_df %>%
     scale_y_continuous(breaks = seq(-2, 2, 0.20)) +
     labs(x = NULL, y = "Estimate")
 
-ggsave("estimates_plot.png")
-    
+ggsave("estimates_plot2.png")
+
+# Plot cognitive distribution of low ISCED and High ISCED
+
+my_countryplots <-
+    map(seq_along(countries3), function(country) {
+    countries3[[country]]$designs[[1]]$variables %>%
+    select(pvnum, highedu) %>%
+    filter(highedu %in% c(1, 3)) %>%
+    mutate(highedu = as.character(highedu)) %>%
+    ggplot(aes(x = pvnum, fill = highedu, colour = highedu)) +
+    geom_density(alpha = 0.3) +
+    scale_fill_discrete(name = "Education",
+                        labels = c("Low ISCED", "High ISCED")) +
+    scale_colour_discrete(guide = F) +
+    labs(title = names(countries3[country]))
+})
+
+names(my_countryplots) <- names(countries3)
+
+walk(seq_along(my_countryplots), function(graph) {
+    ggsave(paste0(names(my_countryplots)[graph], ".png"),
+    my_countryplots[[graph]])
+    })
+
 rm(list=c(ls()[!ls() %in% ls2]))
 
 # Continous dependent both for positive DV and negative DV
