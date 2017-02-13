@@ -21,9 +21,9 @@ ls2 <- c(ls()[grepl("*.design", ls())] , "ls2", "directory", "multiplot")
 # Remove everything that is not in ls2 (so the .design )
 rm(list= c(ls()[!ls() %in% ls2]))
 
-countries3 <- list(Austria=prgautp1.design,
+countries3 <- list(# Austria=prgautp1.design,
                    USA=prgusap1.design,
-                   Belgium=prgbelp1.design,
+                   # Belgium=prgbelp1.design,
                    Germany=prgdeup1.design,
                    Italy=prgitap1.design,
                    Netherlands=prgnldp1.design,
@@ -31,17 +31,17 @@ countries3 <- list(Austria=prgautp1.design,
                    Sweden=prgswep1.design,
                    France=prgfrap1.design,
                    UK=prggbrp1.design,
-                   Spain=prgespp1.design,
-                   Canada=prgcanp1.design,
-                   Czech=prgczep1.design,
-                   Estonia=prgestp1.design,
-                   Finland=prgfinp1.design,
-                   Japan=prgjpnp1.design,
-                   Korea=prgkorp1.design,
-                   Norway=prgnorp1.design,
-                   Poland=prgpolp1.design,
-                   Russia=prgrusp1.design,
-                   Slovakia=prgsvkp1.design
+                   Spain=prgespp1.design
+                   # Canada=prgcanp1.design,
+                   # Czech=prgczep1.design,
+                   # Estonia=prgestp1.design,
+                   #Finland=prgfinp1.design,
+                   # Japan=prgjpnp1.design,
+                   # Korea=prgkorp1.design,
+                   # Norway=prgnorp1.design,
+                   # Poland=prgpolp1.design,
+                   # Russia=prgrusp1.design,
+                   # Slovakia=prgsvkp1.design
                    )
 
 
@@ -502,28 +502,44 @@ country_df %>%
 
 ggsave("estimates_plot2.png")
 
-# Plot cognitive distribution of low ISCED and High ISCED
 
-my_countryplots <-
-    map(seq_along(countries3), function(country) {
-    countries3[[country]]$designs[[1]]$variables %>%
-    select(pvnum, highedu) %>%
-    filter(highedu %in% c(1, 3)) %>%
-    mutate(highedu = as.character(highedu)) %>%
-    ggplot(aes(x = pvnum, fill = highedu, colour = highedu)) +
-    geom_density(alpha = 0.3) +
-    scale_fill_discrete(name = "Education",
-                        labels = c("Low ISCED", "High ISCED")) +
-    scale_colour_discrete(guide = F) +
-    labs(title = names(countries3[country]))
+country_list <-
+    map(countries3, function(country) {
+    country$designs[[1]]$variables %>%
+    summarise(mean_HighISCEDlowcogn = mean(pvnum[adv == 1], na.rm = T),
+              sd_HighISCEDlowcogn = sd(pvnum[adv == 1], na.rm = T),
+              mean_LowISCEDhighcogn = mean(pvnum[disadv == 1], na.rm = T),
+              sd_LowISCEDhighcogn = sd(pvnum[disadv == 1], na.rm = T)) %>%
+    gather(key = name, value = values) %>%
+    separate(name, c("metric", "class"), sep = "_") %>%
+    select(class, everything())
 })
 
-names(my_countryplots) <- names(countries3)
+summary_cntlist <-
+    country_list %>%
+    enframe() %>%
+    unnest(value)
 
-walk(seq_along(my_countryplots), function(graph) {
-    ggsave(paste0(names(my_countryplots)[graph], ".png"),
-    my_countryplots[[graph]])
-    })
+summary_cntlist %>%
+    ggplot(aes(name, values, fill = metric)) +
+    geom_col(position = "dodge") +
+    facet_wrap(~ class) +
+    coord_flip() +
+    labs(x = "Countries", y = "Cognitive value") +
+    coord_flip()
+
+library(htmlTable)
+summary_cntlist %>%
+    spread(metric, values) %>%
+    arrange(class) %>%
+    (function(df) {
+        num_cols <- map_lgl(df, is.numeric)
+        df[num_cols] <- map_df(df[num_cols], round, 0)
+        df
+    }) %>%
+    htmlTable()
+
+ggsave("means_sds.png")
 
 rm(list=c(ls()[!ls() %in% ls2]))
 
