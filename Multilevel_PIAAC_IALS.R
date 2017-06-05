@@ -1,4 +1,3 @@
-
 library(dplyr)
 library(car)
 library(haven)
@@ -315,7 +314,8 @@ setNames(initial_year_epl, unique(epl$country)) ## here you can see the initial 
 
 ## Cite this
 ## Original link: http://stats.oecd.org/Index.aspx?datasetcode=SOCX_AGG#
-## Set all options to Public, all total and In percentage of GDP, in that order. Download as csv and name it oecdsocialspending.csv
+## Set all options to Public, all total and In percentage of GDP, in that order.
+# Download as csv and name it oecdsocialspending.csv
 oecd <- read.csv("/Users/cimentadaj/Downloads/oecdsocialspending.csv")[c("Country","Year","Value")]
 
 initial_year_welfare <- numeric()

@@ -13,6 +13,7 @@
 # use forward slashes instead of back slashes
 
 ### THIS IS WHERE YOU INTRODUCE YOUR WORKING DIRECTORY ###
+oldwd <- getwd()
 setwd("/Users/cimentadaj/Downloads/Social_mob_data")
 
 
@@ -64,6 +65,7 @@ source_url(
  #########################################################################################
  load("countrylist.Rda") # if you commented out the download section, you should have this file
  names(countrylist) <- csv.fns
+ 
  # save(countrylist, file="countrylist.Rda") # list contains all the country data frames
  # in your working directory
 
@@ -221,17 +223,71 @@ x$lowisced  <- as.numeric(x$highedu == 1)
 x$lowmidisced2 <- as.numeric(x$highedu %in% c(1,2)) # For the USA
 
 quant3 <- quantile(scale(x$PVNUM1), probs = c(0.30,0.70), na.rm=T)
+quant4 <- quantile(scale(x$non.cognitive), probs = c(0.30,0.70), na.rm=T)
+
+quant5 <- quantile(scale(x$PVNUM1), probs = c(0.50,0.70), na.rm=T)
+quant6 <- quantile(scale(x$non.cognitive), probs = c(0.50,0.70), na.rm=T)
+
+quant7 <- quantile(scale(x$PVNUM1), probs = c(0.50,0.80), na.rm=T)
+quant8 <- quantile(scale(x$non.cognitive), probs = c(0.50,0.80), na.rm=T)
+
+quant9 <- quantile(scale(x$PVNUM1), probs = c(0.40,0.80), na.rm=T)
+quant10 <- quantile(scale(x$non.cognitive), probs = c(0.40,0.80), na.rm=T)
 
 x$adv <- as.numeric(x$highedu == 3 & scale(x$PVNUM1) <= quant3[[1]])
 x$disadv <- as.numeric(x$highedu == 1 & scale(x$PVNUM1) >= quant3[[2]])
 
-return(x)
+x$highcogn <- as.numeric(scale(x$PVNUM1)) >= quant3[[2]]
+x$lowcogn <- as.numeric(scale(x$PVNUM1)) <= quant3[[1]]
+
+x$highnon.cogn <- as.numeric(scale(x$non.cognitive)) >= quant4[[2]]
+x$lownon.cogn <- as.numeric(scale(x$non.cognitive)) <= quant4[[1]]
+
+cognitive_recoder <- function(variable, q) {
+    ifelse(as.numeric(scale(x[, variable])) >= q[[2]], 1,
+    ifelse(as.numeric(scale(x[, variable])) <= q[[1]], 0, NA))
+}
+
+column_names <- c(
+    "cognitive_top30_bottom30",
+    "noncognitive_top30_bottom30",
+    "cognitive_top30_bottom50",
+    "noncognitive_top30_bottom50",
+    "cognitive_top20_bottom50",
+    "noncognitive_top20_bottom50",
+    "cognitive_top20_bottom40",
+    "noncognitive_top20_bottom40"
+)
+
+cognitive_index <- column_names[seq(1, length(column_names), 2)]
+noncognitive_index <- column_names[seq(2, length(column_names), 2)]
+
+x[cognitive_index] <- lapply(paste0("quant", 3:10), function(x) {
+    quan <- get(x)
+    cognitive_recoder("PVNUM1", quan)
+})
+
+x[noncognitive_index] <- lapply(paste0("quant", 3:10), function(x) {
+    quan <- get(x)
+    cognitive_recoder("non.cognitive", quan)
+})
+
+x
 }
 
 usable.country2 <- lapply(countrylist, data.management)
 
-rm(list=ls()[!ls() %in% c("countrylist","usable.country2", "csv.fns","csv.links","csv.page","csv.texts")])
+files_noto_delete <- c("countrylist",
+                     "usable.country2",
+                     "csv.fns",
+                     "csv.links",
+                     "csv.page",
+                     "csv.texts",
+                     "tf",
+                     "csv.fns",
+                     "oldwd")
 
+rm(list=ls()[!ls() %in% files_noto_delete])
 
 # specify which variables are plausible values (i.e. multiply-imputed)
 pvals <- c( 'pvlit' , 'pvnum' , 'pvpsl' )
@@ -365,6 +421,7 @@ rm(list=ls())
 # for each multiply-imputed, replicate-weighted complex-sample survey design object
 # that's one for each available country
 
-
+setwd(oldwd)
 # print a reminder: set the directory you just saved everything to as read-only!
 message( paste0( "all done.  you should set the directory " , getwd() , " read-only so you don't accidentally alter these tables." ) )
+
