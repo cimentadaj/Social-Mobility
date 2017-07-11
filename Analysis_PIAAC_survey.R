@@ -113,21 +113,21 @@ depvar_title <- c("Continuous service class")
 
 #####
 
-##### Modeling ####
-
-out_name <- paste0("-PIAAC-sons-", dv, ".html")
-
-covariate_labels <- c("High ISCED",
-                      "High ISCED - Low cogn",
-                      "Low ISCED",
-                      "Low ISCED - High cogn",
-                      "Cognitive",
-                      "Non-cognitive",
-                      "Age categories",
-                      "Postwelfare",
-                      "Dad immigrant")
-digits <- 2
-
+# ##### Modeling ####
+# 
+# out_name <- paste0("-PIAAC-sons-", dv, ".html")
+# 
+# covariate_labels <- c("High ISCED",
+#                       "High ISCED - Low cogn",
+#                       "Low ISCED",
+#                       "Low ISCED - High cogn",
+#                       "Cognitive",
+#                       "Non-cognitive",
+#                       "Age categories",
+#                       "Postwelfare",
+#                       "Dad immigrant")
+# digits <- 2
+# 
 # Function tests the logical statement and if it doesn't equal T, it gives the error_message.
 stop_message <- function(logical_statement, error_message) {
     if(logical_statement) stop(error_message, call. = F)
@@ -135,109 +135,109 @@ stop_message <- function(logical_statement, error_message) {
 warning_message <- function(logical_statement, error_message) {
     if(logical_statement) warning(error_message, call. = F)
 }
-
-# Function does all the modeling. It checks the DV is valid,
-# whether it's a dummy or not (to produce odd ratios or not)
-# and loops through each country and does the modeling.
-
-modeling_function <- function(df_list,
-                              dv,
-                              firstcovariates,
-                              usa_secondcovariates,
-                              secondcovariates,
-                              age_subset,
-                              family_models = "gaussian",
-                              covariate_labels,
-                              digits,
-                              out_name,
-                              dir_tables,
-                              depvar_title) {
-    
-    stop_message(length(df_list) < 1, "df_list is empty")
-    last_models <- rep(list(vector("list", 2)), length(df_list))
-    names(last_models) <- names(df_list)
-    
-    # Odd ratios or not?
-    # This should be done to identify whether DV is a dummy or not
-    dv_length_countries <-
-        map_dbl(df_list, function(.x) 
-            unique(.x$designs[[1]]$variables[, dv]) %>%
-            na.omit() %>%
-            length())
-
-    # If the number of countries equals 1, bring the only length,
-    # if not, sample from all countries
-    len <- ifelse(length(dv_length_countries) == 1,
-                  dv_length_countries,
-                  sample(dv_length_countries, 1))
-    
-    stop_message(!all(len == dv_length_countries),
-                 "The length of the dependent variable differs by country")
-    stop_message(!(len >= 2),
-                 "DV has length < 2")
-    
-    odd.ratio <- ifelse(family_models == "gaussian", F,
-                        unname(ifelse(sample(dv_length_countries, 1) == 2, T, F)))
-
-for (i in 1:length(df_list)) {
-    
-    # The low isced variable for USA combines both low and mid isced
-    # Whenever the country is USA, use a different set of covariates
-    # than with all other countries.
-    if (names(df_list[i]) == "USA") {
-        secondcovariates <- usa_secondcovariates
-    } else {
-        secondcovariates <- all_secondcovariates }
-    
-    mod1 <- models(dv, all_firstcovariates,
-                   subset(df_list[[i]], gender == 1 & age_categories %in% age_subset),
-                   family_models = family_models)
-    mod2 <- models(dv, secondcovariates,
-                   subset(df_list[[i]], gender == 1 & age_categories %in% age_subset),
-                   family_models = family_models)
-    
-    last_models[[i]][[1]] <- mod1[[length(mod1)]] # length(mod1) to only get the last (complete model)
-    last_models[[i]][[2]] <- mod2[[length(mod1)]]
-            
-    # Calculate R squared for each model
-    mod1_r <- c("R squared:", paste0(sapply(mod1, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%"))
-    mod2_r <- paste0(sapply(mod2, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%")
-            
-    all.models <- append(mod1, mod2)
-            
-    ## Tables
-    stargazer2(all.models, odd.ratio, type = "html",
-               title = paste0(names(df_list[i])),
-               column.labels = rep(depvar_title, 2),
-               column.separate = rep(length(all_firstcovariates), 2),
-               dep.var.labels.include = FALSE,
-               order = c(1, 2, 8, 9),
-               covariate.labels = covariate_labels,
-               digits = digits,
-               out = file.path(dir_tables, paste0(names(df_list[i]), out_name)),
-               add.lines = list(c(mod1_r, mod2_r))
-               )
-    }
-  last_models
-}
-
-family_models <- "gaussian"
-
-model_lists <-
-    modeling_function(
-        df_list = countries3,
-        dv = dv,
-        firstcovariates = all_firstcovariates,
-        usa_secondcovariates = usa_secondcovariates,
-        secondcovariates = all_secondcovariates,
-        age_subset = age,
-        family_models = family_models,
-        covariate_labels = covariate_labels,
-        digits = digits,
-        out_name = out_name,
-        dir_tables = directory,
-        depvar_title = depvar_title)
-#####
+# 
+# # Function does all the modeling. It checks the DV is valid,
+# # whether it's a dummy or not (to produce odd ratios or not)
+# # and loops through each country and does the modeling.
+# 
+# modeling_function <- function(df_list,
+#                               dv,
+#                               firstcovariates,
+#                               usa_secondcovariates,
+#                               secondcovariates,
+#                               age_subset,
+#                               family_models = "gaussian",
+#                               covariate_labels,
+#                               digits,
+#                               out_name,
+#                               dir_tables,
+#                               depvar_title) {
+#     
+#     stop_message(length(df_list) < 1, "df_list is empty")
+#     last_models <- rep(list(vector("list", 2)), length(df_list))
+#     names(last_models) <- names(df_list)
+#     
+#     # Odd ratios or not?
+#     # This should be done to identify whether DV is a dummy or not
+#     dv_length_countries <-
+#         map_dbl(df_list, function(.x) 
+#             unique(.x$designs[[1]]$variables[, dv]) %>%
+#             na.omit() %>%
+#             length())
+# 
+#     # If the number of countries equals 1, bring the only length,
+#     # if not, sample from all countries
+#     len <- ifelse(length(dv_length_countries) == 1,
+#                   dv_length_countries,
+#                   sample(dv_length_countries, 1))
+#     
+#     stop_message(!all(len == dv_length_countries),
+#                  "The length of the dependent variable differs by country")
+#     stop_message(!(len >= 2),
+#                  "DV has length < 2")
+#     
+#     odd.ratio <- ifelse(family_models == "gaussian", F,
+#                         unname(ifelse(sample(dv_length_countries, 1) == 2, T, F)))
+# 
+# for (i in 1:length(df_list)) {
+#     
+#     # The low isced variable for USA combines both low and mid isced
+#     # Whenever the country is USA, use a different set of covariates
+#     # than with all other countries.
+#     if (names(df_list[i]) == "USA") {
+#         secondcovariates <- usa_secondcovariates
+#     } else {
+#         secondcovariates <- all_secondcovariates }
+#     
+#     mod1 <- models(dv, all_firstcovariates,
+#                    subset(df_list[[i]], gender == 1 & age_categories %in% age_subset),
+#                    family_models = family_models)
+#     mod2 <- models(dv, secondcovariates,
+#                    subset(df_list[[i]], gender == 1 & age_categories %in% age_subset),
+#                    family_models = family_models)
+#     
+#     last_models[[i]][[1]] <- mod1[[length(mod1)]] # length(mod1) to only get the last (complete model)
+#     last_models[[i]][[2]] <- mod2[[length(mod1)]]
+#             
+#     # Calculate R squared for each model
+#     mod1_r <- c("R squared:", paste0(sapply(mod1, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%"))
+#     mod2_r <- paste0(sapply(mod2, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%")
+#             
+#     all.models <- append(mod1, mod2)
+#             
+#     ## Tables
+#     stargazer2(all.models, odd.ratio, type = "html",
+#                title = paste0(names(df_list[i])),
+#                column.labels = rep(depvar_title, 2),
+#                column.separate = rep(length(all_firstcovariates), 2),
+#                dep.var.labels.include = FALSE,
+#                order = c(1, 2, 8, 9),
+#                covariate.labels = covariate_labels,
+#                digits = digits,
+#                out = file.path(dir_tables, paste0(names(df_list[i]), out_name)),
+#                add.lines = list(c(mod1_r, mod2_r))
+#                )
+#     }
+#   last_models
+# }
+# 
+# family_models <- "gaussian"
+# 
+# model_lists <-
+#     modeling_function(
+#         df_list = countries3,
+#         dv = dv,
+#         firstcovariates = all_firstcovariates,
+#         usa_secondcovariates = usa_secondcovariates,
+#         secondcovariates = all_secondcovariates,
+#         age_subset = age,
+#         family_models = family_models,
+#         covariate_labels = covariate_labels,
+#         digits = digits,
+#         out_name = out_name,
+#         dir_tables = directory,
+#         depvar_title = depvar_title)
+# #####
 
 ##### Descriptives #####
 
@@ -283,6 +283,89 @@ FlexTable(descriptive_table) %>%
                  first = TRUE)
 #####
 
+##### Preparing second modeling #####
+# I will use all of the variables from the first models from above.
+dv <- "lowerclass"
+standard_covariates <- c("scale(pvnum)",
+                         "non.cognitive")
+
+all_firstcovariates <- c("highisced", "adv", standard_covariates)
+all_secondcovariates <- c("lowisced", "disadv", standard_covariates)
+usa_secondcovariates <- c("lowmidisced2", all_secondcovariates[-1])
+
+cohort <- "young_cohort"
+
+random <- "(1 | country)"
+random_two <- "(1 + highisced | country)"
+random_three <- "(1 + lowisced | country)"
+
+unique_second <- setdiff(all_secondcovariates, all_firstcovariates)
+
+vars_subset <-
+    gsub("scale|\\(|\\)", "", c(unique_second, all_firstcovariates)) %>%
+    `c`("highedu", "country", "cohort", "gender", "postwelfare", "age_categories",
+        dv)
+
+# Loop through country datasets and names, create a column with that country's name
+# and select all variables in vars_subset (which includes the country var)
+cnts <- map2(countries3, names(countries3), function(data, names) {
+    data$designs[[1]]$variables %>%
+        mutate(country = names,
+               cohort = ifelse(age_categories <= 5, "post", "pre")) %>%
+        select_(.dots = map(vars_subset, as.name))
+})
+
+cnt_bind <- Reduce(rbind, cnts)
+
+# Service class
+cnt_countrylevel <- map(countries3, ~ {
+    df <- .x$designs[[1]]$variables
+    
+    perc_industry <-
+        df %>%
+        mutate(isco_short = recode(isco, `2` = 1, `8` = 9)) %>%
+        filter(isco_short %in% c(1, 9)) %>%
+        count(postwelfare, isco_short) %>%
+        filter(!is.na(isco_short)) %>%
+        mutate(
+            perc = round(n / sum(n) * 100, 1),
+            type_industry = rep(c("perc_service", "perc_manual"), 2)
+        ) %>%
+        dplyr::select(-n, -isco_short) %>%
+        spread(type_industry, perc)
+    
+    perc_industry
+})
+
+cnt_bind <-
+    cnt_countrylevel %>%
+    enframe() %>%
+    unnest(value) %>%
+    right_join(cnt_bind, by = c("name" = "country", "postwelfare")) %>%
+    rename(country = name)
+#####
+
+##### Cognitive distribution graphs #####
+cnt_bind %>%
+    filter(highedu %in% c(1, 3)) %>%
+    ggplot(aes(pvnum, fill = as.character(highedu))) +
+    geom_density(alpha = 0.3) +
+    labs(x = "Cognitive distribution", y = "Density") +
+    scale_fill_discrete(name = "Social class",
+                        labels = c("Low ISCED", "Higher ISCED")) +
+    scale_y_continuous(labels = round(seq(0, 0.0075, 0.0025), 3),
+                       breaks = round(seq(0, 0.0075, 0.0025), 3)) +
+    theme_minimal()
+
+cnt_bind %>%
+    filter(highedu %in% c(1, 3)) %>%
+    ggplot(aes(non.cognitive, fill = as.character(highedu))) +
+    geom_density(alpha = 0.3) +
+    labs(x = "Non-cognitive distribution", y = "Density") +
+    scale_fill_discrete(name = "Social class",
+                        labels = c("Low ISCED", "Higher ISCED")) +
+    theme_minimal()
+#####
 
 # To produce regressions for cognitive and non cognitive against
 # age variable for different categories.
@@ -370,6 +453,7 @@ ability_list <-
                 depvar_title = depvar_title)
     })
 
+###### confirm if you can delete 
 # summary_models <-
 # map(1:length(model_lists), function(country) { # loop through each country in model list
 #     
@@ -411,101 +495,10 @@ ability_list <-
 #     labs(x = NULL, y = "Estimate")
 # 
 # ggsave("estimates_plot2.png")
+#####
 
-##### Variables #####
-# I will use all of the variables from the first models from above.
-cohort <- "young_cohort"
 
-random <- "(1 | country)"
-random_two <- "(1 + highisced | country)"
-random_three <- "(1 + lowisced | country)"
-
-unique_second <- setdiff(all_secondcovariates, all_firstcovariates)
-
-vars_subset <-
-    gsub("scale|\\(|\\)", "", c(unique_second, all_firstcovariates)) %>%
-    `c`("highedu", "country", "cohort", "gender", "postwelfare", dv)
-
-# Loop through country datasets and names, create a column with that country's name
-# and select all variables in vars_subset (which includes the country var)
-cnts <- map2(countries3, names(countries3), function(data, names) {
-    data$designs[[1]]$variables %>%
-        mutate(country = names,
-               cohort = ifelse(age_categories <= 5, "post", "pre")) %>%
-        select_(.dots = map(vars_subset, as.name))
-})
-
-cnt_bind <- Reduce(rbind, cnts)
-
-# Service class
-cnt_countrylevel <- map(countries3, ~ {
-    df <- .x$designs[[1]]$variables
-    
-    perc_industry <-
-        df %>%
-        mutate(isco_short = recode(isco, `2` = 1, `8` = 9)) %>%
-        filter(isco_short %in% c(1, 9)) %>%
-        count(postwelfare, isco_short) %>%
-        filter(!is.na(isco_short)) %>%
-        mutate(
-            perc = round(n / sum(n) * 100, 1),
-            type_industry = rep(c("perc_service", "perc_manual"), 2)
-        ) %>%
-        dplyr::select(-n, -isco_short) %>%
-        spread(type_industry, perc)
-    
-    perc_industry
-})
-
-cnt_bind <-
-    cnt_countrylevel %>%
-    enframe() %>%
-    unnest(value) %>%
-    right_join(cnt_bind, by = c("name" = "country", "postwelfare")) %>%
-    rename(country = name)
-
-# ##### Cognitive distribution graphs #####
-# cogn <-
-#     cnt_bind %>%
-#     filter(highedu %in% c(1, 3)) %>%
-#     ggplot(aes(pvnum, fill = as.character(highedu))) +
-#     geom_density(alpha = 0.3) +
-#     labs(x = "Cognitive distribution", y = "Density") +
-#     scale_fill_discrete(name = "Social class",
-#                         labels = c("Low ISCED", "Higher ISCED")) +
-#     scale_y_continuous(labels = round(seq(0, 0.0075, 0.0025), 3),
-#                        breaks = round(seq(0, 0.0075, 0.0025), 3)) +
-#     theme_minimal()
-# 
-# non_cogn <-
-#     cnt_bind %>%
-#     filter(highedu %in% c(1, 3)) %>%
-#     ggplot(aes(non.cognitive, fill = as.character(highedu))) +
-#     geom_density(alpha = 0.3) +
-#     labs(x = "Non-cognitive distribution", y = "Density") +
-#     scale_fill_discrete(name = "Social class",
-#                         labels = c("Low ISCED", "Higher ISCED")) +
-#     theme_minimal()
-# #####
-
-## Section on multilevel modeling
-
-# Adding model specific country-variables
-# all_firstcovariates <- c(all_firstcovariates, "highedu_enrollment")
-# all_secondcovariates <- c(all_secondcovariates, "lowedu_enrollment")
-
-# Loop through each sets of covariates and create a formula containing the DV,
-# the covariates and the random component.
-# covariate_list <-
-#     map(list(all_firstcovariates, all_secondcovariates), function(covariates) {
-#         
-#     base_model <- paste(covariates, collapse = " + ")
-#     extended_model <- paste(base_model, country_vars, sep = " + ")
-#     all_models <- c(base_model, extended_model)
-#         
-#     paste(dv, " ~ ", paste(all_models, random, sep = " + ")) %>%
-#     map(as.formula)
-# })
+##### Table 1 multilevel ####
 
 rhs_sequence <- function(iv) {
     stop_message(length(iv) < 1, "iv must have length >= 1")
@@ -540,19 +533,11 @@ form_random_effects <- function(dv, sequence, random_effects, fixed) {
     map(random_formulas, as.formula)
 }
 
-# Turn that nested list into a flat list
-# covariate_list <- c(covariate_list, recursive = T)
-
-# covariate_list <- c(static_formula(dv, all_firstcovariates, random),
-#                     static_formula(dv, c(all_firstcovariates, "highedu_enrollment"), random),
-#                     static_formula(dv, all_secondcovariates, random),
-#                     static_formula(dv, c(all_secondcovariates, "lowedu_enrollment"), random))
-
 covariate_list <- list(static_formula(dv, all_firstcovariates, random_two),
                        static_formula(dv, all_secondcovariates, random_three))
 
 # If the DV is not binary, run lmer, if it is, then use glmer
-type_model <- ifelse(length(na.omit(unique(cnt_bind[, dv]))) > 2, "lmer", "glmer")
+type_model <- ifelse(length(na.omit(unique(cnt_bind[[dv]]))) > 2, "lmer", "glmer")
 
 multi_fun <-
     switch(type_model,
@@ -573,7 +558,6 @@ models_multilevel <- map(covariate_list, function(formula) {
               data = cnt_bind,
               subset = "gender == 1 & age_categories %in% age")
 })
-
 
 stargazer3 <- function(model, odd.ratio = FALSE, ...) {
     
@@ -603,6 +587,11 @@ stargazer3 <- function(model, odd.ratio = FALSE, ...) {
     
 }
 
+stargazer3(models_multilevel, odd.ratio = TRUE, type = 'text')
+#####
+# Repeat this for both dependent variables ( in section preparing second modeling change
+# dv's)
+
 # Remember to finish the stargazer3 in your package (and do it as object-oriented programming).
 stargazer_linear <- function(model, covariate_labels, depvar_title, directory, cohort) {
     stargazer(model,
@@ -627,28 +616,27 @@ stargazer_binomial <- function(model, covariate_labels, depvar_title, directory,
               covariate.labels = covariate_labels,
               dep.var.labels = depvar_title,
               out = file.path(directory, paste0(dv, "_", cohort, "_multilevel_tables.html")))
-    
 }
 
 stargazer_linear(models_multilevel, covariate_labels, depvar_title, directory, cohort)
-# stargazer_binomial(models_multilevel, covariate_labels, depvar_title, directory, cohort)
-# 
-# countryvars_formula_low <- form_random_effects(dv, country_vars, random, all_secondcovariates)
-# countryvars_formula_high <- form_random_effects(dv, country_vars, random, all_firstcovariates)
-# 
-# all_models <- c(countryvars_formula_high, countryvars_formula_low)
-# 
-# models <- map(all_models, ~ glmer(.x, subset = age_categories %in% age, data = cnt_bind,
-#                                   family = "binomial"))
-# 
-# 
-# stargazer_sequence2(models,
-#                    c(covariate_labels,"Tracking",
-#                      "% enrollment Lowedu mom",
-#                      "% enrollment highedu mom"),
-#                    depvar_title,
-#                    directory,
-#                    cohort)
+stargazer_binomial(models_multilevel, covariate_labels, depvar_title, directory, cohort)
+
+countryvars_formula_low <- form_random_effects(dv, country_vars, random, all_secondcovariates)
+countryvars_formula_high <- form_random_effects(dv, country_vars, random, all_firstcovariates)
+
+all_models <- c(countryvars_formula_high, countryvars_formula_low)
+
+models <- map(all_models, ~ glmer(.x, subset = age_categories %in% age, data = cnt_bind,
+                                  family = "binomial"))
+
+
+stargazer_sequence2(models,
+                   c(covariate_labels,"Tracking",
+                     "% enrollment Lowedu mom",
+                     "% enrollment highedu mom"),
+                   depvar_title,
+                   directory,
+                   cohort)
 
 term_grabber <- function(model, term) {
     df <- tidy(model) 
