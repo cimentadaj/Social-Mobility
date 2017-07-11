@@ -123,14 +123,12 @@ countries3 <- svy_recode(countries3, 'isco', 'lowerclass', '3:9 = 1; 1:2 = 0; el
 countries3 <- svy_recode(countries3, 'age_categories', 'postwelfare', '1:5 = 1; 6:10 = 0; else = NA')
 
 ##### Model Specification #####
-standard_covariates <- c("scale(pvnum)", "non.cognitive", "age_categories")
+standard_covariates <- c("scale(pvnum)", "non.cognitive", "age_categories", "postwelfare", "dadimmigrant")
 
 all_firstcovariates <- c("highisced", "adv", standard_covariates)
 all_secondcovariates <- c("lowisced", "disadv", standard_covariates)
 usa_secondcovariates <- c("lowmidisced2", all_secondcovariates[-1])
 age <- 1:10
-dv <- "long_dist_upward"
-
 
 dep <- c("long_dist_downward")
 title_dep <- c("Continuous working class")
@@ -145,7 +143,7 @@ age <- 1:10
 
 covariate_labels <- c("High ISCED","High ISCED - Low cogn", "Low ISCED",
                       "Low ISCED - High cogn", "Cognitive", "Non-cognitive",
-                      "Postwelfare", "Age categories")
+                      "Age categories", "Postwelfare", "Dad immigrant")
 digits <- 2
 
 # ##### Data preparation for simulation #######
@@ -343,7 +341,7 @@ for (i in 1:length(df_list)) {
                column.labels = rep(depvar_title, 2),
                column.separate = rep(length(all_firstcovariates), 2),
                dep.var.labels.include = FALSE,
-               order = c(1, 2, 7, 8),
+               order = c(1, 2, 8, 9),
                covariate.labels = covariate_labels,
                digits = digits,
                out = file.path(dir_tables, paste0(names(df_list[i]), out_name)),
@@ -371,6 +369,44 @@ model_lists <-
         depvar_title = depvar_title)
 }
 
+# Descriptives
+
+descriptive_table <-
+    countries3 %>%
+    enframe(name = "Country")
+
+descriptive_table$descriptive <-
+    map(descriptive_table$value, function(.x) {
+    .x$designs[[1]]$variables %>%
+        group_by(postwelfare) %>%
+        summarize(`Sample size` = n(),
+                  `% High ISCED` = mean(highisced, na.rm = T) * 100,
+                  `% Low ISCED` = mean(lowisced, na.rm = T) * 100,
+                  `% Dad immigrant` = mean(dadimmigrant, na.rm = T) * 100,
+                  `Avg numeracy skills` = mean(pvnum, na.rm = T)) %>%
+        map_if(is_numeric, round, 0) %>%
+        as_tibble() %>%
+        gather(terms, vals, -postwelfare) %>%
+        unite(postwelfare, postwelfare, terms , sep = "_") %>%
+        spread(postwelfare, vals)
+})
+
+descriptive_table <-
+    descriptive_table %>%
+    select(-value) %>%
+    unnest(descriptive) %>%
+    setNames(c("Country",
+               rep(c("% Dad immigrant",
+                     "% High ISCED", "% Low ISCED", "Avg numeracy skills", "Sample size"), 2)))
+
+dyn.load('/Library/Java/JavaVirtualMachines/jdk1.8.0_131.jdk/Contents/Home/jre/lib/server/libjvm.dylib')
+library(ReporteRs)
+
+FlexTable(descriptive_table) %>%
+    addHeaderRow(text.properties = textBold(),
+                 value = c("", "Pre-welfare cohort", "Post-welfare cohort"),
+                 colspan = c(1, 5, 5),
+                 first = TRUE)
 
 # To produce regressions for cognitive and non cognitive against
 # age variable for different categories.

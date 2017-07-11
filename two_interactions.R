@@ -127,11 +127,11 @@ dv <- c("long_dist_upward", "long_dist_downward")
 title_dep <- c("Continuous upward", "Continuous downward")
 
 countrymod_list <-
-    map(seq_along(dep), function(index) {
+    map(seq_along(dv), function(index) {
     
     dv <- dv[index]
     depvar_title <- title_dep[index]
-    out_name <- paste0("-PIAAC-sons-", dep[index], "_prewelfare.html")
+    out_name <- paste0("-PIAAC-sons-", dv[index], "_prewelfare.html")
     age <- 1:10
     # 6:10 is prewelfare
     # 1:5 is postwelfare
@@ -338,17 +338,17 @@ countrymod_list <-
             all.models <- append(mod1, mod2)
             
             ## Tables
-            stargazer2(all.models, odd.ratio, type = "html",
-                       title = paste0(names(df_list[i])),
-                       column.labels = rep(depvar_title, 2),
-                       column.separate = rep(length(all_firstcovariates), 2),
-                       dep.var.labels.include = FALSE,
-                       order = c(1, 2, 6, 7),
-                       covariate.labels = covariate_labels,
-                       digits = digits,
-                       out = file.path(dir_tables, paste0(names(df_list[i]), out_name)),
-                       add.lines = list(c(mod1_r, mod2_r))
-            )
+            # stargazer2(all.models, odd.ratio, type = "html",
+            #            title = paste0(names(df_list[i])),
+            #            column.labels = rep(depvar_title, 2),
+            #            column.separate = rep(length(all_firstcovariates), 2),
+            #            dep.var.labels.include = FALSE,
+            #            order = c(1, 2, 6, 7),
+            #            covariate.labels = covariate_labels,
+            #            digits = digits,
+            #            out = file.path(dir_tables, paste0(names(df_list[i]), out_name)),
+            #            add.lines = list(c(mod1_r, mod2_r))
+            # )
             # graph_pred_all(df_list[i], mod1, mod2, "pvnum")
         }
         last_models
@@ -392,16 +392,16 @@ countrymod_list <-
 # 
 # df_for_cluster <-
 #     summarized_df %>%
-#     filter(grepl("isced$|pvnum|^non", term)) %>%
+#     filter(grepl("isced$|pvnum|^non", term), dv == "downward") %>%
 #     unite(term, term, dv, name, sep = "_") %>%
 #     spread(term, estimate)
 # 
 # cluster_matrix <-
-#     df_for_cluster %>%    
+#     df_for_cluster %>%
 #     select(-country) %>%
 #     as.matrix()
 # 
-# cnt_cluster <- 
+# cnt_cluster <-
 #     cluster_matrix %>%
 #     kmeans(centers = 5, nstart = 30)
 # 

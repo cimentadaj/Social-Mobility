@@ -1,17 +1,14 @@
-library(survey)
 library(car)
-library(stargazer)
-library(arm)
 library(broom)
 library(tidyverse)
 library(forcats)
-library(visreg)
 library(cimentadaj)
 library(ggthemes)
 library(lme4)
 library(MuMIn)
 library(GGally)
 library(gridExtra)
+library(artyfarty)
 
 ###### THIS IS WHERE YOU CHANGE YOUR WORKING DIRECTORY ##############
 old_dir <- getwd()
@@ -67,56 +64,18 @@ svy_recode <- function(svy_design, old_varname, new_varname, recode) {
     
 }
 
-# New occupation var
-countries3 <- svy_recode(countries3, 'isco', 'occupation_recode', '1:2 = 5; 3 = 4; 4:5 = 3; 6:7 = 2; 8:9 = 1')
-countries3 <- svy_recode(countries3, 'isco', 'occupation_recode_rev', '1:2 = 1; 3 = 2; 4:5 = 3; 6:7 = 4; 8:9 = 5')
-
-# Long distance variables
-countries3 <- svy_recode(countries3, 'occupation_recode', 'long_dist_upward', '5:4 = 4; 3 = 3; 2 = 2; 1 = 1')
-countries3 <- svy_recode(countries3, 'occupation_recode', 'long_dist_downward', '1:2 = 4; 3 = 3; 4 = 2; 5 = 1')
-
-countries3 <- svy_recode(countries3, 'isco', 'lowerclass', '3:9 = 1; 1:2 = 0; else = NA')
 countries3 <- svy_recode(countries3, 'isco', 'lowerclass_extreme', '8:9 = 1; 1:2 = 0; else = NA')
 countries3 <- svy_recode(countries3, 'isco', 'serviceclass_extreme', '8:9 = 0; 1:2 = 1; else = NA')
-
 countries3 <- svy_recode(countries3, 'age_categories', 'postwelfare', '1:5 = 1; 6:10 = 0; else = NA')
 
 ##### Model Specification #####
 dv <- "serviceclass_extreme"
 age <- 1:10
-# 6:10 is prewelfare
-# 1:5 is postwelfare
+cohort <- "fullcohort"
 
-age <- 1:10; cohort <- "fullcohort"
-
-standard_covariates <- c("highcogn",
-                         "highnon.cogn",
-                         "lowcogn",
-                         "lownon.cogn",
-                         "pvnum",
-                         "non.cognitive",
-                         "age_categories",
-                         "postwelfare",
-                         "gender",
-                         "highisced",
-                         "lowisced",
-                         "spfwt0",
-                         "lowerclass_extreme",
-                         "serviceclass_extreme")
-
-all_firstcovariates <- standard_covariates
-
-all_secondcovariates <- standard_covariates
-
+all_firstcovariates <- c("pvnum", "non.cognitive", "age_categories", "postwelfare")
+vars_to_subset <- c(all_firstcovariates, "gender", "lowisced", "highisced")
 digits <- 2
-
-# All variables done
-# Deleting any scale transformation
-# Adding highedu variables for the next two plots
-# Adding country variable that I create in the loop
-# Adding cohort to identify pre/post welfare
-
-vars_subset <- standard_covariates
 
 # Loop through country datasets and names, create a column with that country's name
 # and select all variables in vars_subset (which includes the country var)
@@ -124,35 +83,29 @@ cnts <- map2(countries3, names(countries3), function(data, names) {
     data$designs[[1]]$variables %>%
         mutate(country = names,
                cohort = ifelse(age_categories <= 5, "post", "pre")) %>%
-        select_(.dots = map(c(vars_subset, dv, "country"), as.name))
+        select_(.dots = map(c(vars_to_subset, dv, "country"), as.name))
 })
 
 cnt_bind <- Reduce(rbind, cnts)
 cnt_bind$pvnum <- scale(cnt_bind$pvnum)
 attributes(cnt_bind$pvnum) <- NULL
 
-# multilevel models
-
-standard_covariates <- c("pvnum", "non.cognitive", "age_categories", "postwelfare")
-    
-all_firstcovariates <- standard_covariates
-
 rhs_sequence <- function(iv) {
-        stop_message(length(iv) < 1, "iv must have length >= 1")
-        warning_message(any(is.na(iv)), "NA's found in iv. Removing them.")
-        
-        non_na_iv <- na.omit(iv)
-        model_combination <- map(seq_along(non_na_iv), ~ seq(1:.x))
-        rhs <- map(model_combination, ~ paste(non_na_iv[.x], collapse = " + "))
-        
-        rhs
-    }
-static_formula <- function(dv, rhs) {
-        new_dv <- paste0(dv, " ~ 1")
-        rhs <- paste0(c(rhs), collapse = " + ")
-        as.formula(paste0(c(new_dv, rhs), collapse = " + "))
-    }
+    stop_message(length(iv) < 1, "iv must have length >= 1")
+    warning_message(any(is.na(iv)), "NA's found in iv. Removing them.")
     
+    non_na_iv <- na.omit(iv)
+    model_combination <- map(seq_along(non_na_iv), ~ seq(1:.x))
+    rhs <- map(model_combination, ~ paste(non_na_iv[.x], collapse = " + "))
+    
+    rhs
+}
+static_formula <- function(dv, rhs) {
+    new_dv <- paste0(dv, " ~ 1")
+    rhs <- paste0(c(rhs), collapse = " + ")
+    as.formula(paste0(c(new_dv, rhs), collapse = " + "))
+}
+
 covariate_list <-
     map(list(all_firstcovariates), function(iv) static_formula(dv, iv)) %>%
     `c`(recursive = T)
@@ -167,35 +120,35 @@ country_highisced_split <- split(cnt_highisced, cnt_highisced$country)
 
 models_low <-
     map(country_lowisced_split, ~ {
-    glm(formula = covariate_list[[1]],
-        data = .x,
-        # weights = .x$spfwt0,
-        family = "binomial")
-})
+        glm(formula = covariate_list[[1]],
+            data = .x,
+            # weights = .x$spfwt0, # weights not working for some reason
+            family = "binomial")
+    })
 
 models_high <-
     map(country_highisced_split, ~ {
-    glm(formula = covariate_list[[1]],
-        data = .x,
-        # weights = .x$spfwt0,
-        family = "binomial")
-})
+        glm(formula = covariate_list[[1]],
+            data = .x,
+            # weights = .x$spfwt0, # weights not working for some reason
+            family = "binomial")
+    })
 
 quantile_est <- function(df) {
-
+    
     country_list <- map(df, ~ {
         cogn_quantile <- Hmisc::wtd.quantile(.x$pvnum,
-                                                 weights = .x$spfwt0,
-                                                 probs = seq(0.01, 1, 0.01))
+                                             weights = .x$spfwt0,
+                                             probs = seq(0.01, 1, 0.01))
         
         noncogn_quantile <- Hmisc::wtd.quantile(.x$non.cognitive,
-                                                    weights = .x$spfwt0,
-                                                    probs = seq(1, 0.01, -0.01))
+                                                weights = .x$spfwt0,
+                                                probs = seq(1, 0.01, -0.01))
         
-            isced <- tibble(pvnum = cogn_quantile,
-                            non.cognitive = noncogn_quantile,
-                            age_categories = modelr::typical(.x$age_categories),
-                            postwelfare = modelr::typical(.x$postwelfare))
+        isced <- tibble(pvnum = cogn_quantile,
+                        non.cognitive = noncogn_quantile,
+                        age_categories = modelr::typical(.x$age_categories),
+                        postwelfare = modelr::typical(.x$postwelfare))
         isced
     })
     country_list
@@ -206,9 +159,9 @@ low_isced <- quantile_est(country_lowisced_split)
 
 high_isced <-
     map2(high_isced, models_high, ~ {
-    .x$pred <- predict(.y, newdata = .x, type = "response")
-    .x
-})
+        .x$pred <- predict(.y, newdata = .x, type = "response")
+        .x
+    })
 
 low_isced <-
     map2(low_isced, models_low, ~ {
@@ -253,7 +206,7 @@ low_isced <-
 
 prob_isced_data <- bind_rows(high_isced, low_isced)
 
-da <-
+prob_isced_data <-
     prob_isced_data %>%
     select(-age_categories, -postwelfare) %>%
     mutate(pred = pred * 100,
@@ -272,8 +225,8 @@ top_b <- 70
 bottom_b <- 30
 bottom <- 10
 
-m <- da %>%
-    # filter(!is.na(cogn_noncogn_cat)) %>%
+data_ready <-
+    prob_isced_data %>%
     mutate(cogn_label = case_when(.$isced == "High ISCED" & .$rank <= 30 ~ top_b,
                                   .$isced == "High ISCED" & .$rank >= 70 ~ top,
                                   .$isced == "Low ISCED" & .$rank <= 30 ~ bottom,
@@ -285,9 +238,55 @@ m <- da %>%
                                               "topcogn_bottnoncogn_low",
                                               "bottcogn_topnoncogn_low"), ordered = T))
 data_m <-
-    m %>%
+    data_ready %>%
     mutate(cogn_num = factor(as.numeric(cogn_label_fac), levels = c("4", "3", "2", "1"))) %>%
     select(country, pred, cogn_label_fac, isced, cogn_num, cogn_label) %>%
     map_if(is_double, round, 2) %>%
-    as_tibble()
+    as_tibble() %>%
+    filter(country == "United States")
 
+dist_pred <-
+    data_m %>%
+    ggplot(aes(x = pred, fill = isced)) + 
+    geom_density(alpha = .5) +
+    geom_rug(data = filter(data_m, is.na(cogn_label_fac)), aes(x = pred), color = "black", inherit.aes = FALSE) +
+    scale_x_continuous(name = NULL, breaks = seq(0, 100, 10), labels = paste0(seq(0, 100, 10), "%"),
+                       lim = c(0, 100)) +
+    scale_y_continuous(name = NULL, labels = NULL) +
+    scale_fill_manual(name = "", values = c("red", "blue")) +
+    ggtitle("Probability of achieving service class for U.S") +
+    coord_cartesian(expand = FALSE) +
+    artyfarty::theme_scientific() +
+    theme(legend.position = c(0.95, 0.95),
+          text = element_text(size = 18))
+
+graph_m <-
+    data_m %>%
+    ggparcoord(columns = c(6, 2),
+               groupColumn = 4,
+               alphaLines = 0.2,
+               scale = "globalminmax")
+
+labels <- c("Bottom cognitive \n Top non cognitive",
+            "Top cognitive \n Bottom non cognitive",
+            "Bottom cognitive \n Top non cognitive",
+            "Top cognitive \n Bottom non cognitive")
+
+cogn_pred <-
+    graph_m +
+    scale_x_discrete(name = NULL, labels = NULL) +
+    scale_y_continuous(name = NULL,
+                       limits = c(0, 100),
+                       breaks = c(10, 30, 70, 90),
+                       labels = labels) +
+    scale_colour_manual(guide = F, values = c("red", "blue")) +
+    theme(panel.background = element_rect(fill = "white"),
+          axis.ticks = element_blank(),
+          axis.line.x = element_line(colour = "black")) +
+    coord_flip(expand = FALSE) +
+    artyfarty::theme_scientific() +
+    theme(axis.text.x = element_text(size = 16))
+
+grid.arrange(dist_pred, cogn_pred, ncol=1, nrow=2, widths = 10, heights = c(2, 4))
+
+ggsave("US.png", path = "./graphs/")
