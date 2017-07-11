@@ -1,3 +1,4 @@
+#### Packages ####
 library(survey)
 library(car)
 library(stargazer)
@@ -11,8 +12,10 @@ library(ggthemes)
 library(lme4)
 library(MuMIn)
 source("http://peterhaschke.com/Code/multiplot.R")
+#####
 
-###### THIS IS WHERE YOU CHANGE YOUR WORKING DIRECTORY ##############
+##### Reading data #####
+###### THIS IS WHERE YOU CHANGE YOUR WORKING DIRECTORY
 old_dir <- getwd()
 
 # To save tables
@@ -50,53 +53,9 @@ countries3 <- list(Austria = prgautp1.design,
                    `Russian Federation` = prgrusp1.design,
                    `Slovak Republic` = prgsvkp1.design
                    )
+#####
 
-### Experimental section ###
-### Calculates the share of service class jobs in the PIAAC and the IALS and then the difference ####
-
-# # PIAAC share of service class jobs
-# piaac.share <- unlist(lapply(countries3, function(x) with(x,svymean(~serviceclass, na.rm=T,
-#                                      rho=NULL,return.replicates=FALSE, deff=FALSE))[[1]][1]))
-# names(piaac.share) <- names(countries3)
-# 
-# # IALS share of service class jobs
-# ials <- as.data.frame(read_sas("/Users/cimentadaj/Google Drive/Gosta project/ials/data/microf.sas7bdat"))
-# ials$serviceclass <- recode(ials$ISCOR, "c('','.', 0,98,99)=NA; c(1,2)=1; c(3,4,5,6,7,8,9)=0")
-# ials$cntrid <- factor(ials$CNTRID, c(1,3,5,6,7,8,9,11,13,14,16,17,18,20,21,23,24,25,29),
-#                        labels = c("Canada","Switzerland","Germany","USA","Ireland","Netherlands",
-#                                   "Poland","Sweden","New Zealand","UK","Belgium(flanders)",
-#                                   "Italy","Norway","Slovenia","Czech","Denmark","Finland","Hungary",
-#                                   "Chile"))
-# 
-# weightsurvey1 <- svrepdesign ( 	
-#     weights = ~WEIGHT, 
-#     repweights = ials[ ,356:385] ,
-#     scale = 1 ,
-#     rscales = rep( 1 , 30 ) ,
-#     type = 'JKn' ,
-#     data = ials ,
-#     mse = TRUE
-# )
-# 
-# ials.share <- setNames(as.numeric(svyby(~serviceclass, ~cntrid, weightsurvey1, svymean, na.rm=T,
-#               rho=NULL, return.replicates=FALSE, deff=FALSE)[, 2]), na.omit(unique(ials$cntrid)))
-# 
-# ## Difference between PIAAC and IALS ##
-# ## REMEBER BELGIUM IS FLANDERS IN IALS WHEREAS IN PIAAC ITS BELGIUM AS A WHOLE - INCOMPARABLE
-# country.names <- intersect(names(ials.share), names(piaac.share))
-# piaac.share <- piaac.share[country.names]; ials.share <- ials.share[country.names]
-# 
-# diff <- piaac.share - ials.share
-# 
-# 
-# # This line is still incomplete. You can't figure out how to add a different number
-# # to each list object from the diff vector in line 82(diff=).
-# # sapply(names(countries3), function(x) ifelse(x %in% names(diff),
-# #                           lapply(countries3, function(x) update(x, diff=)),
-# #                           lapply(countries3, function(x) update(x, diff=NA))), simplify = F)
-
-###############
-
+##### Recoding variables ####
 svy_recode <- function(svy_design, old_varname, new_varname, recode) {
     
     svy_design2 <- lapply(svy_design, function(cnt) {
@@ -121,98 +80,48 @@ countries3 <- svy_recode(countries3, 'occupation_recode', 'long_dist_downward', 
 
 countries3 <- svy_recode(countries3, 'isco', 'lowerclass', '3:9 = 1; 1:2 = 0; else = NA')
 countries3 <- svy_recode(countries3, 'age_categories', 'postwelfare', '1:5 = 1; 6:10 = 0; else = NA')
+#####
 
 ##### Model Specification #####
-standard_covariates <- c("scale(pvnum)", "non.cognitive", "age_categories", "postwelfare", "dadimmigrant")
 
+standard_covariates <- c("scale(pvnum)",
+                         "non.cognitive",
+                         "age_categories",
+                         "postwelfare",
+                         "dadimmigrant")
+
+# I'm running two models, one with highisced variables and another
+# with lowisced variables, that's why I'm creating two separate set of
+# independent variables.
+
+# Finally, USA has a different lowisced variable, so I create a separate vector
+# for US.
 all_firstcovariates <- c("highisced", "adv", standard_covariates)
 all_secondcovariates <- c("lowisced", "disadv", standard_covariates)
 usa_secondcovariates <- c("lowmidisced2", all_secondcovariates[-1])
-age <- 1:10
 
-dep <- c("long_dist_downward")
-title_dep <- c("Continuous working class")
-for (index in seq_along(dep)) {
-
-dv <- dep[index]
-depvar_title <- title_dep[index]
-out_name <- paste0("-PIAAC-sons-", dep[index], ".html")
+# I want all ages (categories from 1:10, not ages 1:10)
 age <- 1:10
 # 6:10 is prewelfare
 # 1:5 is postwelfare
+
+
+# Change for long_dist_upward and the title to produce models for the other variable
+# models
+dv <- c("long_dist_downward")
+depvar_title <- c("Continuous working class")
+
+#####
+
+##### Modeling ####
+
+out_name <- paste0("-PIAAC-sons-", dv, ".html")
 
 covariate_labels <- c("High ISCED","High ISCED - Low cogn", "Low ISCED",
                       "Low ISCED - High cogn", "Cognitive", "Non-cognitive",
                       "Age categories", "Postwelfare", "Dad immigrant")
 digits <- 2
 
-# ##### Data preparation for simulation #######
-# empty_data <- data.frame(col1 = rep(NA, 1000))
-#
-# repeated_data <- setNames(replicate(6, empty_data, simplify = F),
-#                           c("lower1", "lower2", "middle1", "middle2", "high1", "high2"))
-#
-# simulation <- rep(list(repeated_data),
-#                   length(countries3))
-#
-# simulation <- setNames(simulation, names(countries3))
-#
-# coefi <- data.frame(countries = rep(names(simulation), each = 6),
-#                     type_coefs = rep(c("adv", "disadv"), each = 3),
-#                     coefs = NA,
-#                     type = c(grep("1", names(repeated_data), val = T),
-#                              grep("1", names(repeated_data), inv = T, val = T)))
-#
-# simulated_check <- function(data_simulate, country_list, country_name) {
-#
-#     for (m in names(data_simulate[[country_name]])) {
-#     tidy_stats <- tidy(get(m)[[3]])[-1, ]
-#     dist <- rnorm(1000, tidy_stats[1, 2], tidy_stats[1, 3])
-#
-#     data_simulate[[c(country_name, m)]][,1] <- dist
-#     data_simulate[[c(country_name, m)]][,2] <- data_simulate[[c(country_name, m)]][,1] - 2 * sd(data_simulate[[c(country_name, m)]][,1])
-#     data_simulate[[c(country_name, m)]][,3] <- data_simulate[[c(country_name, m)]][,1] + 2 * sd(data_simulate[[c(country_name, m)]][,1])
-#     }
-#
-#     data_simulate
-# }
-#
-# ######
-
-# ##### Data preparation for simulation #####
-# simulated_summary <- lapply(simulation, function(cnt) lapply(cnt, function(vec) exp(colMeans(vec))))
-# 
-# df <- as.data.frame(do.call(rbind, (lapply(1:6, function(i) do.call(rbind,
-#                                                                     lapply(simulated_summary, `[[`, i))))))
-# 
-# df$country <- row.names(df)
-# df <- df[order(row.names(df)), ]
-# row.names(df) <- 1:nrow(df)
-# df$type <- names(repeated_data)
-# 
-# lookup_classes <- c(
-#              high1 = "Service class - High edu low cogn",
-#              high2 = "Service class - Low edu high cogn",
-#              middle1 = "Middle class - High edu low cogn",
-#              middle2 = "Middle class - Low edu high cogn",
-#              lower1 = "Lower class - High edu low cogn",
-#              lower2 = "Lower class - Low edu high cogn")
-# 
-# df$type <- lookup_classes[df$type]
-# coefi$type <- lookup_classes[as.character(coefi$type)]
-# # Graph of the simulation
-# 
-# ggplot(df, aes(country, col1)) +
-#     geom_hline(yintercept = 1) +
-#     geom_point(size = 2, alpha = 0.5, colour = 'black') +
-#     geom_errorbar(aes(ymin = V2, ymax = V3)) +
-#     facet_wrap(~ type) +
-#     geom_point(data = coefi, aes(countries, exp(coefs), colour = "red"), alpha = 0.5, size = 2) +
-#     scale_y_continuous(breaks = 0:10, limits = c(0, 10)) +
-#     ylab("Odds ratios") + xlab("Countries") +
-#     guides(colour = F)
-# 
-# ###################
 
 graph_pred <- function(df_list, quant_var, model_to_extract, xvar) {
     
@@ -367,7 +276,7 @@ model_lists <-
         out_name = out_name,
         dir_tables = directory,
         depvar_title = depvar_title)
-}
+
 
 # Descriptives
 
@@ -393,7 +302,7 @@ descriptive_table$descriptive <-
 
 descriptive_table <-
     descriptive_table %>%
-    select(-value) %>%
+    dplyr::select(-value) %>%
     unnest(descriptive) %>%
     setNames(c("Country",
                rep(c("% Dad immigrant",
@@ -536,125 +445,6 @@ ability_list <-
 # 
 # ggsave("estimates_plot2.png")
 
-## Download the xlsx from here http://www.oecd.org/employment/emp/EPL-timeseries.xlsx
-## Download the second sheet and convert to CSV
-epl <- read_csv("./country_level_variables/epl_summary_pagetwo.csv")[c(2, 3, 7)]
-
-latest_epl <-
-    epl %>%
-    filter(year == 2012)
-
-# Creating 2012 EPL lookup and then creating variable
-epl_all_lookup <- setNames(latest_epl$eprc_v1, latest_epl$country)
-
-## EPL is just from 2012 to 1985. A person born in 1967 + 25 years is higher than 1985
-## A person born in 1945 + 25 years
-
-## Social Expenditure
-## Cite this
-## Original link: http://stats.oecd.org/Index.aspx?datasetcode=SOCX_AGG#
-## Download as csv and name it oecdsocialspending.csv
-## Social Expenditure as % of GDP.
-oecd <- read_csv("./country_level_variables/oecdsocialspending.csv")
-
-oecd_tidy <-
-    oecd %>%
-    filter(Source == "Public" &
-           Branch == "Total" &
-          `Type of Expenditure` == "Total" &
-          `Type of Programme` == "Total" &
-           UNIT == "PCT_GDP") %>%
-    rename(cntry = Country) %>%
-    select(cntry, Year, Value) %>%
-    spread(Year, Value) %>%
-    map_if(is.numeric, ~ round(.x, 1)) %>%
-    as_tibble()
-
-cnts_available_welfare
-
-latest_welfare <-
-    oecd_tidy %>%
-    gather(year, percentage, -cntry) %>%
-    filter(year == 2013)
-
-welfare_lookup <- with(latest_welfare, setNames(percentage, cntry))
-# Russian % of GDP still missing.
-
-
-# Tracking data taken from Checchi paper
-# Imputed Estonia which is not there from this
-# information: http://www.oecd.org/edu/highlightsEstonia.htm
-trackingdata <- tibble(
-    cntry = c("Austria","Belgium","Canada","Chile","Czech Republic","Denmark",
-              "Finland","France","Germany","Hungary","Ireland","Italy","Japan",
-              "Korea","Netherlands","New Zealand","Norway","Poland","Russian Federation",
-              "Slovak Republic","Slovenia","Spain","Sweden","Switzerland",
-              "United Kingdom","United States", "Estonia"),
-    
-    `1980` = c(10,12,18,14,15,16,16,16,10,10,12,14,15,14,12,18,16,15,15,10,15,14,16,15.5,16,18,15),
-    `2002` = c(10,12,18,13,11,16,16,15,10,11,15,14,15,14,12,16,16,15,15,11,15,16,16,16,16,18,15)
-)
-
-latest_tracking <-
-    trackingdata %>%
-    gather(year, value, -cntry) %>%
-    filter(year == 2002)
-
-tracking_lookup <- with(latest_tracking, setNames(value, cntry))
-
-# Share of enrolment by type of institution (early education)
-# Download from: http://stats.oecd.org/Index.aspx?datasetcode=SOCX_AGG#
-
-earlyedu_att <- read_csv("./country_level_variables/earlyeducation_attendance.csv")
-
-earlyedu_att_summary <-
-    earlyedu_att %>%
-    filter(AGE %in% c("Y0T2_OECD", "Y3T4_OECD") & # Early childhood education (ISCED2011 level 0)
-           Sex == "Total") %>% # Public institutions
-    rename(country = Country, value = Value, age = Age) %>%
-    mutate(age = c(`0 to 2 years` = "0_to_2", `3 to 4 years` = "3_to_4")[age]) %>%
-    select(country, age, value) %>%
-    spread(age, value)
-
-earlyedu_lookup <- with(earlyedu_att_summary, setNames(`3_to_4`, country))
-
-# Share of enrolment by type of institution (early education)
-# Download from: http://stats.oecd.org/Index.aspx?datasetcode=SOCX_AGG#
-
-earlyedu_weight <- read_csv("./country_level_variables/earlyeducation_weighted.csv")
-
-names(earlyedu_weight) <-
-    c("country", "X2", "participation_rate", "avg_hours_week", "fullt_participation_rate")
-
-earlyedu_att_weight <-
-    earlyedu_weight %>%
-    select(-X2)
-
-earlyedu_weight_lookup <- with(earlyedu_att_weight, setNames(fullt_participation_rate, country))
-
-names(earlyedu_weight_lookup) <-
-    gsub("\\(.*)", "", names(earlyedu_weight_lookup)) %>%
-    trimws()
-
-# Share of enrolment by type of institution (early education)
-# Download from: http://stats.oecd.org/Index.aspx?datasetcode=SOCX_AGG#
-
-edu_enrollment <- read_csv("./country_level_variables/enrollment_by_edu.csv", skip = 1)
-colnames(edu_enrollment) <- c("countries", "overall", "low_edu", "high_edu", "p_val")
-
-edu_enrollment$countries <- trimws(gsub("\\*|\\(.*)", "", edu_enrollment$countries))
-
-lowedu_enrollment_lookup <- with(edu_enrollment, setNames(low_edu, countries))
-highedu_enrollment_lookup <- with(edu_enrollment, setNames(high_edu, countries))
-
-
-# * % employed in public sector
-# * proportion of labor force in professional type jobs
-# (i.e. in our classes 4 and 5). An alternative is to weight the jobs distribution directly
-# 
-# * unemployment levels
-# * clientelism/corruption index
-
 ##### Variables #####
 # I will use all of the variables from the first models from above.
 cohort <- "young_cohort"
@@ -662,13 +452,6 @@ cohort <- "young_cohort"
 random <- "(1 | country)"
 random_two <- "(1 + highisced | country)"
 random_three <- "(1 + lowisced | country)"
-country_vars <- c("tracking_all") # country-level variables but for all models
-
-# All variables done
-# Deleting any scale transformation
-# Adding highedu variables for the next two plots
-# Adding country variable that I create in the loop
-# Adding cohort to identify pre/post welfare
 
 unique_second <- setdiff(all_secondcovariates, all_firstcovariates)
 
@@ -687,23 +470,6 @@ cnts <- map2(countries3, names(countries3), function(data, names) {
 
 cnt_bind <- Reduce(rbind, cnts)
 
-#### Country level lookups
-
-# EPL
-cnt_bind$epl_all <- epl_all_lookup[cnt_bind$country]
-# Social expenditure
-cnt_bind$welfare_all <- welfare_lookup[cnt_bind$country]
-# Tracking
-cnt_bind$tracking_all <- tracking_lookup[cnt_bind$country]
-# Preschool attendance
-cnt_bind$preschool_att <- earlyedu_lookup[cnt_bind$country]
-# Preschool attendance weighted by full/part time
-cnt_bind$preschool_att_weight <- earlyedu_weight_lookup[cnt_bind$country]
-# Enrollment by low edu
-cnt_bind$lowedu_enrollment <- lowedu_enrollment_lookup[cnt_bind$country]
-# Enrollment by high edu
-cnt_bind$highedu_enrollment <- highedu_enrollment_lookup[cnt_bind$country]
-
 # Service class
 cnt_countrylevel <- map(countries3, ~ {
     df <- .x$designs[[1]]$variables
@@ -716,9 +482,9 @@ cnt_countrylevel <- map(countries3, ~ {
         filter(!is.na(isco_short)) %>%
         mutate(
             perc = round(n / sum(n) * 100, 1),
-            type_industry = c("perc_service", "perc_manual")
+            type_industry = rep(c("perc_service", "perc_manual"), 2)
         ) %>%
-        select(-n, -isco_short) %>%
+        dplyr::select(-n, -isco_short) %>%
         spread(type_industry, perc)
     
     perc_industry
