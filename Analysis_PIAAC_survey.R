@@ -108,8 +108,8 @@ age <- 1:10
 
 # Change for long_dist_upward and the title to produce models for the other variable
 # models
-dv <- c("long_dist_downward")
-depvar_title <- c("Continuous working class")
+dv <- c("long_dist_upward")
+depvar_title <- c("Continuous service class")
 
 #####
 
@@ -117,58 +117,16 @@ depvar_title <- c("Continuous working class")
 
 out_name <- paste0("-PIAAC-sons-", dv, ".html")
 
-covariate_labels <- c("High ISCED","High ISCED - Low cogn", "Low ISCED",
-                      "Low ISCED - High cogn", "Cognitive", "Non-cognitive",
-                      "Age categories", "Postwelfare", "Dad immigrant")
+covariate_labels <- c("High ISCED",
+                      "High ISCED - Low cogn",
+                      "Low ISCED",
+                      "Low ISCED - High cogn",
+                      "Cognitive",
+                      "Non-cognitive",
+                      "Age categories",
+                      "Postwelfare",
+                      "Dad immigrant")
 digits <- 2
-
-
-graph_pred <- function(df_list, quant_var, model_to_extract, xvar) {
-    
-    df <- df_list[[1]]
-    quant <- quantile(df$designs[[1]]$variables[, quant_var],
-                      na.rm = T,
-                      probs = c(0.30, 0.5, 0.70))
-    
-    plot1 <- visreg(model_to_extract, xvar, quant_var,
-                    type = "conditional",
-                    overlay = T,
-                    plot = F)
-    
-    plot1$fit[, quant_var] <- as.factor(plot1$fit[, quant_var])
-    plot1$fit
-}
-graph_pred_all <-  function(df, model1, model2, quant_var) {
-    
-    graph1 <- graph_pred(df, "pvnum", model1[[5]], "highisced")
-    xvar <- "highisced"
-    
-    g1 <- ggplot(graph1, aes_string(xvar, "visregFit", colour = quant_var)) +
-        geom_line(size = 1.5, alpha = 0.7) +
-        scale_x_continuous(breaks = c(0, 1)) +
-        xlab(paste0(ifelse(xvar == "highisced", "High", "Low"), "ISCED = 1")) +
-        ylab("Occupation(1 - 4)") +
-        ylim(1, 4) +
-        labs(title = paste0(names(df))) +
-        theme(plot.title = element_text(hjust = 0.5)) +
-        scale_color_discrete(guide = FALSE)
-    
-    xvar <- ifelse(names(df) == "USA","lowmidisced2", "lowisced")
-    
-    graph2 <- graph_pred(df, "pvnum", model2[[5]], xvar)
-    
-    g2 <- ggplot(graph2, aes_string(xvar, "visregFit", colour = quant_var)) +
-        geom_line(size = 1.5, alpha = 0.7) +
-        scale_x_continuous(breaks = c(0, 1)) +
-        xlab(paste0(ifelse(xvar == "highisced", "High", "Low"), "ISCED = 1")) +
-        scale_y_continuous(name = NULL, limits = c(1, 4), labels = NULL) +
-        labs(title = paste0(names(df))) +
-        theme(plot.title = element_text(hjust = 0.5)) +
-        scale_color_discrete(name = "Quantile",
-                             labels = c("Bottom", "Middle", "High"))
-    
-    ggsave(paste0(names(df), ".jpeg"), plot = multiplot(g1, g2, cols = 2))
-}
 
 # Function tests the logical statement and if it doesn't equal T, it gives the error_message.
 stop_message <- function(logical_statement, error_message) {
@@ -178,7 +136,9 @@ warning_message <- function(logical_statement, error_message) {
     if(logical_statement) warning(error_message, call. = F)
 }
 
-df_list <- countries3
+# Function does all the modeling. It checks the DV is valid,
+# whether it's a dummy or not (to produce odd ratios or not)
+# and loops through each country and does the modeling.
 
 modeling_function <- function(df_list,
                               dv,
@@ -205,7 +165,8 @@ modeling_function <- function(df_list,
             na.omit() %>%
             length())
 
-    # If the number of countries equals 1, bring the only length, if not, sample from all countries
+    # If the number of countries equals 1, bring the only length,
+    # if not, sample from all countries
     len <- ifelse(length(dv_length_countries) == 1,
                   dv_length_countries,
                   sample(dv_length_countries, 1))
@@ -256,12 +217,12 @@ for (i in 1:length(df_list)) {
                out = file.path(dir_tables, paste0(names(df_list[i]), out_name)),
                add.lines = list(c(mod1_r, mod2_r))
                )
-    # graph_pred_all(df_list[i], mod1, mod2, "pvnum")
     }
   last_models
 }
 
 family_models <- "gaussian"
+
 model_lists <-
     modeling_function(
         df_list = countries3,
@@ -276,9 +237,9 @@ model_lists <-
         out_name = out_name,
         dir_tables = directory,
         depvar_title = depvar_title)
+#####
 
-
-# Descriptives
+##### Descriptives #####
 
 descriptive_table <-
     countries3 %>%
@@ -292,7 +253,8 @@ descriptive_table$descriptive <-
                   `% High ISCED` = mean(highisced, na.rm = T) * 100,
                   `% Low ISCED` = mean(lowisced, na.rm = T) * 100,
                   `% Dad immigrant` = mean(dadimmigrant, na.rm = T) * 100,
-                  `Avg numeracy skills` = mean(pvnum, na.rm = T)) %>%
+                  `Avg numeracy skills` = mean(pvnum, na.rm = T),
+                  `Avg noncogn skills` = mean(non.cognitive, na.rm = T)) %>%
         map_if(is_numeric, round, 0) %>%
         as_tibble() %>%
         gather(terms, vals, -postwelfare) %>%
@@ -306,7 +268,10 @@ descriptive_table <-
     unnest(descriptive) %>%
     setNames(c("Country",
                rep(c("% Dad immigrant",
-                     "% High ISCED", "% Low ISCED", "Avg numeracy skills", "Sample size"), 2)))
+                     "% High ISCED",
+                     "% Low ISCED",
+                     "Avg numeracy skills",
+                     "Sample size"), 2)))
 
 dyn.load('/Library/Java/JavaVirtualMachines/jdk1.8.0_131.jdk/Contents/Home/jre/lib/server/libjvm.dylib')
 library(ReporteRs)
@@ -316,6 +281,8 @@ FlexTable(descriptive_table) %>%
                  value = c("", "Pre-welfare cohort", "Post-welfare cohort"),
                  colspan = c(1, 5, 5),
                  first = TRUE)
+#####
+
 
 # To produce regressions for cognitive and non cognitive against
 # age variable for different categories.
