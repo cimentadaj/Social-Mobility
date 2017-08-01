@@ -562,9 +562,6 @@ variables <- c("long_dist_upward", "long_dist_downward")
 titles <- c("Continuous upward", "Continuous downward")
 
 interaction_vars <- c(
-    "cognitive_top30_bottom30", "noncognitive_top30_bottom30",
-    "cognitive_top30_bottom50", "noncognitive_top30_bottom50",
-    "cognitive_top20_bottom50", "noncognitive_top20_bottom50",
     "cognitive_top20_bottom40", "noncognitive_top20_bottom40"
 )
 
@@ -919,19 +916,8 @@ walk(1:nrow(x_two), ~ {
 })
 })
 
-
 rm(list=c(ls()[!ls() %in% ls2]))
 
-# Simulation to increase state-level reforms and see how the elasticity of students changes.
-
-# - Check Germany if we have separation dummy between east and west.
-# - Maybe conduct analysis leaving out East Germany.
-
-# International data on Germany doesn't have indicator for East/West Germany.
-# However, German PIAAC Microdata has state indicators. But this data has to be
-# requested + it might be different.
-
-# - Conduct K-nearest neighbor or dendogram
-# - And statistical significant difference between each country
-# - Plot the scatterplot of countries with CI's and average slope with CI (see plot in the paper).
-# - Check the % of women employed in each country.
+# There's a mistake. Tabel 7 in the paper, the upward models are written from the pooled linear
+# models but the downwrd models are crated from the multilevel models instead.
+# You need to change the downward models to the pooled linear models.

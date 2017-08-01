@@ -183,13 +183,6 @@ x$lowmidisced <- as.numeric(x$dadedu %in% c(2,1))
 x$highorigin <- as.numeric(x$dadedu == 3 & x$momedu == 3) # Mom and Dad are ISCED 5 and 6
 x$loworigin <- as.numeric(x$dadedu == 1 & x$momedu == 1) # Mom and Dad are ISCED 1 and 2
 
-
-## Was your father or male guardian born in #CountryName? 1=Yes 2=No
-x$dadimmigrant <- car::recode(x$dadimmigrant,"1 = 0; 2 = 1")
-
-# x$momimmigrant <- car::recode(x$momimmigrant,"'2'='1';'1'=0;c('','V','D','R','N')=NA")
-# x$momimmigrant <- as.numeric(as.character(x$momimmigrant))
-
 ## standardizing cognitive score
 #x$cognitive <- scale(x$cognitive)
 
@@ -424,4 +417,3 @@ rm(list=ls())
 setwd(oldwd)
 # print a reminder: set the directory you just saved everything to as read-only!
 message( paste0( "all done.  you should set the directory " , getwd() , " read-only so you don't accidentally alter these tables." ) )
-

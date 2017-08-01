@@ -1,3 +1,6 @@
+# To get the interaction plots, run this code and change all combinations
+# from lines 93 to 97.
+
 library(survey)
 library(car)
 library(stargazer)
@@ -86,8 +89,13 @@ interaction_vars <- c(
     "cognitive_top20_bottom40", "noncognitive_top20_bottom40"
 )
 
-dv <- variables[2]
-depvar_title <- titles[2]
+# Change to 1 for the upward graphs and 2 for the downward graphs
+dv <- variables[1]
+depvar_title <- titles[1]
+
+# Change to 1 for the high/low isced specification and 0 for the opposite
+high_low_isced <- 1
+
 
 age <- 1:10; cohort <- "fullcohort"
     
@@ -118,7 +126,7 @@ digits <- 2
 # Adding cohort to identify pre/post welfare
     
 vars_subset <- standard_covariates
-    
+ 
 # Loop through country datasets and names, create a column with that country's name
 # and select all variables in vars_subset (which includes the country var)
 cnts <- map2(countries3, names(countries3), function(data, names) {
@@ -138,15 +146,15 @@ country_subset <- c("United States", "Sweden", "Norway", "Netherlands", "Japan",
 cnt_bind <- Reduce(rbind, cnts)
 cnt_bind$pvnum <- scale(cnt_bind$pvnum)[, 1] # because it returns 1 col matrix
 cnt_bind[interaction_vars] <- map_df(cnt_bind[interaction_vars], as.factor)
-cnt_bind <- filter(cnt_bind, country %in% country_subset)
-    
+# cnt_bind <- filter(cnt_bind, country %in% country_subset)
+
 x_two <-
     tibble(cogn = interaction_vars[seq(1, length(interaction_vars), 2)],
            noncogn = interaction_vars[seq(2, length(interaction_vars), 2)]) %>%
     unite(interaction, cogn, noncogn, sep = "*")
 
 .x <- 1    
-    # multilevel models
+# multilevel models
 current_int <- as.character(x_two[.x, ])
         
 standard_covariates <- c(current_int,
@@ -177,17 +185,20 @@ multi_fun <-
                        eval(m)
                    }
          )
-        # Pass that list to the glmer to run two different models and then show table with stargazer
+
+# Pass that list to the glmer to run two different models and then show table with stargazer
 models_multilevel1 <- map(covariate_list, function(formula) {
             multi_fun(formula = formula,
                       data = cnt_bind,
-                      subset = gender == 1 & age_categories %in% age & highisced == 1)
+                      subset = gender == 1 & age_categories %in% age & highisced == high_low_isced)
         })
+
 models_multilevel2 <- map(covariate_list, function(formula) {
             multi_fun(formula = formula,
                       data = cnt_bind,
-                      subset = gender == 1 & age_categories %in% age & lowisced == 1)
+                      subset = gender == 1 & age_categories %in% age & lowisced == high_low_isced)
         })
+
 models_multilevel <- list(models_multilevel1[[1]], models_multilevel2[[1]])
 
 model <- models_multilevel[[1]]
