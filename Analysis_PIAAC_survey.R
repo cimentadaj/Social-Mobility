@@ -108,16 +108,16 @@ usa_secondcovariates <- c("lowmidisced2", all_secondcovariates[-1])
 age <- 1:10
 # 6:10 is prewelfare
 # 1:5 is postwelfare
-
-
-# Change for long_dist_upward and the title to produce models for the other variable
-# models
-dv <- c("long_dist_upward")
-depvar_title <- c("Continuous upward class")
-
 #####
 
 ##### Modeling for Table 2 and 3 ####
+
+# Change for long_dist_upward/long_dist_downward and the title to produce models for the
+# other variable models
+
+dv <- c("long_dist_upward")
+depvar_title <- c("Continuous upward class")
+
 
 out_name <- paste0("-PIAAC-sons-", dv, ".html")
 
@@ -142,21 +142,6 @@ warning_message <- function(logical_statement, error_message) {
 # Function does all the modeling. It checks the DV is valid,
 # whether it's a dummy or not (to produce odd ratios or not)
 # and loops through each country and does the modeling.
-
-df_list = countries3
-dv = dv
-firstcovariates = all_firstcovariates
-usa_secondcovariates = usa_secondcovariates
-secondcovariates = all_secondcovariates
-age_subset = age
-family_models = family_models
-covariate_labels = covariate_labels
-digits = digits
-out_name = out_name
-dir_tables = directory
-depvar_title = depvar_title
-i <- 4
-
 
 modeling_function <- function(df_list,
                               dv,
@@ -308,7 +293,7 @@ dv <- "long_dist_upward"
 standard_covariates <- c("scale(pvnum)",
                          "non.cognitive",
                          "postwelfare",
-                         "momimmigrant")
+                         "dadimmigrant")
 
 all_firstcovariates <- c("highisced", "adv", standard_covariates)
 all_secondcovariates <- c("lowisced", "disadv", standard_covariates)
@@ -325,7 +310,7 @@ unique_second <- setdiff(all_secondcovariates, all_firstcovariates)
 vars_subset <-
     gsub("scale|\\(|\\)", "", c(unique_second, all_firstcovariates)) %>%
     `c`("highedu", "country", "cohort", "gender", "age_categories",
-        dv)
+        "long_dist_upward", "long_dist_downward", "serviceclass", "lowerclass")
 
 # Loop through country datasets and names, create a column with that country's name
 # and select all variables in vars_subset (which includes the country var)
@@ -396,7 +381,6 @@ cnt_bind %>%
 
 ability_vars <- c("non.cognitive")
 ability_title <- c("Non cognitive")
-index <- 1
 
 ability_list <-
     map(seq_along(ability_vars), function(index) {
@@ -474,7 +458,7 @@ ability_list <-
                 depvar_title = depvar_title)
     })
 
-###### confirm if you can delete 
+###### confirm if you can delete ####
 # summary_models <-
 # map(1:length(model_lists), function(country) { # loop through each country in model list
 #     
@@ -518,11 +502,13 @@ ability_list <-
 # ggsave("estimates_plot2.png")
 #####
 
-
 # Repeat this for both dependent variables ( in section preparing second modeling change
 # dv's)
-##### Table 1 multilevel ####
 
+##### Table 1 multilevel ####
+# change to lowerclass to get the other table
+dv <- "lowerclass"
+    
 rhs_sequence <- function(iv) {
     stop_message(length(iv) < 1, "iv must have length >= 1")
     warning_message(any(is.na(iv)), "NA's found in iv. Removing them.")
@@ -582,9 +568,10 @@ multi_fun <-
 models_multilevel <- map(covariate_list, function(formula) {
     multi_fun(formula = formula,
               data = cnt_bind,
-              subset = "gender == 1")
+              subset = "gender == 1 & age_categories %in% age")
 })
 
+# Remember to finish the stargazer3 in your package (and do it as object-oriented programming).
 stargazer3 <- function(model, odd.ratio = FALSE, ...) {
     
     if (!("list" %in% class(model))) model <- list(model)
@@ -613,22 +600,6 @@ stargazer3 <- function(model, odd.ratio = FALSE, ...) {
     
 }
 
-stargazer3(models_multilevel, odd.ratio = FALSE, type = 'html',
-           covariate.labels = c(
-               "High ISCED",
-               "High ISCED - Low cogn",
-               "Low ISCED",
-               "Low ISCED - High cogn",
-               "Cognitive",
-               "Non cognitive",
-               "Postwelfare",
-               "Mom immigrant"
-           ),
-           out = "./Tables/pooled_long_dist_upward.html")
-
-#####
-
-# Remember to finish the stargazer3 in your package (and do it as object-oriented programming).
 stargazer_linear <- function(model, covariate_labels, depvar_title, directory, cohort) {
     stargazer(model,
               type = "html",
@@ -654,8 +625,13 @@ stargazer_binomial <- function(model, covariate_labels, depvar_title, directory,
               out = file.path(directory, paste0(dv, "_", cohort, "_multilevel_tables.html")))
 }
 
-stargazer_linear(models_multilevel, covariate_labels, depvar_title, directory, cohort)
+# stargazer_linear(models_multilevel, covariate_labels, depvar_title, directory, cohort)
 stargazer_binomial(models_multilevel, covariate_labels, depvar_title, directory, cohort)
+
+#####
+
+##### Figure 1 and 2 ####
+# Repeat for both dependent variables
 
 term_grabber <- function(model, term) {
     df <- tidy(model) 
@@ -668,8 +644,6 @@ list_model_todf <- function(list, term) {
         unnest(value)
 }
 
-##### Figure 1 and 2 ####
-# Repeat for both dependent variables
 
 term <- c("highisced", "lowisced")
 breaks_term <- term
@@ -729,17 +703,3 @@ df_countries %>%
 # ggsave("cognitive_noncognitive_downward.png", path = directory)
 
 #####
-
-# Simulation to increase state-level reforms and see how the elasticity of students changes.
-
-# - Check Germany if we have separation dummy between east and west.
-# - Maybe conduct analysis leaving out East Germany.
-
-# International data on Germany doesn't have indicator for East/West Germany.
-# However, German PIAAC Microdata has state indicators. But this data has to be
-# requested + it might be different.
-
-# - Conduct K-nearest neighbor or dendogram
-# - And statistical significant difference between each country
-# - Plot the scatterplot of countries with CI's and average slope with CI (see plot in the paper).
-# - Check the % of women employed in each country.

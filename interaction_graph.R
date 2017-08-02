@@ -1,5 +1,9 @@
-# To get the interaction plots, run this code and change all combinations
-# from lines 93 to 97.
+# Script to get the interaction plots (figure 3-6), run this code and change all combinations
+# from section: CHANGE
+
+# Another problem. The interaction table 7 was produced with the quantiles 20-40
+# for top and bottom cogn/non-cognitive. Here the interaction is calculated with
+# the 30-30 quantiles.
 
 library(survey)
 library(car)
@@ -82,20 +86,17 @@ countries3 <- svy_recode(countries3, 'age_categories', 'postwelfare', '1:5 = 1; 
 variables <- c("long_dist_upward", "long_dist_downward")
 titles <- c("Continuous upward", "Continuous downward")
 
-interaction_vars <- c(
-    "cognitive_top30_bottom30", "noncognitive_top30_bottom30",
-    "cognitive_top30_bottom50", "noncognitive_top30_bottom50",
-    "cognitive_top20_bottom50", "noncognitive_top20_bottom50",
-    "cognitive_top20_bottom40", "noncognitive_top20_bottom40"
-)
+interaction_vars <- c("cognitive_top30_bottom30", "noncognitive_top30_bottom30")
 
+
+##### Change #####
 # Change to 1 for the upward graphs and 2 for the downward graphs
 dv <- variables[1]
 depvar_title <- titles[1]
 
 # Change to 1 for the high/low isced specification and 0 for the opposite
 high_low_isced <- 1
-
+######
 
 age <- 1:10; cohort <- "fullcohort"
     

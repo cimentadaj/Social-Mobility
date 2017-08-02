@@ -1,3 +1,5 @@
+### Script to reproduce table 7
+
 library(survey)
 library(car)
 library(stargazer)
@@ -920,4 +922,6 @@ rm(list=c(ls()[!ls() %in% ls2]))
 
 # There's a mistake. Tabel 7 in the paper, the upward models are written from the pooled linear
 # models but the downwrd models are crated from the multilevel models instead.
-# You need to change the downward models to the pooled linear models.
+# You need to change the downward models to the pooled linear models. Also
+# the interaction graphs were calculated using 30-30 quantiles and here the table is calculated using
+# 20-40 quantiles.
