@@ -91,8 +91,8 @@ interaction_vars <- c("cognitive_top30_bottom30", "noncognitive_top30_bottom30")
 
 ##### Change #####
 # Change to 1 for the upward graphs and 2 for the downward graphs
-dv <- variables[1]
-depvar_title <- titles[1]
+dv <- variables[2]
+depvar_title <- titles[2]
 
 # Change to 1 for the high/low isced specification and 0 for the opposite
 high_low_isced <- 1

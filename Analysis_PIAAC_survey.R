@@ -14,6 +14,7 @@ library(MuMIn)
 source("http://peterhaschke.com/Code/multiplot.R")
 #####
 
+
 ##### Reading data #####
 ###### THIS IS WHERE YOU CHANGE YOUR WORKING DIRECTORY
 old_dir <- getwd()
@@ -55,6 +56,7 @@ countries3 <- list(Austria = prgautp1.design,
                    )
 #####
 
+
 ##### Recoding variables ####
 svy_recode <- function(svy_design, old_varname, new_varname, recode) {
     
@@ -87,6 +89,7 @@ countries3 <- svy_recode(countries3, 'dadimmigrant', 'dadimmigrant', "2 = 0; 1 =
 
 #####
 
+
 ##### Model Specification #####
 
 standard_covariates <- c("scale(pvnum)",
@@ -109,6 +112,7 @@ age <- 1:10
 # 6:10 is prewelfare
 # 1:5 is postwelfare
 #####
+
 
 ##### Modeling for Table 2 and 3 ####
 
@@ -241,7 +245,111 @@ model_lists <-
         dir_tables = directory,
         depvar_title = depvar_title)
 
+dv <- c("long_dist_downward")
+depvar_title <- c("Continuous downward class")
+out_name <- paste0("-PIAAC-sons-", dv, ".html")
+
+model_lists_downward <-
+    modeling_function(
+        df_list = countries3,
+        dv = dv,
+        firstcovariates = all_firstcovariates,
+        usa_secondcovariates = usa_secondcovariates,
+        secondcovariates = all_secondcovariates,
+        age_subset = age,
+        family_models = family_models,
+        covariate_labels = covariate_labels,
+        digits = digits,
+        out_name = out_name,
+        dir_tables = directory,
+        depvar_title = depvar_title)
 #####
+
+
+##### Table 2 and 3 ####
+
+table_generator <- function(list) {
+    country_models <-
+        lapply(list, function(list_data) {
+            lapply(list_data, function(each_model) {
+                broom::tidy(each_model)[-c(6, 7), c(1, 2, 5)]
+            })
+        })
+    
+    country_models <- lapply(country_models, function(x) {
+        setNames(x,  c("high", "low")) %>%
+            enframe() %>%
+            unnest()
+    })
+    
+    all_countries <-
+        country_models %>%
+        enframe() %>%
+        unnest() %>%
+        filter(term != "(Intercept)") %>%
+        map_if(is_double, round, 2) %>%
+        as_tibble() %>%
+        mutate(estimate = case_when(p.value < 0.001 ~ paste0(estimate, "***"),
+                                    p.value > 0.001 & p.value <= 0.01 ~ paste0(estimate, "**"),
+                                    p.value > 0.01 & p.value <= 0.05 ~ paste0(estimate, "*"),
+                                    p.value > 0.05 ~ as.character(estimate))) %>%
+        select(-p.value)
+    
+    meritocracy <-
+        all_countries %>%
+        filter(name1 == "high", term %in% c("highisced", "scale(pvnum)", "non.cognitive")) %>%
+        select(-name1) %>%
+        mutate(estimate = as.numeric(gsub("\\*", "", estimate))) %>%
+        spread(term, estimate) %>%
+        transmute(name,
+                  cogn_mer = `scale(pvnum)` / highisced,
+                  noncogn_mer = non.cognitive / highisced
+        ) %>%
+        map_if(is_double, round, 1) %>%
+        as_tibble()
+    
+    table_one <-
+        all_countries %>%
+        filter(term != c("scale(pvnum)", "non.cognitive")) %>%
+        select(-name1) %>%
+        spread(term, estimate) %>%
+        select(name, highisced, adv, lowisced, disadv) %>%
+        full_join(meritocracy, key = "name")
+    table_one
+    
+}
+
+table_two <- table_generator(model_lists)
+table_three <- table_generator(model_lists_downward)
+
+dyn.load('/Library/Java/JavaVirtualMachines/jdk1.8.0_131.jdk/Contents/Home/jre/lib/server/libjvm.dylib')
+library(ReporteRs)
+
+title_columns <-
+    c("","High SES \n origin β \n \n (1)", "High-SES, \n bottom 1/3rd β \n \n (2)",
+      "Low SES \n origin β \n \n (3)", "Low-SES \n top 1/3rd β \n \n (4)",
+      "Cognitive Meritocracy: \n origin ratio (cogn β:(1))",
+      "Non-cognitive meritocracy: \n origin ratio (non-cogn β: (1))")
+
+doc <- docx()
+
+doc <- addTitle(doc, "Table 2")
+doc <- addFlexTable(doc,
+             FlexTable(table_two, header.columns = FALSE) %>%
+                 addHeaderRow(text.properties = textBold(),
+                              value = title_columns,
+                              first = TRUE))
+
+doc <- addTitle(doc, "Table 3")
+doc <- addFlexTable(doc,
+                    FlexTable(table_three, header.columns = FALSE) %>%
+                        addHeaderRow(text.properties = textBold(),
+                                     value = title_columns,
+                                     first = TRUE))
+
+
+#####
+
 
 ##### Descriptives #####
 
@@ -257,8 +365,7 @@ descriptive_table$descriptive <-
                   `% High ISCED` = mean(highisced, na.rm = T) * 100,
                   `% Low ISCED` = mean(lowisced, na.rm = T) * 100,
                   `% Dad immigrant` = mean(dadimmigrant, na.rm = T) * 100,
-                  `Avg numeracy skills` = mean(pvnum, na.rm = T),
-                  `Avg noncogn skills` = mean(non.cognitive, na.rm = T)) %>%
+                  `Avg numeracy skills` = mean(pvnum, na.rm = T)) %>%
         map_if(is_numeric, round, 0) %>%
         as_tibble() %>%
         gather(terms, vals, -postwelfare) %>%
@@ -277,15 +384,17 @@ descriptive_table <-
                      "Avg numeracy skills",
                      "Sample size"), 2)))
 
-dyn.load('/Library/Java/JavaVirtualMachines/jdk1.8.0_131.jdk/Contents/Home/jre/lib/server/libjvm.dylib')
-library(ReporteRs)
-
-FlexTable(descriptive_table) %>%
-    addHeaderRow(text.properties = textBold(),
+doc <- addTitle(doc, "Descriptives")
+doc <- addFlexTable(doc,
+             FlexTable(descriptive_table) %>%
+                 addHeaderRow(text.properties = textBold(),
                  value = c("", "Pre-welfare cohort", "Post-welfare cohort"),
                  colspan = c(1, 5, 5),
                  first = TRUE)
+             )
+
 #####
+
 
 ##### Preparing second modeling #####
 # I will use all of the variables from the first models from above.
@@ -351,6 +460,7 @@ cnt_bind <-
     rename(country = name)
 #####
 
+
 ##### Cognitive distribution graphs #####
 cnt_bind %>%
     filter(highedu %in% c(1, 3)) %>%
@@ -372,6 +482,9 @@ cnt_bind %>%
                         labels = c("Low ISCED", "Higher ISCED")) +
     theme_minimal()
 #####
+
+
+##### Extra AGE analysis ####
 
 # To produce regressions for cognitive and non cognitive against
 # age variable for different categories.
@@ -458,6 +571,9 @@ ability_list <-
                 depvar_title = depvar_title)
     })
 
+#####
+
+
 ###### confirm if you can delete ####
 # summary_models <-
 # map(1:length(model_lists), function(country) { # loop through each country in model list
@@ -502,12 +618,14 @@ ability_list <-
 # ggsave("estimates_plot2.png")
 #####
 
-# Repeat this for both dependent variables ( in section preparing second modeling change
+# Repeat this for both dependent variables (in section preparing second modeling change
 # dv's)
+
 
 ##### Table 1 multilevel ####
 # change to lowerclass to get the other table
-dv <- "lowerclass"
+dv <- "serviceclass"
+depvar_title <- "Service class dummy"
     
 rhs_sequence <- function(iv) {
     stop_message(length(iv) < 1, "iv must have length >= 1")
@@ -565,7 +683,7 @@ multi_fun <-
         })
 
 # Pass that list to the glmer to run two different models and then show table with stargazer
-models_multilevel <- map(covariate_list, function(formula) {
+models_multilevel_service <- map(covariate_list, function(formula) {
     multi_fun(formula = formula,
               data = cnt_bind,
               subset = "gender == 1 & age_categories %in% age")
@@ -599,36 +717,158 @@ stargazer3 <- function(model, odd.ratio = FALSE, ...) {
     }
     
 }
-
-stargazer_linear <- function(model, covariate_labels, depvar_title, directory, cohort) {
+stargazer_linear <- function(model, covariate_labels, depvar_title, directory) {
     stargazer(model,
               type = "html",
               digits = 2,
               add.lines = list(c("R-sq", map_dbl(model, ~ round(r.squaredGLMM(.x)[1], 2)))),
-                               # c("Between group SD", map_dbl(model, ~ round(.x@theta, 2))),
-                               # c("Number of groups", map_dbl(model, ~ .x@pp$Zt@Dim[1])),
-                               # c("Varying", rep("Intercept", length(model)))),
+              # c("Between group SD", map_dbl(model, ~ round(.x@theta, 2))),
+              # c("Number of groups", map_dbl(model, ~ .x@pp$Zt@Dim[1])),
+              # c("Varying", rep("Intercept", length(model)))),
               covariate.labels = covariate_labels,
               dep.var.labels = depvar_title,
-              out = file.path(directory, paste0(dv, "_", cohort, "_multilevel_tables.html")))
+              out = file.path(directory, paste0(dv, "_", "_multilevel_tables.html")))
     
 }
-stargazer_binomial <- function(model, covariate_labels, depvar_title, directory, cohort) {
+stargazer_binomial <- function(model, covariate_labels, depvar_title, directory) {
     stargazer3(model, odd.ratio = T,
-              type = "html",
-              digits = 2,
-              add.lines = list(c("Between group SD", map_dbl(model, ~ round(.x@theta, 2))),
+               type = "text",
+               digits = 2,
+               add.lines = list(c("Between group SD", map_dbl(model, ~ round(.x@theta, 2))),
                                 c("Number of groups", map_dbl(model, ~ .x@pp$Zt@Dim[1])),
                                 c("Varying", rep("Intercept", length(model)))),
-              covariate.labels = covariate_labels,
-              dep.var.labels = depvar_title,
-              out = file.path(directory, paste0(dv, "_", cohort, "_multilevel_tables.html")))
+               covariate.labels = covariate_labels,
+               dep.var.labels = depvar_title,
+               out = file.path(directory, paste0(dv, "_", "_multilevel_tables.docx")))
 }
 
 # stargazer_linear(models_multilevel, covariate_labels, depvar_title, directory, cohort)
-stargazer_binomial(models_multilevel, covariate_labels, depvar_title, directory, cohort)
+stargazer_binomial(models_multilevel_service,
+                   covariate_labels, depvar_title, directory)
 
+
+dv <- "lowerclass"
+depvar_title <- "Lower class dummy"
+
+covariate_list <- list(static_formula(dv, all_firstcovariates, random_two),
+                       static_formula(dv, all_secondcovariates, random_three))
+
+covariate_list <- list(static_formula(dv, all_firstcovariates, "(1 | country)"),
+                       static_formula(dv, all_secondcovariates, "(1 | country)"))
+
+# If the DV is not binary, run lmer, if it is, then use glmer
+type_model <- ifelse(length(na.omit(unique(cnt_bind[[dv]]))) > 2, "lmer", "glmer")
+
+multi_fun <-
+    switch(type_model,
+           lmer = function(formula, data, subset, ...) {
+               lmer(formula = formula,
+                    data = subset(data, eval(parse(text = subset))),
+                    ...)
+           },
+           glmer = function(formula, data, subset, ...) {
+               glmer(formula = formula,
+                     data = subset(data, eval(parse(text = subset))),
+                     family = "binomial", ...)
+           })
+
+# Pass that list to the glmer to run two different models and then show table with stargazer
+models_multilevel_lower <- map(covariate_list, function(formula) {
+    multi_fun(formula = formula,
+              data = cnt_bind,
+              subset = "gender == 1 & age_categories %in% age")
+})
+
+table_converter <- function(models) {
+    coef_table <- map(models, tidy)
+    
+    table_one <-
+        map(coef_table, ~ {
+        .x[, 2] <- exp(.x[[2]])
+        .x[, 3] <- .x[[2]] * .x[[3]]
+    
+        .x[!grepl("isced|adv", .x$term), -c(3, 4, 6)]
+    }) %>%
+        reduce(cbind)
+    
+    table_one_separate <-
+        map(coef_table, ~ {
+        .x[, 2] <- exp(.x[[2]])
+        .x[, 3] <- .x[[2]] * .x[[3]]
+        .x[grepl("isced|adv", .x$term), -c(3, 4, 6)]
+    })
+    
+    names(table_one_separate[[1]])[2:3] <- c("estimate_high", "p.val_high")
+    table_one_separate[[1]]$estimate_low <- NA
+    table_one_separate[[1]]$p.val_low <- NA
+    
+    names(table_one_separate[[2]])[2:3] <- c("estimate_low", "p.val_low")
+    table_one_separate[[2]]$estimate_high <- NA
+    table_one_separate[[2]]$p.val_high <- NA
+    
+    table_one_separate[[2]] <- table_one_separate[[2]][c(1, 4, 5, 2, 3)]
+    
+    sd_group <- map_dbl(models, ~ round(.x@theta, 2))
+    n_groups <- map_dbl(models, ~ .x@pp$Zt@Dim[1])
+    sample_size <- map_dbl(models, nobs)
+    
+    
+    tibble_to_bind <-
+        tibble(term = c("Between group SD:", "Numer of countries: ", "Sample size: "),
+               estimate_high = as.character(c(sd_group[1], n_groups[1], sample_size[1])),
+               estimate_low = as.character(c(sd_group[2], n_groups[2], sample_size[2])))
+    
+    
+    table_almost <-
+        table_one[-4] %>%
+        setNames(c("term", "estimate_high", "p.val_high", "estimate_low", "p.val_low")) %>%
+        bind_rows(table_one_separate %>% reduce(bind_rows)) %>%
+        map_if(is_double, function(x) as.character(round(x, 2))) %>%
+        as_tibble() %>%
+        transmute(term,
+                  estimate_high = case_when(
+                      is.na(p.val_high) ~ estimate_high,
+                      p.val_high < 0.001 ~ paste0(estimate_high, "***"),
+                      p.val_high > 0.001 & p.val_high <= 0.01 ~ paste0(estimate_high, "**"),
+                      p.val_high > 0.01 & p.val_high <= 0.05 ~ paste0(estimate_high, "*"),
+                      p.val_high > 0.05 ~ as.character(estimate_high)
+                      ),
+                  estimate_low = case_when(
+                      is.na(p.val_low) ~ estimate_low,
+                      p.val_low < 0.001 ~ paste0(estimate_low, "***"),
+                      p.val_low > 0.001 & p.val_low <= 0.01 ~ paste0(estimate_low, "**"),
+                      p.val_low > 0.01 & p.val_low <= 0.05 ~ paste0(estimate_low, "*"),
+                      p.val_low > 0.05 ~ as.character(estimate_low)
+                  )) %>%
+        bind_rows(tibble_to_bind)
+    
+    
+    table_ready<-
+        table_almost[c(7, 8, 9, 10, 2:3, 4, 5, 11:13), ] %>%
+        mutate(term = recode(term,
+                             "highisced" = "High-ISCED origin",
+                             "adv" = "High-ISCED origin, \n Bottom 1/3rd cognitive skills",
+                             "lowisced" = "Low-ISCED origin",
+                             "disadv" = "Low-ISCED origin, \n Top 1/3rd cognitive skills",
+                             "scale(pvnum)" = "Cognitive skills",
+                             "non.cognitive" = "Social skills",
+                             "postwelfare" = "Postwelfare (dummy)",
+                             "dadimmigrant" = "Dad immigrant"))
+    table_ready
+}
+    
+table_one <-
+    table_converter(models_multilevel_service) %>%
+    bind_cols(table_converter(models_multilevel_lower) %>% select(-term)) %>%
+    setNames(c("", rep(c("Service class", "Working class"), each = 2)))
+
+doc <- addTitle(doc, "Table 1")
+doc <- addFlexTable(doc, FlexTable(table_one, header.columns = TRUE))
+
+stargazer_binomial(models_multilevel_lower,
+                   covariate_labels, depvar_title, directory)
 #####
+
 
 ##### Figure 1 and 2 ####
 # Repeat for both dependent variables
@@ -644,62 +884,263 @@ list_model_todf <- function(list, term) {
         unnest(value)
 }
 
-
-term <- c("highisced", "lowisced")
-breaks_term <- term
-term_regex <- paste0("^", term, collapse = "|")
-labels_term <- c("High ISCED", "Low ISCED")
-order_term <- "lowisced"
-term_colour <- c("blue", "blue", "green", "red")
-
-avg_slopes <-
-    list_model_todf(models_multilevel, term_regex)[1:2, ] %>%
-    transmute(country = "Average slope",
-              term, estimate, std.error) %>%
-    mutate(term = c("avg_slope_high", "avg_slope_low"))
-
-cnt_slopes <-
-    map(model_lists, ~ list_model_todf(.x, term_regex)[1:2, ]) %>%
-    enframe(name = 'country') %>%
-    unnest(value)
-
-df_countries <-
-    cnt_slopes %>%
-    dplyr::select(-name) %>%
-    rbind(avg_slopes) %>%
-    mutate(lower = estimate - 1.96 * std.error,
-           upper = estimate + 1.96 * std.error)
-
-order_cnt <-
+plot_generator <- function(multilevel, linear, title_graph) {
+    
+    term <- c("highisced", "lowisced")
+    breaks_term <- term
+    term_regex <- paste0("^", term, collapse = "|")
+    labels_term <- c("High ISCED", "Low ISCED")
+    order_term <- "lowisced"
+    term_colour <- c("blue", "blue", "green", "red")
+    
+    avg_slopes <-
+        list_model_todf(multilevel, term_regex)[1:2, ] %>%
+        transmute(country = "Average slope",
+                  term, estimate, std.error) %>%
+        mutate(term = c("avg_slope_high", "avg_slope_low"))
+    
+    cnt_slopes <-
+        map(linear, ~ list_model_todf(.x, term_regex)[1:2, ]) %>%
+        enframe(name = 'country') %>%
+        unnest(value)
+    
+    df_countries <-
+        cnt_slopes %>%
+        dplyr::select(-name) %>%
+        rbind(avg_slopes) %>%
+        mutate(lower = estimate - 1.96 * std.error,
+               upper = estimate + 1.96 * std.error)
+    
+    order_cnt <-
+        df_countries %>%
+        filter(term %in% c(order_term, "avg_slope_low")) %>%
+        arrange(desc(estimate)) %>%
+        distinct(country) %>%
+        .[["country"]]
+    
+    trans <- 0.5
+    axis_color <- c(rep("grey36", 10), "blue", rep("grey36", 11))
+    blue_index <- which(order_cnt == "Average slope")
+    country_color <-
+        c(rep("grey36", blue_index - 1), "blue", rep("grey36", length(order_cnt) - blue_index))
+    
+    
     df_countries %>%
-    filter(term %in% c(order_term, "avg_slope_low")) %>%
-    arrange(desc(estimate)) %>%
-    distinct(country) %>%
-    .[["country"]]
+        mutate(country = factor(country, levels = order_cnt, ordered = T),
+               term = as.factor(term)) %>%
+        ggplot(aes(country, estimate, fill = term)) +
+        geom_col(alpha = trans) +
+        geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2, alpha = trans - 0.2) +
+        scale_fill_manual(name = "Slope",
+                          breaks = breaks_term,
+                          labels = labels_term,
+                          values = term_colour) +
+        xlab(NULL) +
+        ylab("Estimated slope with 95% uncertainty intervals") +
+        ggtitle(title_graph) +
+        coord_flip() +
+        theme_minimal() +
+        theme(axis.text.y=element_text(colour = country_color))
+}
 
-trans <- 0.5
-axis_color <- c(rep("grey36", 10), "blue", rep("grey36", 11))
-blue_index <- which(order_cnt == "Average slope")
-country_color <-
-    c(rep("grey36", blue_index - 1), "blue", rep("grey36", length(order_cnt) - blue_index))
+plot_generator(models_multilevel_service, model_lists, "Chances of upward mobility")
+ggsave("high_low_isced_upward.png", path = directory)
+    
+plot_generator(models_multilevel_lower, model_lists_downward, "Chances of downward mobility")
+ggsave("high_low_isced_downward.png", path = directory)
 
-df_countries %>%
-    mutate(country = factor(country, levels = order_cnt, ordered = T),
-           term = as.factor(term)) %>%
-    ggplot(aes(country, estimate, fill = term)) +
-    geom_col(alpha = trans) +
-    geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2, alpha = trans - 0.2) +
-    scale_fill_manual(name = "Slope",
-                      breaks = breaks_term,
-                      labels = labels_term,
-                      values = term_colour) +
-    xlab(NULL) +
-    ylab("Estimated slope with 95% uncertainty intervals") +
-    ggtitle("Chances of downward mobility") +
-    coord_flip() +
-    theme_minimal() +
-    theme(axis.text.y=element_text(colour = country_color))
+#####
 
-# ggsave("cognitive_noncognitive_downward.png", path = directory)
+##### Table 4 ####
+
+dv <- "serviceclass"
+depvar_title <- "Continuous upward class"
+
+standard_covariates <- c("scale(pvnum)",
+                         "non.cognitive",
+                         "postwelfare",
+                         "dadimmigrant")
+
+all_firstcovariates <- c("highisced", "adv", standard_covariates)
+all_secondcovariates <- c("lowisced", "disadv", standard_covariates)
+usa_secondcovariates <- c("lowmidisced2", all_secondcovariates[-1])
+
+# I want all ages (categories from 1:10, not ages 1:10)
+age <- 1:10
+# 6:10 is prewelfare
+# 1:5 is postwelfare
+
+
+modeling_function_two <- function(df_list,
+                              dv,
+                              firstcovariates,
+                              usa_secondcovariates,
+                              secondcovariates,
+                              age_subset,
+                              family_models = "gaussian") {
+    
+    stop_message(length(df_list) < 1, "df_list is empty")
+    last_models <- rep(list(vector("list", 2)), length(df_list))
+    names(last_models) <- names(df_list)
+    
+    # Odd ratios or not?
+    # This should be done to identify whether DV is a dummy or not
+    dv_length_countries <-
+        map_dbl(df_list, function(.x)
+            unique(.x$designs[[1]]$variables[, dv]) %>%
+                na.omit() %>%
+                length())
+    
+    # If the number of countries equals 1, bring the only length,
+    # if not, sample from all countries
+    len <- ifelse(length(dv_length_countries) == 1,
+                  dv_length_countries,
+                  sample(dv_length_countries, 1))
+    
+    stop_message(!all(len == dv_length_countries),
+                 "The length of the dependent variable differs by country")
+    stop_message(!(len >= 2),
+                 "DV has length < 2")
+    
+    odd.ratio <- ifelse(family_models == "gaussian", F,
+                        unname(ifelse(sample(dv_length_countries, 1) == 2, T, F)))
+    
+    all.models <- rep(list(list()), length(df_list))
+    for (i in 1:length(df_list)) {
+        
+        # The low isced variable for USA combines both low and mid isced
+        # Whenever the country is USA, use a different set of covariates
+        # than with all other countries.
+        if (names(df_list[i]) == "USA") {
+            secondcovariates <- usa_secondcovariates
+        } else {
+            secondcovariates <- all_secondcovariates }
+        
+        mod1 <- models(dv, all_firstcovariates,
+                       subset(df_list[[i]], gender == 1 & age_categories %in% age_subset),
+                       family_models = family_models)
+        mod2 <- models(dv, secondcovariates,
+                       subset(df_list[[i]], gender == 1 & age_categories %in% age_subset),
+                       family_models = family_models)
+        
+        last_models[[i]][[1]] <- mod1[[length(mod1)]] # length(mod1) to only get the last (complete model)
+        last_models[[i]][[2]] <- mod2[[length(mod2)]]
+        
+        # Calculate R squared for each model
+        # mod1_r <- c("R squared:", paste0(sapply(mod1, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%"))
+        # mod2_r <- paste0(sapply(mod2, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%")
+        
+    }
+    last_models
+}
+
+family_models <- "gaussian"
+
+models_table_service_four <-
+    modeling_function_two(
+        df_list = countries3,
+        dv = dv,
+        firstcovariates = all_firstcovariates,
+        usa_secondcovariates = usa_secondcovariates,
+        secondcovariates = all_secondcovariates,
+        age_subset = age,
+        family_models = family_models)
+
+dv <- "lowerclass"
+depvar_title <- "Continuous downward class"
+
+models_table_downward_four <-
+    modeling_function_two(
+        df_list = countries3,
+        dv = dv,
+        firstcovariates = all_firstcovariates,
+        usa_secondcovariates = usa_secondcovariates,
+        secondcovariates = all_secondcovariates,
+        age_subset = age,
+        family_models = family_models)
+
+star_paster <- function(df, var_one, var_two) {
+        df[[var_two]] <- round(df[[var_two]], 2)
+    sapply(1:nrow(df), function(index) {
+        
+        is_na <- is.na(df[[var_one]][index])
+        three_stars <- df[[var_one]][index] < 0.001
+        two_stars <- df[[var_one]][index] > 0.001 & df[[var_one]][index] <= 0.01
+        one_stars <- df[[var_one]][index] > 0.01 & df[[var_one]][index] <= 0.05
+        
+        if (is_na) {
+            
+            NA
+            
+        } else if (three_stars) {
+            
+            paste(df[[var_two]][index], "***")
+            
+        } else if (two_stars) {
+            
+            paste(df[[var_two]][index], "**")
+            
+        } else if (one_stars) {
+            
+            paste(df[[var_two]][index], "*")
+            
+        } else {
+            
+            df[[var_two]][index]
+        }
+    })
+    
+    
+}
+tabler <- function(model, high = "TRUE") {
+    
+    metadata <- switch(high,
+                       "TRUE" = list(-1, c("lowisced", "disadv")),
+                       "FALSE" = list(-2, c("highisced", "adv")))
+    
+    table_ready <-
+        map(model, function(country) {
+            df_model <- tidy(country[[metadata[[1]]]])
+            
+            df_model[grepl(paste(metadata[[2]], collapse = "|"), df_model$term), ] %>%
+                select(term, estimate, p.value) %>%
+                transmute(term,
+                          estimate = star_paster(., "p.value", "estimate")) %>%
+                spread(term, estimate) %>%
+                select(one_of(metadata[[2]]))
+        }) %>%
+        reduce(rbind) %>%
+        mutate(country = names(model)) %>%
+        select(one_of(c("country", metadata[[2]])))
+    table_ready
+}
+
+
+table_four <-
+    tabler(models_table_service_four, "TRUE") %>%
+    arrange(country) %>%
+    bind_cols(tabler(models_table_downward_four, "FALSE") %>%
+                  arrange(country) %>%
+                  select(-country))
+
+title_columns <-
+    c("Destiny:",
+      "Service class \n All low-SES sons",
+      "Service class \n Low-SES sons* \n high cognitive \n score",
+      "Working class \n All high-SES sons",
+      "Working class \n High-SES sons* \n Low cognitive \n score"
+    )
+
+doc <- docx()
+
+doc <- addTitle(doc, "Table 4")
+doc <- addFlexTable(doc,
+                    FlexTable(table_four, header.columns = FALSE) %>%
+                        addHeaderRow(text.properties = textBold(),
+                                     value = title_columns,
+                                     first = TRUE))
+
+writeDoc(doc, file = "./Tables/tables.docx")
+
 
 #####
