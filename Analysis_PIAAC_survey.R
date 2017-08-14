@@ -1,3 +1,25 @@
+# Redo analysis for Israel
+# 
+# Table 2:
+#     
+#     Add model specification in the notes section
+# 
+# Table 3:
+#     
+#     Add model specification in the notes section
+# 
+# Table 6.
+# 
+# Any upward for Low SES sons in the top third cognitive
+# separate for old and young cohort
+# 
+# Table 8.
+# 
+# So the division is bottom cognitive - top cognitive divided by bottom bottom and how much % change.
+# 
+# Interaction graph for nation clusters and one for pooled 21 countries
+
+
 #### Packages ####
 library(survey)
 library(car)
@@ -622,158 +644,65 @@ ability_list <-
 # dv's)
 
 
-##### Table 1 multilevel ####
+##### Table 1 ####
 # change to lowerclass to get the other table
-dv <- "serviceclass"
-depvar_title <- "Service class dummy"
-    
-rhs_sequence <- function(iv) {
-    stop_message(length(iv) < 1, "iv must have length >= 1")
-    warning_message(any(is.na(iv)), "NA's found in iv. Removing them.")
-    
-    non_na_iv <- na.omit(iv)
-    model_combination <- map(seq_along(non_na_iv), ~ seq(1:.x))
-    rhs <- map(model_combination, ~ paste(non_na_iv[.x], collapse = " + "))
-    
-    rhs
-}
-static_formula <- function(dv, rhs, random) {
-    new_dv <- paste0(dv, " ~ 1")
-    rhs <- paste0(c(rhs, random), collapse = " + ")
-    as.formula(paste0(c(new_dv, rhs), collapse = " + "))
-}
-formula_builder <- function(dv, sequence, fixed) {
-    
-    if (!missing(fixed)) {
-        fixed <- paste0(c(dv, paste(fixed, collapse = " + ")), collapse = " ~ ")
-    } else {
-        fixed <- paste(dv, "~ 1")
-    }
-    
-    map_chr(rhs_sequence(sequence), ~ paste(c(fixed, .x), collapse = " + "))
-}
-formula_generator <- function(dv, sequence, fixed) {
-    map(formula_builder(dv, sequence, fixed), as.formula)
-}
-form_random_effects <- function(dv, sequence, random_effects, fixed) {
-    random_formulas <- paste(formula_builder(dv, sequence, fixed), random_effects, sep = " + ")
-    map(random_formulas, as.formula)
+dv <- "long_dist_upward"
+depvar_title <- "Continuous upward mobility"
+
+standard_covariates <- c("scale(pvnum)",
+                         "non.cognitive",
+                         "age_categories",
+                         "postwelfare",
+                         "dadimmigrant")
+
+# I'm running two models, one with highisced variables and another
+# with lowisced variables, that's why I'm creating two separate set of
+# independent variables.
+
+# Finally, USA has a different lowisced variable, so I create a separate vector
+# for US.
+all_firstcovariates <- c("highisced", "adv", standard_covariates)
+all_secondcovariates <- c("lowisced", "disadv", standard_covariates)
+usa_secondcovariates <- c("lowmidisced2", all_secondcovariates[-1])
+
+formula_maker <- function(lhs, rhs) {
+    as.formula(paste(lhs, " ~ ", paste0(rhs, collapse = " + ")))
 }
 
-covariate_list <- list(static_formula(dv, all_firstcovariates, random_two),
-                       static_formula(dv, all_secondcovariates, random_three))
-
-covariate_list <- list(static_formula(dv, all_firstcovariates, "(1 | country)"),
-                       static_formula(dv, all_secondcovariates, "(1 | country)"))
+covariate_list <- list(formula_maker(dv, all_firstcovariates),
+                       formula_maker(dv, all_secondcovariates))
 
 # If the DV is not binary, run lmer, if it is, then use glmer
-type_model <- ifelse(length(na.omit(unique(cnt_bind[[dv]]))) > 2, "lmer", "glmer")
+type_model <- ifelse(length(na.omit(unique(cnt_bind[[dv]]))) > 2, "lm", "glm")
 
 multi_fun <-
     switch(type_model,
-           lmer = function(formula, data, subset, ...) {
-               lmer(formula = formula,
+           lm = function(formula, data, subset, ...) {
+               lm(formula = formula,
                      data = subset(data, eval(parse(text = subset))),
                     ...)
            },
-           glmer = function(formula, data, subset, ...) {
-               glmer(formula = formula,
+           glm = function(formula, data, subset, ...) {
+               glm(formula = formula,
                      data = subset(data, eval(parse(text = subset))),
-                     family = "binomial", ...)
+                     family = "gaussian", ...)
         })
 
 # Pass that list to the glmer to run two different models and then show table with stargazer
-models_multilevel_service <- map(covariate_list, function(formula) {
+models_upward <- map(covariate_list, function(formula) {
     multi_fun(formula = formula,
               data = cnt_bind,
               subset = "gender == 1 & age_categories %in% age")
 })
 
-# Remember to finish the stargazer3 in your package (and do it as object-oriented programming).
-stargazer3 <- function(model, odd.ratio = FALSE, ...) {
-    
-    if (!("list" %in% class(model))) model <- list(model)
-    
-    if (odd.ratio) {
-        # Get coefficients
-        coef_table <- purrr::map(model, ~ as.data.frame(summary(.x)$coefficients))
-        
-        # Estimate odds for all models
-        odds <- purrr::map(coef_table, ~ exp(.x[, 1]))
-        
-        # Loop through odds and SE and multiply them
-        oddsSE <- purrr::map2(odds, coef_table, ~ .x * .y[, 2])
-        
-        # Get p vals from models
-        p_vals <- purrr::map(coef_table, ~ .x[, 4])
-        
-        stargazer::stargazer(model,
-                             coef = odds,
-                             se = oddsSE,
-                             p = p_vals, ...)
-        
-    } else {
-        stargazer::stargazer(model, ...)
-    }
-    
-}
-stargazer_linear <- function(model, covariate_labels, depvar_title, directory) {
-    stargazer(model,
-              type = "html",
-              digits = 2,
-              add.lines = list(c("R-sq", map_dbl(model, ~ round(r.squaredGLMM(.x)[1], 2)))),
-              # c("Between group SD", map_dbl(model, ~ round(.x@theta, 2))),
-              # c("Number of groups", map_dbl(model, ~ .x@pp$Zt@Dim[1])),
-              # c("Varying", rep("Intercept", length(model)))),
-              covariate.labels = covariate_labels,
-              dep.var.labels = depvar_title,
-              out = file.path(directory, paste0(dv, "_", "_multilevel_tables.html")))
-    
-}
-stargazer_binomial <- function(model, covariate_labels, depvar_title, directory) {
-    stargazer3(model, odd.ratio = T,
-               type = "text",
-               digits = 2,
-               add.lines = list(c("Between group SD", map_dbl(model, ~ round(.x@theta, 2))),
-                                c("Number of groups", map_dbl(model, ~ .x@pp$Zt@Dim[1])),
-                                c("Varying", rep("Intercept", length(model)))),
-               covariate.labels = covariate_labels,
-               dep.var.labels = depvar_title,
-               out = file.path(directory, paste0(dv, "_", "_multilevel_tables.docx")))
-}
+dv <- "long_dist_downward"
+depvar_title <- "Continuous downward mobility"
 
-# stargazer_linear(models_multilevel, covariate_labels, depvar_title, directory, cohort)
-stargazer_binomial(models_multilevel_service,
-                   covariate_labels, depvar_title, directory)
-
-
-dv <- "lowerclass"
-depvar_title <- "Lower class dummy"
-
-covariate_list <- list(static_formula(dv, all_firstcovariates, random_two),
-                       static_formula(dv, all_secondcovariates, random_three))
-
-covariate_list <- list(static_formula(dv, all_firstcovariates, "(1 | country)"),
-                       static_formula(dv, all_secondcovariates, "(1 | country)"))
-
-# If the DV is not binary, run lmer, if it is, then use glmer
-type_model <- ifelse(length(na.omit(unique(cnt_bind[[dv]]))) > 2, "lmer", "glmer")
-
-multi_fun <-
-    switch(type_model,
-           lmer = function(formula, data, subset, ...) {
-               lmer(formula = formula,
-                    data = subset(data, eval(parse(text = subset))),
-                    ...)
-           },
-           glmer = function(formula, data, subset, ...) {
-               glmer(formula = formula,
-                     data = subset(data, eval(parse(text = subset))),
-                     family = "binomial", ...)
-           })
+covariate_list <- list(formula_maker(dv, all_firstcovariates),
+                       formula_maker(dv, all_secondcovariates))
 
 # Pass that list to the glmer to run two different models and then show table with stargazer
-models_multilevel_lower <- map(covariate_list, function(formula) {
+models_lower <- map(covariate_list, function(formula) {
     multi_fun(formula = formula,
               data = cnt_bind,
               subset = "gender == 1 & age_categories %in% age")
@@ -783,20 +712,10 @@ table_converter <- function(models) {
     coef_table <- map(models, tidy)
     
     table_one <-
-        map(coef_table, ~ {
-        .x[, 2] <- exp(.x[[2]])
-        .x[, 3] <- .x[[2]] * .x[[3]]
-    
-        .x[!grepl("isced|adv", .x$term), -c(3, 4, 6)]
-    }) %>%
+        map(coef_table, ~ .x[!grepl("isced|adv", .x$term), -c(3, 4, 6)]) %>%
         reduce(cbind)
     
-    table_one_separate <-
-        map(coef_table, ~ {
-        .x[, 2] <- exp(.x[[2]])
-        .x[, 3] <- .x[[2]] * .x[[3]]
-        .x[grepl("isced|adv", .x$term), -c(3, 4, 6)]
-    })
+    table_one_separate <- map(coef_table, ~ .x[grepl("isced|adv", .x$term), -c(3, 4, 6)])
     
     names(table_one_separate[[1]])[2:3] <- c("estimate_high", "p.val_high")
     table_one_separate[[1]]$estimate_low <- NA
@@ -808,43 +727,27 @@ table_converter <- function(models) {
     
     table_one_separate[[2]] <- table_one_separate[[2]][c(1, 4, 5, 2, 3)]
     
-    sd_group <- map_dbl(models, ~ round(.x@theta, 2))
-    n_groups <- map_dbl(models, ~ .x@pp$Zt@Dim[1])
     sample_size <- map_dbl(models, nobs)
-    
+    r_sq <- map_dbl(models, ~ summary(.x)$adj.r.squared %>% round(2))
     
     tibble_to_bind <-
-        tibble(term = c("Between group SD:", "Numer of countries: ", "Sample size: "),
-               estimate_high = as.character(c(sd_group[1], n_groups[1], sample_size[1])),
-               estimate_low = as.character(c(sd_group[2], n_groups[2], sample_size[2])))
-    
-    
+        tibble(term = c("R-squared", "Sample size: "),
+               estimate_high = as.character(c(r_sq[1], sample_size[1])),
+               estimate_low = as.character(c(r_sq[2], sample_size[2])))
+
     table_almost <-
         table_one[-4] %>%
         setNames(c("term", "estimate_high", "p.val_high", "estimate_low", "p.val_low")) %>%
         bind_rows(table_one_separate %>% reduce(bind_rows)) %>%
-        map_if(is_double, function(x) as.character(round(x, 2))) %>%
         as_tibble() %>%
         transmute(term,
-                  estimate_high = case_when(
-                      is.na(p.val_high) ~ estimate_high,
-                      p.val_high < 0.001 ~ paste0(estimate_high, "***"),
-                      p.val_high > 0.001 & p.val_high <= 0.01 ~ paste0(estimate_high, "**"),
-                      p.val_high > 0.01 & p.val_high <= 0.05 ~ paste0(estimate_high, "*"),
-                      p.val_high > 0.05 ~ as.character(estimate_high)
-                      ),
-                  estimate_low = case_when(
-                      is.na(p.val_low) ~ estimate_low,
-                      p.val_low < 0.001 ~ paste0(estimate_low, "***"),
-                      p.val_low > 0.001 & p.val_low <= 0.01 ~ paste0(estimate_low, "**"),
-                      p.val_low > 0.01 & p.val_low <= 0.05 ~ paste0(estimate_low, "*"),
-                      p.val_low > 0.05 ~ as.character(estimate_low)
-                  )) %>%
+                  estimate_high = star_paster(., "p.val_high", "estimate_high"),
+                  estimate_low = star_paster(., "p.val_low", "estimate_low")) %>%
         bind_rows(tibble_to_bind)
     
     
-    table_ready<-
-        table_almost[c(7, 8, 9, 10, 2:3, 4, 5, 11:13), ] %>%
+    table_ready <-
+        table_almost[c(7:10, 2:3, 4:6, 1, 11:12), ] %>%
         mutate(term = recode(term,
                              "highisced" = "High-ISCED origin",
                              "adv" = "High-ISCED origin, \n Bottom 1/3rd cognitive skills",
@@ -852,21 +755,21 @@ table_converter <- function(models) {
                              "disadv" = "Low-ISCED origin, \n Top 1/3rd cognitive skills",
                              "scale(pvnum)" = "Cognitive skills",
                              "non.cognitive" = "Social skills",
+                             "age_categories" = "Age",
                              "postwelfare" = "Postwelfare (dummy)",
-                             "dadimmigrant" = "Dad immigrant"))
+                             "dadimmigrant" = "Dad immigrant",
+                             "(Intercept)" = "Constant"))
     table_ready
 }
-    
+
 table_one <-
-    table_converter(models_multilevel_service) %>%
-    bind_cols(table_converter(models_multilevel_lower) %>% select(-term)) %>%
+    table_converter(models_upward) %>%
+    bind_cols(table_converter(models_lower) %>% select(-term)) %>%
     setNames(c("", rep(c("Service class", "Working class"), each = 2)))
 
 doc <- addTitle(doc, "Table 1")
 doc <- addFlexTable(doc, FlexTable(table_one, header.columns = TRUE))
 
-stargazer_binomial(models_multilevel_lower,
-                   covariate_labels, depvar_title, directory)
 #####
 
 
@@ -1145,12 +1048,15 @@ writeDoc(doc, file = "./Tables/tables.docx")
 #####
 
 
+
 ##### Table 6 ####
 
 
 dv <- "long_dist_upward"
 standard_covariates <- c("scale(pvnum)",
-                         "non.cognitive")
+                         "non.cognitive",
+                         "dadimmigrant",
+                         "age_categories")
 
 all_firstcovariates <- c("highisced", "adv", standard_covariates)
 all_secondcovariates <- c("lowisced", "disadv", standard_covariates)
@@ -1251,6 +1157,6 @@ countries_postwelfare <-
         family_models = family_models,
         postwelfare = TRUE)
 
-tidy(countries_prewelfare$Austria[[1]])
+tidy(countries_prewelfare$Austria[[2]])
 
 #####

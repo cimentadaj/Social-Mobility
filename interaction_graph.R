@@ -82,6 +82,7 @@ countries3 <- svy_recode(countries3, 'occupation_recode', 'long_dist_downward', 
 
 countries3 <- svy_recode(countries3, 'isco', 'lowerclass', '3:9 = 1; 1:2 = 0; else = NA')
 countries3 <- svy_recode(countries3, 'age_categories', 'postwelfare', '1:5 = 1; 6:10 = 0; else = NA')
+countries3 <- svy_recode(countries3, 'dadimmigrant', 'dadimmigrant', "2 = 0; 1 = 1; else = NA")
 
 variables <- c("long_dist_upward", "long_dist_downward")
 titles <- c("Continuous upward", "Continuous downward")
@@ -95,7 +96,7 @@ dv <- variables[2]
 depvar_title <- titles[2]
 
 # Change to 1 for the high/low isced specification and 0 for the opposite
-high_low_isced <- 1
+high_low_isced <- 0
 ######
 
 age <- 1:10; cohort <- "fullcohort"
@@ -112,7 +113,10 @@ standard_covariates <- c(interaction_vars,
                              "gender",
                              "highisced",
                              "lowisced",
-                             "spfwt0")
+                             "dadimmigrant",
+                             "spfwt0",
+                             "long_dist_upward",
+                             "long_dist_downward")
     
 all_firstcovariates <- standard_covariates
     
@@ -162,7 +166,8 @@ standard_covariates <- c(current_int,
                          "pvnum",
                          "non.cognitive",
                          "age_categories",
-                         "postwelfare")
+                         "postwelfare",
+                         "dadimmigrant")
         
 all_firstcovariates <- standard_covariates
 
@@ -243,6 +248,7 @@ interaction_visual <- function(model) {
 
 interaction_visual(model)
 
-ggsave(filename = "multilevel_interaction_downward_highisced_non_scandinavia.png", path = "./Tables/")
+ggsave(filename = "downward_for_lowisced_interaction.png",
+       path = "./Tables/")
 
 map(models_multilevel, interaction_visual)
