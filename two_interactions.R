@@ -12,6 +12,43 @@ library(lme4)
 library(MuMIn)
 source("http://peterhaschke.com/Code/multiplot.R")
 
+dyn.load('/Library/Java/JavaVirtualMachines/jdk1.8.0_131.jdk/Contents/Home/jre/lib/server/libjvm.dylib')
+library(ReporteRs)
+
+star_paster <- function(df, var_one, var_two) {
+    df[[var_two]] <- round(df[[var_two]], 2)
+    sapply(1:nrow(df), function(index) {
+        
+        is_na <- is.na(df[[var_one]][index])
+        three_stars <- df[[var_one]][index] < 0.001
+        two_stars <- df[[var_one]][index] > 0.001 & df[[var_one]][index] <= 0.01
+        one_stars <- df[[var_one]][index] > 0.01 & df[[var_one]][index] <= 0.05
+        
+        if (is_na) {
+            
+            NA
+            
+        } else if (three_stars) {
+            
+            paste(df[[var_two]][index], "***")
+            
+        } else if (two_stars) {
+            
+            paste(df[[var_two]][index], "**")
+            
+        } else if (one_stars) {
+            
+            paste(df[[var_two]][index], "*")
+            
+        } else {
+            
+            df[[var_two]][index]
+        }
+    })
+    
+    
+}
+
 ###### THIS IS WHERE YOU CHANGE YOUR WORKING DIRECTORY ##############
 old_dir <- getwd()
 
@@ -51,6 +88,8 @@ countries3 <- list(Austria = prgautp1.design,
                    `Slovak Republic` = prgsvkp1.design
 )
 
+# countries3 <- list(Israel = prgisrp1.design)
+
 svy_recode <- function(svy_design, old_varname, new_varname, recode) {
     
     svy_design2 <- lapply(svy_design, function(cnt) {
@@ -64,6 +103,42 @@ svy_recode <- function(svy_design, old_varname, new_varname, recode) {
     svy_design2
     
 }
+star_paster <- function(df, var_one, var_two) {
+    df[[var_two]] <- round(df[[var_two]], 2)
+    sapply(1:nrow(df), function(index) {
+        
+        is_na <- is.na(df[[var_one]][index])
+        three_stars <- df[[var_one]][index] < 0.001
+        two_stars <- df[[var_one]][index] > 0.001 & df[[var_one]][index] <= 0.01
+        one_stars <- df[[var_one]][index] > 0.01 & df[[var_one]][index] <= 0.05
+        
+        if (is_na) {
+            
+            NA
+            
+        } else if (three_stars) {
+            
+            paste(df[[var_two]][index], "***")
+            
+        } else if (two_stars) {
+            
+            paste(df[[var_two]][index], "**")
+            
+        } else if (one_stars) {
+            
+            paste(df[[var_two]][index], "*")
+            
+        } else {
+            
+            df[[var_two]][index]
+        }
+    })
+    
+    
+}
+
+
+
 
 ##### Recoding variables ####
 svy_recode <- function(svy_design, old_varname, new_varname, recode) {
@@ -147,305 +222,13 @@ cnts <- map2(countries3, names(countries3), function(data, names) {
 })
 
 cnt_bind <- Reduce(rbind, cnts)
-cnt_bind$pvnum <- scale(cnt_bind$pvnum)
+cnt_bind$pvnum <- scale(cnt_bind$pvnum) %>% .[, 1]
 cnt_bind[interaction_vars] <- map_df(cnt_bind[interaction_vars], as.factor)
 
 x_two <-
     tibble(cogn = interaction_vars[seq(1, length(interaction_vars), 2)],
            noncogn = interaction_vars[seq(2, length(interaction_vars), 2)]) %>%
     unite(interaction, cogn, noncogn, sep = "*")
-
-#####
-
-##### multilevel models #####
-dv <- c("long_dist_downward")
-titles <- c("Continuous downward")
-
-current_int <- as.character(x_two[1, ])
-
-standard_covariates <- c(current_int,
-                         "pvnum",
-                         "non.cognitive",
-                         "age_categories",
-                         "postwelfare")
-
-all_firstcovariates <- standard_covariates
-
-# all_secondcovariates <- c("lowisced", standard_covariates)
-
-random <- "(1 | country)"
-
-rhs_sequence <- function(iv) {
-    stop_message(length(iv) < 1, "iv must have length >= 1")
-    warning_message(any(is.na(iv)), "NA's found in iv. Removing them.")
-    
-    non_na_iv <- na.omit(iv)
-    model_combination <- map(seq_along(non_na_iv), ~ seq(1:.x))
-    rhs <- map(model_combination, ~ paste(non_na_iv[.x], collapse = " + "))
-    
-    rhs
-}
-static_formula <- function(dv, rhs, random) {
-    new_dv <- paste0(dv, " ~ 1")
-    rhs <- paste0(c(rhs, random), collapse = " + ")
-    as.formula(paste0(c(new_dv, rhs), collapse = " + "))
-}
-formula_builder <- function(dv, sequence, fixed) {
-    
-    if (!missing(fixed)) {
-        fixed <- paste0(c(dv, paste(fixed, collapse = " + ")), collapse = " ~ ")
-    } else {
-        fixed <- paste(dv, "~ 1")
-    }
-    map_chr(rhs_sequence(sequence), ~ paste(c(fixed, .x), collapse = " + "))
-}
-formula_generator <- function(dv, sequence, fixed) {
-    map(formula_builder(dv, sequence, fixed), as.formula)
-}
-form_random_effects <- function(dv, sequence, random_effects, fixed) {
-    random_formulas <- paste(formula_builder(dv, sequence, fixed), random_effects, sep = " + ")
-    map(random_formulas, as.formula)
-}
-
-# Turn that nested list into a flat list
-# covariate_list <- c(covariate_list, recursive = T)
-
-# covariate_list <- c(static_formula(dv, all_firstcovariates, random),
-#                     static_formula(dv, c(all_firstcovariates, "highedu_enrollment"), random),
-#                     static_formula(dv, all_secondcovariates, random),
-#                     static_formula(dv, c(all_secondcovariates, "lowedu_enrollment"), random))
-
-# covariate_list <- list(static_formula(dv, all_firstcovariates, random),
-#                        static_formula(dv, all_secondcovariates, random))
-
-covariate_list <-
-    map(list(all_firstcovariates), function(iv) {
-        map(current_int, ~ static_formula(dv, iv, random))
-    }) %>%
-    `c`(recursive = T)
-
-# If the DV is not binery, run lmer, if it is, then use glmer
-type_model <- ifelse(length(na.omit(unique(cnt_bind[, dv]))) > 2, "lmer", "glmer")
-
-iv <- list(all_firstcovariates)[[1]]
-
-multi_fun <-
-    multi_fun <-
-    switch(type_model,
-           lmer = function(formula, data, subset, ...) {
-               m <- match.call()
-               m[[1]] <- as.name("lmer")
-               eval(m)
-           },
-           glmer = function(formula, data, subset, ...) {
-               m <- match.call()
-               m[[1]] <- as.name("glmer")
-               eval(m)
-           }
-    )
-
-# Pass that list to the glmer to run two different models and then show table with stargazer
-models_multilevel1 <- map(covariate_list, function(formula) {
-    multi_fun(formula = formula,
-              data = cnt_bind,
-              subset = gender == 1 & age_categories %in% age & highisced == 1)
-})
-models_multilevel2 <- map(covariate_list, function(formula) {
-    multi_fun(formula = formula,
-              data = cnt_bind,
-              subset = gender == 1 & age_categories %in% age & lowisced == 1)
-})
-models_multilevel_downward <- list(models_multilevel1[[1]], models_multilevel2[[1]])
-
-values_rbind <-
-    map(models_multilevel_downward, ~ {
-        n_obs <- nobs(.x)
-        rsq <- NA
-        rse <- NA
-        
-        data.frame(term = c("N", "R squared", "Residual s.e"), vals = c(n_obs, rsq, rse))
-    }) %>%
-    reduce(bind_cols) %>%
-    setNames(c("term", "highisced", "", "lowisced")) %>%
-    select(-3)
-
-multilevel_downward_table_seven <-
-    map(models_multilevel_downward, ~ {
-    tidy(.x, conf.int = TRUE) %>%
-        .[c(4:5, 2:3, 8, 6:7, 1), c("term", "estimate")]
-        }) %>%
-    reduce(cbind) %>%
-    .[-3] %>%
-    setNames(c("term", "highisced", "lowisced")) %>%
-    bind_rows(values_rbind) %>%
-    mutate_if(is_double, function(x) as.character(round(x, 2)))
-
-multilevel_downward_table_seven
-
-#####
-
-##### lm models_upward_mockup ####
-dv <- c("long_dist_upward")
-titles <- c("Continuous upward")
-
-current_int <- as.character(x_two[1, ])
-    
-standard_covariates <- c("pvnum",
-                         "non.cognitive",
-                         "age_categories",
-                         "postwelfare")
-
-all_firstcovariates <- standard_covariates
-
-iv <- list(all_firstcovariates)[[1]]
-
-covariate_list <-
-    map(list(all_firstcovariates), function(iv) {
-        map(current_int, ~ as.formula(paste(dv, paste(c(.x, iv), collapse = " + "), sep = " ~ ")))
-    }) %>%
-    `c`(recursive = T)
-
-all_firstcovariates <- standard_covariates
-
-# If the DV is not binary, run lm, if it is, then use glm
-type_model <- ifelse(length(na.omit(unique(cnt_bind[, dv]))) > 2, "lm", "glm")
-
-multi_fun <-
-    multi_fun <-
-    switch(type_model,
-           lm = function(formula, data, subset, ...) {
-               m <- match.call()
-               m[[1]] <- as.name("lm")
-               eval(m)
-           },
-           glmer = function(formula, data, subset, ...) {
-               m <- match.call()
-               m[[1]] <- as.name("glm")
-               eval(m)
-           }
-    )
-
-# Pass that list to the glmer to run two different models and then show table with stargazer
-models_multilevel1 <- map(covariate_list, function(formula) {
-    multi_fun(formula = formula,
-              data = cnt_bind,
-              subset = gender == 1 & age_categories %in% age & highisced == 1,
-              weight = spfwt0)
-})
-
-models_multilevel2 <- map(covariate_list, function(formula) {
-    multi_fun(formula = formula,
-              data = cnt_bind,
-              subset = gender == 1 & age_categories %in% age & lowisced == 1,
-              weight = spfwt0)
-})
-models_multilevel_upward <- list(models_multilevel1[[1]], models_multilevel2[[1]])
-
-values_rbind <-
-    map(models_multilevel_upward, ~ {
-    n_obs <- nobs(.x)
-    rsq <- summary(.x)$adj.r.squared
-    rse <- summary(.x)$sigma
-    
-    data.frame(term = c("N", "R squared", "Residual s.e"), vals = c(n_obs, rsq, rse))
-}) %>%
-    reduce(bind_cols) %>%
-    setNames(c("term", "highisced", "", "lowisced")) %>%
-    select(-3) %>%
-    mutate_if(is_double, function(x) as.character(round(x, 2)))
-
-star_paster <- function(df, var_one, var_two) {
-    df[[var_two]] <- round(df[[var_two]], 2)
-    sapply(1:nrow(df), function(index) {
-        
-        is_na <- is.na(df[[var_one]][index])
-        three_stars <- df[[var_one]][index] < 0.001
-        two_stars <- df[[var_one]][index] > 0.001 & df[[var_one]][index] <= 0.01
-        one_stars <- df[[var_one]][index] > 0.01 & df[[var_one]][index] <= 0.05
-        
-        if (is_na) {
-            
-            NA
-            
-        } else if (three_stars) {
-            
-            paste(df[[var_two]][index], "***")
-            
-        } else if (two_stars) {
-            
-            paste(df[[var_two]][index], "**")
-            
-        } else if (one_stars) {
-            
-            paste(df[[var_two]][index], "*")
-            
-        } else {
-            
-            df[[var_two]][index]
-        }
-    })
-    
-    
-}
-
-multilevel_upward_table_seven <-
-    map(models_multilevel_upward, ~ {
-        tidy(.x) %>%
-            .[c(4:5, 2:3, 8, 6:7, 1), c("term", "estimate")]
-    }) %>%
-    reduce(cbind) %>%
-    .[-3] %>%
-    setNames(c("term", "highisced", "lowisced")) %>%
-    mutate_if(is_double, function(x) as.character(round(x, 2))) %>%
-    bind_rows(values_rbind)
-
-multilevel_upward_table_seven
-
-#####
-
-##### Table seven_mockup! ####
-
-table_seven_mockup <- 
-    multilevel_upward_table_seven %>%
-    bind_cols(multilevel_downward_table_seven) %>%
-    select(-4) %>%
-    setNames(c("term", "highisced_upward", "lowisced_upward",
-               "highisced_downward", "lowisced_downward"))
-
-dyn.load('/Library/Java/JavaVirtualMachines/jdk1.8.0_131.jdk/Contents/Home/jre/lib/server/libjvm.dylib')
-library(ReporteRs)
-
-title_columns <-
-    c("", "Upward mobility \n High-SES sons",
-      "Upward mobility \n Low-SES sons",
-      "Downward mobility \n High-SES sons",
-      "Downward mobility \n Low-SES sons")
-
-term_names <- c(
-    "Cognitive skills",
-    "Non-cognitive skills",
-    "Cognitive top + \n Non-cognitive bottom",
-    "Cognitive bottom + \n Non-cognitive top",
-    "Cognitive top + \n non-cognitive bottom (x)
-    cognitive bottom + \nnon-cognitive top",
-    "age",
-    "cohort",
-    "constant",
-    "N",
-    "R-squared",
-    "Residual s.e"
-)
-
-table_seven_mockup$term <- term_names
-
-doc <- docx()
-
-doc <- addTitle(doc, "Table 7_mockup")
-doc <- addFlexTable(doc,
-                    FlexTable(table_seven_mockup, header.columns = FALSE) %>%
-                        addHeaderRow(text.properties = textBold(),
-                                     value = title_columns,
-                                     first = TRUE))
 
 #####
 
@@ -484,7 +267,7 @@ multi_fun <-
                m[[1]] <- as.name("lm")
                eval(m)
            },
-           glmer = function(formula, data, subset, ...) {
+           glm = function(formula, data, subset, ...) {
                m <- match.call()
                m[[1]] <- as.name("glm")
                eval(m)
@@ -498,13 +281,13 @@ models_multilevel1 <- map(covariate_list, function(formula) {
               subset = gender == 1 & age_categories %in% age & highisced == 1,
               weight = spfwt0)
 })
-
 models_multilevel2 <- map(covariate_list, function(formula) {
     multi_fun(formula = formula,
               data = cnt_bind,
               subset = gender == 1 & age_categories %in% age & lowisced == 1,
               weight = spfwt0)
 })
+
 models_multilevel_upward <- list(models_multilevel1[[1]], models_multilevel2[[1]])
 
 values_rbind <-
@@ -534,7 +317,6 @@ multilevel_upward_table_seven <-
     bind_rows(values_rbind)
 
 multilevel_upward_table_seven
-
 #####
 
 ##### lm models_downward ####
@@ -572,7 +354,7 @@ multi_fun <-
                m[[1]] <- as.name("lm")
                eval(m)
            },
-           glmer = function(formula, data, subset, ...) {
+           glm = function(formula, data, subset, ...) {
                m <- match.call()
                m[[1]] <- as.name("glm")
                eval(m)
@@ -586,13 +368,13 @@ models_multilevel1 <- map(covariate_list, function(formula) {
               subset = gender == 1 & age_categories %in% age & highisced == 1,
               weight = spfwt0)
 })
-
 models_multilevel2 <- map(covariate_list, function(formula) {
     multi_fun(formula = formula,
               data = cnt_bind,
               subset = gender == 1 & age_categories %in% age & lowisced == 1,
               weight = spfwt0)
 })
+
 models_multilevel_downward <- list(models_multilevel1[[1]], models_multilevel2[[1]])
 
 values_rbind <-
@@ -611,7 +393,7 @@ values_rbind <-
 
 multilevel_downward_table_seven <-
     map(models_multilevel_downward, ~ {
-        tidy(.x, conf.int = TRUE) %>%
+        tidy(.x) %>%
             .[c(4:5, 2:3, 9, 6:8, 1), c("term", "estimate", "p.value")]
     }) %>%
     reduce(cbind) %>%
@@ -652,7 +434,19 @@ table_seven$term <- c(
     "Residual s.e"
 )
 
+title_columns <- c(
+    "",
+    "Upward Mobility \n 
+    High-SES sons",
+    "Upward Mobility \n
+    Low-SES sons",
+    "Downward mobility \n
+    High-SES sons",
+    "Downward mobility \n
+    Low-SES sons"
+)
 
+doc <- docx()
 doc <- addTitle(doc, "Table 7")
 doc <- addFlexTable(doc,
                     FlexTable(table_seven, header.columns = FALSE) %>%
@@ -733,20 +527,24 @@ writeDoc(doc, file = "./Tables/table_seven.docx")
 
 #####
 
+#######################
+
+
 ##### Table 8 ####
 
-#####
-
-##### lm models scandinavia ####
-walk(1:nrow(x_two), ~ {
-    current_int <- as.character(x_two[.x, ])
+interaction_calc <- function(interaction_df, df, dv) {
     
-    standard_covariates <- c(current_int,
-                             "pvnum",
+    current_int <- as.character(interaction_df[2, ])
+    
+    standard_covariates <- c("pvnum",
                              "non.cognitive",
-                             "age_categories", "postwelfare")
+                             "age_categories",
+                             "postwelfare",
+                             "dadimmigrant")
     
     all_firstcovariates <- standard_covariates
+    
+    iv <- list(all_firstcovariates)[[1]]
     
     covariate_list <-
         map(list(all_firstcovariates), function(iv) {
@@ -754,10 +552,10 @@ walk(1:nrow(x_two), ~ {
         }) %>%
         `c`(recursive = T)
     
-    iv <- list(all_firstcovariates)[[1]]
+    all_firstcovariates <- standard_covariates
     
-    # If the DV is not binery, run lmer, if it is, then use glmer
-    type_model <- ifelse(length(na.omit(unique(cnt_bind[, dv]))) > 2, "lm", "glm")
+    # If the DV is not binary, run lm, if it is, then use glm
+    type_model <- ifelse(length(na.omit(unique(df[, dv]))) > 2, "lm", "glm")
     
     multi_fun <-
         multi_fun <-
@@ -767,55 +565,84 @@ walk(1:nrow(x_two), ~ {
                    m[[1]] <- as.name("lm")
                    eval(m)
                },
-               glmer = function(formula, data, subset, ...) {
+               glm = function(formula, data, subset, ...) {
                    m <- match.call()
                    m[[1]] <- as.name("glm")
                    eval(m)
                }
         )
     
-    countries <- c("Denmark", "Sweden", "Norway", "Finland")
     # Pass that list to the glmer to run two different models and then show table with stargazer
     models_multilevel1 <- map(covariate_list, function(formula) {
         multi_fun(formula = formula,
-                  data = cnt_bind,
-                  subset = gender == 1 & age_categories %in% age & highisced == 1 & country %in% countries,
+                  data = df,
+                  subset = gender == 1 & age_categories %in% age & highisced == 1,
                   weight = spfwt0)
     })
     models_multilevel2 <- map(covariate_list, function(formula) {
         multi_fun(formula = formula,
-                  data = cnt_bind,
-                  subset = gender == 1 & age_categories %in% age & lowisced == 1 & country %in% countries,
+                  data = df,
+                  subset = gender == 1 & age_categories %in% age & lowisced == 1,
                   weight = spfwt0)
     })
     
-    models_multilevel <- list(models_multilevel1[[1]], models_multilevel2[[1]])
+    models_multilevel_upward <- list(models_multilevel1[[1]], models_multilevel2[[1]])
     
-    # Remember to finish the stargazer3 in your package (and do it as object-oriented programming).
+    models_multilevel_upward
+}
+
+table_eight_calculator <- function(table) {
     
-    stargazer_sequence <- function(model, covariate_labels, depvar_title, directory, cohort, ...) {
-        stargazer(model,
-                  type = "html",
-                  digits = 2,
-                  # add.lines = list(c("R-sq", map_dbl(model, ~ round(r.squaredGLMM(.x)[1], 2)))),
-                  # c("Between group SD", map_dbl(model, ~ round(.x@theta, 2))),
-                  # c("Number of groups", map_dbl(model, ~ .x@pp$Zt@Dim[1])),
-                  # c("Varying", rep("Intercept", length(model)))),
-                  # covariate.labels = covariate_labels,
-                  dep.var.labels = depvar_title,
-                  out = file.path(directory,
-                                  paste0(dv, "_", cohort, .x, "_scandinavia_interaction_linear.html")),
-                  ...)
-    }
-    columns <- c("High isced = 1", "Low isced = 1")
-    stargazer_sequence(models_multilevel,
-                       covariate_labels, depvar_title, directory,
-                       cohort, column.labels = columns)
-})
-######
+    table_eight <-
+        table %>%
+        select(1, 2, 4)
+    
+    tibble("Boosting Upward Moves" = (table_eight[[3, 2]] / table_eight[[4, 2]]) - 1,
+           "Averting Downward Moves" = 1 - (table_eight[[3, 3]] / table_eight[[4, 3]])) %>%
+        map_df(~ paste0(round(.x, 3) * 100, "%"))
+}
 
-rm(list=c(ls()[!ls() %in% ls2]))
+all <- cnt_bind$country %>% unique
+scandinavia <- c("Denmark", "Sweden", "Norway", "Finland")
+czech <- c("Czech Republic", "Italy", "Slovak Republic", "Spain")
+aus <- c("Austria", "Belgium", "Estonia", "Korea", "Poland", "United Kingdom")
+can <- c("Canada", "France", "Germany", "Japan", "Netherlands", "Sweden", "United States")
 
-# There's a mistake. Tabel 7 in the paper, the upward models are written from the pooled linear
-# models but the downwrd models are crated from the multilevel models instead.
-# You need to change the downward models to the pooled linear models.
+all_models <- list(all, scandinavia, czech, aus, can)
+
+table_eight <-
+    map(all_models, ~ {
+        up <- interaction_calc(x_two, filter(cnt_bind, country %in% .x), "long_dist_upward")[[1]] %>%
+            tidy() %>%
+            filter(grepl("^noncognitive|Intercept", .$term)) %>%
+            select(1, 2) %>%
+            spread(term, estimate) %>%
+            setNames(c("den", "num")) %>%
+            summarize(`Boosting Upward Moves` = round(abs(num) / den, 2))
+        
+        down <- interaction_calc(x_two, filter(cnt_bind, country %in% .x), "long_dist_downward")[[1]] %>%
+            tidy() %>%
+            filter(grepl("^noncognitive|Intercept", .$term)) %>%
+            select(1, 2) %>%
+            spread(term, estimate) %>%
+            setNames(c("den", "num")) %>%
+            summarize(`Averting Downward Moves` = round(abs(num) / den, 2))
+        
+        cbind(up, down)
+        
+}) %>%
+    enframe() %>%
+    unnest() %>%
+    mutate(name = c("All 21 pooled countries",
+                    paste(all_models[[2]], collapse = ", "),
+                    paste(all_models[[3]], collapse = ", "),
+                    paste(all_models[[4]], collapse = ", "),
+                    paste(all_models[[5]], collapse = ", ")))
+
+doc <- docx()
+doc <- addTitle(doc, "Table 8")
+doc <- addFlexTable(doc, FlexTable(table_eight, header.columns = TRUE))
+
+writeDoc(doc, file = "./Tables/table_eight.docx")
+
+#####

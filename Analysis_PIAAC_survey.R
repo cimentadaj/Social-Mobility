@@ -1,13 +1,5 @@
 # Redo analysis for Israel
 # 
-# Table 2:
-#     
-#     Add model specification in the notes section
-# 
-# Table 3:
-#     
-#     Add model specification in the notes section
-# 
 # Table 6.
 # 
 # Any upward for Low SES sons in the top third cognitive
@@ -34,6 +26,9 @@ library(ggthemes)
 library(lme4)
 library(MuMIn)
 source("http://peterhaschke.com/Code/multiplot.R")
+dyn.load('/Library/Java/JavaVirtualMachines/jdk1.8.0_131.jdk/Contents/Home/jre/lib/server/libjvm.dylib')
+library(ReporteRs)
+
 #####
 
 
@@ -76,6 +71,8 @@ countries3 <- list(Austria = prgautp1.design,
                    `Russian Federation` = prgrusp1.design,
                    `Slovak Republic` = prgsvkp1.design
                    )
+
+# countries3 <- list(Israel = prgisrp1.design)
 #####
 
 
@@ -208,7 +205,7 @@ modeling_function <- function(df_list,
     odd.ratio <- ifelse(family_models == "gaussian", F,
                         unname(ifelse(sample(dv_length_countries, 1) == 2, T, F)))
 
-for (i in 1:length(df_list)) {
+    for (i in 1:length(df_list)) {
 
     # The low isced variable for USA combines both low and mid isced
     # Whenever the country is USA, use a different set of covariates
@@ -344,9 +341,6 @@ table_generator <- function(list) {
 table_two <- table_generator(model_lists)
 table_three <- table_generator(model_lists_downward)
 
-dyn.load('/Library/Java/JavaVirtualMachines/jdk1.8.0_131.jdk/Contents/Home/jre/lib/server/libjvm.dylib')
-library(ReporteRs)
-
 title_columns <-
     c("","High SES \n origin β \n \n (1)", "High-SES, \n bottom 1/3rd β \n \n (2)",
       "Low SES \n origin β \n \n (3)", "Low-SES \n top 1/3rd β \n \n (4)",
@@ -386,7 +380,7 @@ descriptive_table$descriptive <-
         summarize(`Sample size` = n(),
                   `% High ISCED` = mean(highisced, na.rm = T) * 100,
                   `% Low ISCED` = mean(lowisced, na.rm = T) * 100,
-                  `% Dad immigrant` = mean(dadimmigrant, na.rm = T) * 100,
+                  `% Dad immigrant` = 100 - (mean(dadimmigrant, na.rm = T) * 100),
                   `Avg numeracy skills` = mean(pvnum, na.rm = T)) %>%
         map_if(is_numeric, round, 0) %>%
         as_tibble() %>%
@@ -1051,7 +1045,6 @@ writeDoc(doc, file = "./Tables/tables.docx")
 
 ##### Table 6 ####
 
-
 dv <- "long_dist_upward"
 standard_covariates <- c("scale(pvnum)",
                          "non.cognitive",
@@ -1062,14 +1055,13 @@ all_firstcovariates <- c("highisced", "adv", standard_covariates)
 all_secondcovariates <- c("lowisced", "disadv", standard_covariates)
 usa_secondcovariates <- c("lowmidisced2", all_secondcovariates[-1])
 
-modeling_function <- function(df_list,
+modeling_function_f <- function(df_list,
                               dv,
                               firstcovariates,
                               usa_secondcovariates,
                               secondcovariates,
                               age_subset,
-                              family_models = "gaussian",
-                              postwelfare = TRUE) {
+                              family_models = "gaussian") {
     
     stop_message(length(df_list) < 1, "df_list is empty")
     last_models <- rep(list(vector("list", 2)), length(df_list))
@@ -1108,10 +1100,78 @@ modeling_function <- function(df_list,
             secondcovariates <- all_secondcovariates }
         
         mod1 <- models(dv, all_firstcovariates,
-                       subset(df_list[[i]], gender == 1 & postwelfare == ifelse(postwelfare, 1, 0)),
+                       subset(df_list[[i]], gender == 1 &
+                                  postwelfare == 0),
                        family_models = family_models)
+        
         mod2 <- models(dv, secondcovariates,
-                       subset(df_list[[i]], gender == 1 & postwelfare == ifelse(postwelfare, 1, 0)),
+                       subset(df_list[[i]], gender == 1 &
+                                  postwelfare == 0),
+                       family_models = family_models)
+        
+        last_models[[i]][[1]] <- mod1[[length(mod1)]] # length(mod1) to only get the last (complete model)
+        last_models[[i]][[2]] <- mod2[[length(mod1)]]
+        
+        # Calculate R squared for each model
+        # mod1_r <- c("R squared:", paste0(sapply(mod1, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%"))
+        # mod2_r <- paste0(sapply(mod2, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%")
+        
+    }
+    last_models
+}
+
+modeling_function_t <- function(df_list,
+                              dv,
+                              firstcovariates,
+                              usa_secondcovariates,
+                              secondcovariates,
+                              age_subset,
+                              family_models = "gaussian") {
+    
+    stop_message(length(df_list) < 1, "df_list is empty")
+    last_models <- rep(list(vector("list", 2)), length(df_list))
+    names(last_models) <- names(df_list)
+    
+    # Odd ratios or not?
+    # This should be done to identify whether DV is a dummy or not
+    dv_length_countries <-
+        map_dbl(df_list, function(.x)
+            unique(.x$designs[[1]]$variables[, dv]) %>%
+                na.omit() %>%
+                length())
+    
+    # If the number of countries equals 1, bring the only length,
+    # if not, sample from all countries
+    len <- ifelse(length(dv_length_countries) == 1,
+                  dv_length_countries,
+                  sample(dv_length_countries, 1))
+    
+    stop_message(!all(len == dv_length_countries),
+                 "The length of the dependent variable differs by country")
+    stop_message(!(len >= 2),
+                 "DV has length < 2")
+    
+    odd.ratio <- ifelse(family_models == "gaussian", F,
+                        unname(ifelse(sample(dv_length_countries, 1) == 2, T, F)))
+    
+    for (i in 1:length(df_list)) {
+        
+        # The low isced variable for USA combines both low and mid isced
+        # Whenever the country is USA, use a different set of covariates
+        # than with all other countries.
+        if (names(df_list[i]) == "USA") {
+            secondcovariates <- usa_secondcovariates
+        } else {
+            secondcovariates <- all_secondcovariates }
+        
+        mod1 <- models(dv, all_firstcovariates,
+                       subset(df_list[[i]], gender == 1 &
+                                  postwelfare == 1),
+                       family_models = family_models)
+        
+        mod2 <- models(dv, secondcovariates,
+                       subset(df_list[[i]], gender == 1 &
+                                  postwelfare == 1),
                        family_models = family_models)
         
         last_models[[i]][[1]] <- mod1[[length(mod1)]] # length(mod1) to only get the last (complete model)
@@ -1136,27 +1196,46 @@ selected_countries <- c(
 )
 
 countries_prewelfare <-
-    modeling_function(
+    modeling_function_f(
         df_list = countries3[selected_countries],
         dv = dv,
         firstcovariates = all_firstcovariates,
         usa_secondcovariates = usa_secondcovariates,
         secondcovariates = all_secondcovariates,
         age_subset = age,
-        family_models = family_models,
-        postwelfare = FALSE)
+        family_models = family_models)
 
 countries_postwelfare <-
-    modeling_function(
+    modeling_function_t(
         df_list = countries3[selected_countries],
         dv = dv,
         firstcovariates = all_firstcovariates,
         usa_secondcovariates = usa_secondcovariates,
         secondcovariates = all_secondcovariates,
         age_subset = age,
-        family_models = family_models,
-        postwelfare = TRUE)
+        family_models = family_models)
 
-tidy(countries_prewelfare$Austria[[2]])
+pre_post_table <- function(pre_mod, post_mod, country, num, den) {
+    pre <- tidy(pre_mod[[country]][[2]]) %>%
+        filter(term %in% c(num, den)) %>%
+        select(term, estimate) %>%
+        spread(term, estimate) %>%
+        setNames(c("num", "den")) %>%
+        summarize(pre = (abs(num) / den))
+    
+    post <- tidy(post_mod[[country]][[2]]) %>%
+        filter(term %in% c(num, den)) %>%
+        select(term, estimate) %>%
+        spread(term, estimate) %>%
+        setNames(c("num", "den")) %>%
+        summarize(post = (abs(num) / den))
+
+    cbind(post, pre)
+}
+
+pre_post_table(countries_prewelfare,
+               countries_postwelfare,
+               "Denmark", "scale(pvnum)", "lowisced")
+
 
 #####
