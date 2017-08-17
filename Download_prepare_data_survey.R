@@ -98,174 +98,174 @@ data.management <- function(x) {
                               differentideas=I_Q04l,
                               additinfo=I_Q04m)
 
-# this function does two things: if specified character, it will coerce the vector
-# to a character and if specified factor it will coerce the vector to a numeric.
-# It does it so it coerces factors, as well as numeric and character.
-numtrans <- function(x, type=c("character","factor")) {
-    if (type == "character") {
-    x <- as.character(x)
-    } else {
-    x <- as.numeric(as.character(x))
+    # this function does two things: if specified character, it will coerce the vector
+    # to a character and if specified factor it will coerce the vector to a numeric.
+    # It does it so it coerces factors, as well as numeric and character.
+    numtrans <- function(x, type=c("character","factor")) {
+        if (type == "character") {
+        x <- as.character(x)
+        } else {
+        x <- as.numeric(as.character(x))
+        }
+        return(x)
     }
-    return(x)
-}
-
-vars <- c("bottomthings","differentideas","additinfo","isco",
-          "momedu","dadedu","numbooks","dadimmigrant","eduattain",
-          "age","gender")
-x[,vars] <- lapply(x[,vars], numtrans, type="numeric")
-
-x$VEMETHOD <- as.character(x$VEMETHOD)
-
-# Factor loading the three non-cognitive variables
-factor <- fa(x[, c("bottomthings","differentideas","additinfo")],
-              nfactors = 1,rotate="none", fm="pa", score=T)
-
-x$non.cognitive <- as.numeric(factor$scores)
-
-quant <- quantile(scale(x$PVNUM1), probs = c(0.25,0.75), na.rm=T) # get the top and bottom quantile of the cognitive score
-quant2 <- quantile(scale(x$non.cognitive), probs = c(0.25,0.75), na.rm=T) # get the top and bottom quantile of non-cognitive score
-
-
-# create a dummy variables with all possible combination of quantiles
-x$highab <- as.numeric(scale(x$PVNUM1) >= quant[2][[1]] & scale(x$non.cognitive) >= quant2[2][[1]]) ## High quantile of cognitive and non-cognitive
-x$lowab <- as.numeric(scale(x$PVNUM1) <= quant[1][[1]] & scale(x$non.cognitive) <= quant2[1][[1]]) ## Low quantiles of cognitive and non-cognitive
-x$midcoghigh <- as.numeric(scale(x$PVNUM1) >= quant[2][[1]] & scale(x$non.cognitive) <= quant2[1][[1]]) ## High cognitive, low non-cognitive
-x$midnonhigh <- as.numeric(scale(x$PVNUM1) <= quant[1][[1]] & scale(x$non.cognitive) >= quant2[2][[1]])## Low cognitive, high non-cognitive
-
-x <- as.data.frame(x) # Transforming back into class data frame
-
-## Recoding dependent var into dummy: 1= service class, 0 = all else,
-## I exclude ppl who didn't work in the last 5 years(code 9)
-
-# Service class
-#         Armed forces	                                    0       EGP
-#         Legislators, senior officials and managers	    1       1
-#         Professionals	                                    2       1 
-
-# Middle class
-#         Technicians and associate professionals	        3       2
-#         Clerks	                                        4       3
-#         Service workers and shop and market sales workers	5       3
-# Lower class
-#         Skilled agricultural and fishery workers	        6       10
-#         Craft and related trades workers	                7       8
-#         Plant and machine operators and assemblers	    8       9
-#         Elementary occupations	                        9       9
-#         No paid work for past 5 years	                    9995
-#         Valid skip	                                    9996
-#         Don't know	                                    9997
-#         Refused	                                        9998
-#         Not stated or inferred	                        9999
-
-# Service class dummy - for any doubs on the classification coding see above
-x$isco <- car::recode(x$isco, "c(9995,9996,9997,9998,9999,0) = NA")
-x$serviceclass <- as.numeric(as.character(x$isco))
-x$serviceclass <- car::recode(x$serviceclass, "1:2 = 1; 3:9 = 0")
-
-# Middle class dummy - for any doubs on the classification coding see above
-x$middleclass <- 0
-x$middleclass[x$isco %in% c(3,4,5)] <- 1
-x$lowerclass <- as.numeric(x$isco %in% c(6,7,8,9))
-
-## Recoding father's education into dummies
-## 1 = ISCED 1 & 2, 0 = all else
-x$origin12 <- as.numeric(x$dadedu == 1)
-
-## 1 = ISCED 5 & 6, 0 = all else
-x$origin56 <- as.numeric(x$dadedu == 3)
-
-## 1 = ISCED 1,2,3 and 4, 0 = all else
-x$lowmidisced <- as.numeric(x$dadedu %in% c(2,1))
-
-
-## Education homogamy dummies
-x$highorigin <- as.numeric(x$dadedu == 3 & x$momedu == 3) # Mom and Dad are ISCED 5 and 6
-x$loworigin <- as.numeric(x$dadedu == 1 & x$momedu == 1) # Mom and Dad are ISCED 1 and 2
-
-## standardizing cognitive score
-#x$cognitive <- scale(x$cognitive)
-
-## Recoding gender, 1 = men 0 = women
-x$gender <- car::recode(x$gender, "2=0")
-x <- x[!is.na(x$gender), ]
-
-# Recoded the education into three levels: low, mid, high
-x$eduattain <- car::recode(x$eduattain, "1:3 = 1; 4:10=2; 11:16=3")
-
-## Recoding the DV (3 levels) into two levels. Comparing the highly educated
-## vs the middly and low educated
-x$dest56 <- car::recode(x$eduattain, "3=1; c(2,1)=0")
-
-## Creating of highest education indicator
-## Out of both parents education, it picks the highest education of the household
-
-# NA's are now 0 because rowMaxs has a problem with NA
-x$dadedu[is.na(x$dadedu)] <- 0
-x$momedu[is.na(x$momedu)] <- 0
-
-x$highedu <- rowMaxs(as.matrix(x[c("dadedu","momedu")]))
-
-# Recode them back to NA
-x$dadedu[x$dadedu == 0] <- NA
-x$momedu[x$momedu == 0] <- NA
-x$highedu[x$highedu == 0] <- NA
-
-x$highisced <- as.numeric(x$highedu == 3)
-x$lowisced  <- as.numeric(x$highedu == 1)
-x$lowmidisced2 <- as.numeric(x$highedu %in% c(1,2)) # For the USA
-
-quant3 <- quantile(scale(x$PVNUM1), probs = c(0.30,0.70), na.rm=T)
-quant4 <- quantile(scale(x$non.cognitive), probs = c(0.30,0.70), na.rm=T)
-
-quant5 <- quantile(scale(x$PVNUM1), probs = c(0.50,0.70), na.rm=T)
-quant6 <- quantile(scale(x$non.cognitive), probs = c(0.50,0.70), na.rm=T)
-
-quant7 <- quantile(scale(x$PVNUM1), probs = c(0.50,0.80), na.rm=T)
-quant8 <- quantile(scale(x$non.cognitive), probs = c(0.50,0.80), na.rm=T)
-
-quant9 <- quantile(scale(x$PVNUM1), probs = c(0.40,0.80), na.rm=T)
-quant10 <- quantile(scale(x$non.cognitive), probs = c(0.40,0.80), na.rm=T)
-
-x$adv <- as.numeric(x$highedu == 3 & scale(x$PVNUM1) <= quant3[[1]])
-x$disadv <- as.numeric(x$highedu == 1 & scale(x$PVNUM1) >= quant3[[2]])
-
-x$highcogn <- as.numeric(scale(x$PVNUM1)) >= quant3[[2]]
-x$lowcogn <- as.numeric(scale(x$PVNUM1)) <= quant3[[1]]
-
-x$highnon.cogn <- as.numeric(scale(x$non.cognitive)) >= quant4[[2]]
-x$lownon.cogn <- as.numeric(scale(x$non.cognitive)) <= quant4[[1]]
-
-cognitive_recoder <- function(variable, q) {
-    ifelse(as.numeric(scale(x[, variable])) >= q[[2]], 1,
-    ifelse(as.numeric(scale(x[, variable])) <= q[[1]], 0, NA))
-}
-
-column_names <- c(
-    "cognitive_top30_bottom30",
-    "noncognitive_top30_bottom30",
-    "cognitive_top30_bottom50",
-    "noncognitive_top30_bottom50",
-    "cognitive_top20_bottom50",
-    "noncognitive_top20_bottom50",
-    "cognitive_top20_bottom40",
-    "noncognitive_top20_bottom40"
-)
-
-cognitive_index <- column_names[seq(1, length(column_names), 2)]
-noncognitive_index <- column_names[seq(2, length(column_names), 2)]
-
-x[cognitive_index] <- lapply(paste0("quant", 3:10), function(x) {
-    quan <- get(x)
-    cognitive_recoder("PVNUM1", quan)
-})
-
-x[noncognitive_index] <- lapply(paste0("quant", 3:10), function(x) {
-    quan <- get(x)
-    cognitive_recoder("non.cognitive", quan)
-})
-
-x
+    
+    vars <- c("bottomthings","differentideas","additinfo","isco",
+              "momedu","dadedu","numbooks","dadimmigrant","eduattain",
+              "age","gender")
+    x[,vars] <- lapply(x[,vars], numtrans, type="numeric")
+    
+    x$VEMETHOD <- as.character(x$VEMETHOD)
+    
+    # Factor loading the three non-cognitive variables
+    factor <- fa(x[, c("bottomthings","differentideas","additinfo")],
+                  nfactors = 1,rotate="none", fm="pa", score=T)
+    
+    x$non.cognitive <- as.numeric(factor$scores)
+    
+    quant <- quantile(scale(x$PVNUM1), probs = c(0.25,0.75), na.rm=T) # get the top and bottom quantile of the cognitive score
+    quant2 <- quantile(scale(x$non.cognitive), probs = c(0.25,0.75), na.rm=T) # get the top and bottom quantile of non-cognitive score
+    
+    
+    # create a dummy variables with all possible combination of quantiles
+    x$highab <- as.numeric(scale(x$PVNUM1) >= quant[2][[1]] & scale(x$non.cognitive) >= quant2[2][[1]]) ## High quantile of cognitive and non-cognitive
+    x$lowab <- as.numeric(scale(x$PVNUM1) <= quant[1][[1]] & scale(x$non.cognitive) <= quant2[1][[1]]) ## Low quantiles of cognitive and non-cognitive
+    x$midcoghigh <- as.numeric(scale(x$PVNUM1) >= quant[2][[1]] & scale(x$non.cognitive) <= quant2[1][[1]]) ## High cognitive, low non-cognitive
+    x$midnonhigh <- as.numeric(scale(x$PVNUM1) <= quant[1][[1]] & scale(x$non.cognitive) >= quant2[2][[1]])## Low cognitive, high non-cognitive
+    
+    x <- as.data.frame(x) # Transforming back into class data frame
+    
+    ## Recoding dependent var into dummy: 1= service class, 0 = all else,
+    ## I exclude ppl who didn't work in the last 5 years(code 9)
+    
+    # Service class
+    #         Armed forces	                                    0       EGP
+    #         Legislators, senior officials and managers	    1       1
+    #         Professionals	                                    2       1 
+    
+    # Middle class
+    #         Technicians and associate professionals	        3       2
+    #         Clerks	                                        4       3
+    #         Service workers and shop and market sales workers	5       3
+    # Lower class
+    #         Skilled agricultural and fishery workers	        6       10
+    #         Craft and related trades workers	                7       8
+    #         Plant and machine operators and assemblers	    8       9
+    #         Elementary occupations	                        9       9
+    #         No paid work for past 5 years	                    9995
+    #         Valid skip	                                    9996
+    #         Don't know	                                    9997
+    #         Refused	                                        9998
+    #         Not stated or inferred	                        9999
+    
+    # Service class dummy - for any doubs on the classification coding see above
+    x$isco <- car::recode(x$isco, "c(9995,9996,9997,9998,9999,0) = NA")
+    x$serviceclass <- as.numeric(as.character(x$isco))
+    x$serviceclass <- car::recode(x$serviceclass, "1:2 = 1; 3:9 = 0")
+    
+    # Middle class dummy - for any doubs on the classification coding see above
+    x$middleclass <- 0
+    x$middleclass[x$isco %in% c(3,4,5)] <- 1
+    x$lowerclass <- as.numeric(x$isco %in% c(6,7,8,9))
+    
+    ## Recoding father's education into dummies
+    ## 1 = ISCED 1 & 2, 0 = all else
+    x$origin12 <- as.numeric(x$dadedu == 1)
+    
+    ## 1 = ISCED 5 & 6, 0 = all else
+    x$origin56 <- as.numeric(x$dadedu == 3)
+    
+    ## 1 = ISCED 1,2,3 and 4, 0 = all else
+    x$lowmidisced <- as.numeric(x$dadedu %in% c(2,1))
+    
+    
+    ## Education homogamy dummies
+    x$highorigin <- as.numeric(x$dadedu == 3 & x$momedu == 3) # Mom and Dad are ISCED 5 and 6
+    x$loworigin <- as.numeric(x$dadedu == 1 & x$momedu == 1) # Mom and Dad are ISCED 1 and 2
+    
+    ## standardizing cognitive score
+    #x$cognitive <- scale(x$cognitive)
+    
+    ## Recoding gender, 1 = men 0 = women
+    x$gender <- car::recode(x$gender, "2=0")
+    x <- x[!is.na(x$gender), ]
+    
+    # Recoded the education into three levels: low, mid, high
+    x$eduattain <- car::recode(x$eduattain, "1:3 = 1; 4:10=2; 11:16=3")
+    
+    ## Recoding the DV (3 levels) into two levels. Comparing the highly educated
+    ## vs the middly and low educated
+    x$dest56 <- car::recode(x$eduattain, "3=1; c(2,1)=0")
+    
+    ## Creating of highest education indicator
+    ## Out of both parents education, it picks the highest education of the household
+    
+    # NA's are now 0 because rowMaxs has a problem with NA
+    x$dadedu[is.na(x$dadedu)] <- 0
+    x$momedu[is.na(x$momedu)] <- 0
+    
+    x$highedu <- rowMaxs(as.matrix(x[c("dadedu","momedu")]))
+    
+    # Recode them back to NA
+    x$dadedu[x$dadedu == 0] <- NA
+    x$momedu[x$momedu == 0] <- NA
+    x$highedu[x$highedu == 0] <- NA
+    
+    x$highisced <- as.numeric(x$highedu == 3)
+    x$lowisced  <- as.numeric(x$highedu == 1)
+    x$lowmidisced2 <- as.numeric(x$highedu %in% c(1,2)) # For the USA
+    
+    quant3 <- quantile(scale(x$PVNUM1), probs = c(0.30,0.70), na.rm=T)
+    quant4 <- quantile(scale(x$non.cognitive), probs = c(0.30,0.70), na.rm=T)
+    
+    quant5 <- quantile(scale(x$PVNUM1), probs = c(0.50,0.70), na.rm=T)
+    quant6 <- quantile(scale(x$non.cognitive), probs = c(0.50,0.70), na.rm=T)
+    
+    quant7 <- quantile(scale(x$PVNUM1), probs = c(0.50,0.80), na.rm=T)
+    quant8 <- quantile(scale(x$non.cognitive), probs = c(0.50,0.80), na.rm=T)
+    
+    quant9 <- quantile(scale(x$PVNUM1), probs = c(0.40,0.80), na.rm=T)
+    quant10 <- quantile(scale(x$non.cognitive), probs = c(0.40,0.80), na.rm=T)
+    
+    x$adv <- as.numeric(x$highedu == 3 & scale(x$PVNUM1) <= quant3[[1]])
+    x$disadv <- as.numeric(x$highedu == 1 & scale(x$PVNUM1) >= quant3[[2]])
+    
+    x$highcogn <- as.numeric(scale(x$PVNUM1)) >= quant3[[2]]
+    x$lowcogn <- as.numeric(scale(x$PVNUM1)) <= quant3[[1]]
+    
+    x$highnon.cogn <- as.numeric(scale(x$non.cognitive)) >= quant4[[2]]
+    x$lownon.cogn <- as.numeric(scale(x$non.cognitive)) <= quant4[[1]]
+    
+    cognitive_recoder <- function(variable, q) {
+        ifelse(as.numeric(scale(x[, variable])) >= q[[2]], 1,
+        ifelse(as.numeric(scale(x[, variable])) <= q[[1]], 0, NA))
+    }
+    
+    column_names <- c(
+        "cognitive_top30_bottom30",
+        "noncognitive_top30_bottom30",
+        "cognitive_top30_bottom50",
+        "noncognitive_top30_bottom50",
+        "cognitive_top20_bottom50",
+        "noncognitive_top20_bottom50",
+        "cognitive_top20_bottom40",
+        "noncognitive_top20_bottom40"
+    )
+    
+    cognitive_index <- column_names[seq(1, length(column_names), 2)]
+    noncognitive_index <- column_names[seq(2, length(column_names), 2)]
+    
+    x[cognitive_index] <- lapply(paste0("quant", seq(3, 10, 2)), function(x) {
+        quan <- get(x)
+        cognitive_recoder("PVNUM1", quan)
+    })
+    
+    x[noncognitive_index] <- lapply(paste0("quant", seq(4, 10, 2)), function(x) {
+        quan <- get(x)
+        cognitive_recoder("non.cognitive", quan)
+    })
+    
+    x
 }
 
 usable.country2 <- lapply(countrylist, data.management)
