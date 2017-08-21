@@ -1,17 +1,3 @@
-# Redo analysis for Israel
-# 
-# Table 6.
-# 
-# Any upward for Low SES sons in the top third cognitive
-# separate for old and young cohort
-# 
-# Table 8.
-# 
-# So the division is bottom cognitive - top cognitive divided by bottom bottom and how much % change.
-# 
-# Interaction graph for nation clusters and one for pooled 21 countries
-
-
 #### Packages ####
 library(survey)
 library(car)
