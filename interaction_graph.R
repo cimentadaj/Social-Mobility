@@ -90,6 +90,7 @@ titles <- c("Continuous upward", "Continuous downward")
 interaction_vars <- c("cognitive_top30_bottom30", "noncognitive_top30_bottom30")
 
 
+
 ##### Change #####
 # Change to 1 for the upward graphs and 2 for the downward graphs
 dv <- variables[2]
@@ -97,6 +98,7 @@ depvar_title <- titles[2]
 
 # Change to 1 for the high/low isced specification and 0 for the opposite
 high_low_isced <- 0
+
 ######
 
 age <- 1:10; cohort <- "fullcohort"
@@ -248,7 +250,7 @@ interaction_visual <- function(model) {
 
 interaction_visual(model)
 
-ggsave(filename = "downward_for_lowisced_interaction.png",
-       path = "./Tables/")
+file_name <- paste0(dv, "_for_", ifelse(high_low_isced, "highisced", "lowisced"), "_interaction.png")
 
-map(models_multilevel, interaction_visual)
+ggsave(filename = file_name,
+       path = directory)

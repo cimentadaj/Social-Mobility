@@ -446,8 +446,6 @@ doc <- addFlexTable(doc,
                                      value = title_columns,
                                      first = TRUE))
 
-writeDoc(doc, file = "./Tables/table_seven.docx")
-
 #####
 
 ##### Table 8 = Interaction for table 7 table #####
@@ -510,15 +508,12 @@ interaction_table_ready <-
                       "Bottom cognitive \n Bottom non cognitive")) %>%
     mutate_if(is_double, round, 2)
 
-doc <- docx()
-doc <- addTitle(doc, "Table interaction")
+doc <- addTitle(doc, "Table 8 interaction")
 doc <- addFlexTable(doc,
                     FlexTable(interaction_table_ready, header.columns = FALSE) %>%
                         addHeaderRow(text.properties = textBold(),
                                      value = title_columns,
                                      first = TRUE))
-
-writeDoc(doc, file = "./Tables/table_eight.docx")
 
 #####
 
@@ -637,10 +632,9 @@ table_nine <-
                     paste(all_models[[4]], collapse = ", "),
                     paste(all_models[[5]], collapse = ", ")))
 
-doc <- docx()
 doc <- addTitle(doc, "Table 9")
 doc <- addFlexTable(doc, FlexTable(table_nine, header.columns = TRUE))
 
-writeDoc(doc, file = "./Tables/table_nine.docx")
+writeDoc(doc, file = "./Tables/second_batch_tables.docx")
 
 #####
