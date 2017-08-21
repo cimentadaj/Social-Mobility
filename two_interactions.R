@@ -474,7 +474,7 @@ interaction_table_downwards <-
     .[c(1, 2, 5)] %>%
     setNames(c("term", "highisced", "lowisced"))
 
-df <- interaction_table_upwards
+df <- interaction_table_downwards
 vars_interaction <- variables_interaction
 
 interaction_calculator <- function(df, vars_interaction) {
@@ -639,7 +639,7 @@ table_nine <-
 
 doc <- docx()
 doc <- addTitle(doc, "Table 9")
-doc <- addFlexTable(doc, FlexTable(table_eight, header.columns = TRUE))
+doc <- addFlexTable(doc, FlexTable(table_nine, header.columns = TRUE))
 
 writeDoc(doc, file = "./Tables/table_nine.docx")
 

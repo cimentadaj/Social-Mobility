@@ -54,6 +54,7 @@ star_paster <- function(df, var_one, var_two) {
 
 
 
+
 ##### Reading data #####
 ###### THIS IS WHERE YOU CHANGE YOUR WORKING DIRECTORY
 old_dir <- getwd()
@@ -99,6 +100,7 @@ countries3 <- list(Austria = prgautp1.design,
 
 
 
+
 ##### Recoding variables ####
 svy_recode <- function(svy_design, old_varname, new_varname, recode) {
     
@@ -133,6 +135,7 @@ countries3 <- svy_recode(countries3, 'dadimmigrant', 'dadimmigrant', "2 = 0; 1 =
 
 
 
+
 ##### Model Specification #####
 
 standard_covariates <- c("scale(pvnum)",
@@ -155,6 +158,7 @@ age <- 1:10
 # 6:10 is prewelfare
 # 1:5 is postwelfare
 #####
+
 
 
 ##### Modeling for Table 2 and 3 ####
@@ -309,6 +313,7 @@ model_lists_downward <-
 #####
 
 
+
 ##### Table 2 and 3 ####
 
 table_generator <- function(list) {
@@ -391,6 +396,8 @@ doc <- addFlexTable(doc,
 #####
 
 
+
+
 ##### Descriptives #####
 
 descriptive_table <-
@@ -434,7 +441,6 @@ doc <- addFlexTable(doc,
              )
 
 #####
-
 
 ##### Preparing second modeling #####
 # I will use all of the variables from the first models from above.
@@ -498,7 +504,9 @@ cnt_bind <-
     unnest(value) %>%
     right_join(cnt_bind, by = c("name" = "country", "postwelfare")) %>%
     rename(country = name)
+
 #####
+
 
 
 ##### Cognitive distribution graphs #####
@@ -507,21 +515,26 @@ cnt_bind %>%
     ggplot(aes(pvnum, fill = as.character(highedu))) +
     geom_density(alpha = 0.3) +
     labs(x = "Cognitive distribution", y = "Density") +
-    scale_fill_discrete(name = "Social class",
+    scale_fill_colorblind(name = "Social class",
                         labels = c("Low ISCED", "Higher ISCED")) +
     scale_y_continuous(labels = round(seq(0, 0.0075, 0.0025), 3),
                        breaks = round(seq(0, 0.0075, 0.0025), 3)) +
     theme_minimal()
+
+ggsave("cognitive_distribution.png", path = directory)
 
 cnt_bind %>%
     filter(highedu %in% c(1, 3)) %>%
     ggplot(aes(non.cognitive, fill = as.character(highedu))) +
     geom_density(alpha = 0.3) +
     labs(x = "Non-cognitive distribution", y = "Density") +
-    scale_fill_discrete(name = "Social class",
+    scale_fill_colorblind(name = "Social class",
                         labels = c("Low ISCED", "Higher ISCED")) +
     theme_minimal()
+
+ggsave("noncognitive_distribution.png", path = directory)
 #####
+
 
 
 ##### Extra AGE analysis ####
@@ -612,6 +625,7 @@ ability_list <-
     })
 
 #####
+
 
 
 ##### Table 1 ####
@@ -743,6 +757,7 @@ doc <- addFlexTable(doc, FlexTable(table_one, header.columns = TRUE))
 #####
 
 
+
 ##### Figure 1 and 2 ####
 # Repeat for both dependent variables
 
@@ -818,11 +833,12 @@ plot_generator <- function(multilevel, linear, title_graph) {
 
 plot_generator(models_multilevel_service, model_lists, "Chances of upward mobility")
 ggsave("high_low_isced_upward.png", path = directory)
-    
+
 plot_generator(models_multilevel_lower, model_lists_downward, "Chances of downward mobility")
 ggsave("high_low_isced_downward.png", path = directory)
 
 #####
+
 
 
 ##### Table 4 ####
@@ -1016,6 +1032,7 @@ writeDoc(doc, file = "./Tables/tables.docx")
 
 
 #####
+
 
 
 
