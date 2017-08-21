@@ -15,7 +15,43 @@ source("http://peterhaschke.com/Code/multiplot.R")
 dyn.load('/Library/Java/JavaVirtualMachines/jdk1.8.0_131.jdk/Contents/Home/jre/lib/server/libjvm.dylib')
 library(ReporteRs)
 
+star_paster <- function(df, var_one, var_two) {
+    df[[var_two]] <- round(df[[var_two]], 2)
+    sapply(1:nrow(df), function(index) {
+        
+        is_na <- is.na(df[[var_one]][index])
+        three_stars <- df[[var_one]][index] < 0.001
+        two_stars <- df[[var_one]][index] > 0.001 & df[[var_one]][index] <= 0.01
+        one_stars <- df[[var_one]][index] > 0.01 & df[[var_one]][index] <= 0.05
+        
+        if (is_na) {
+            
+            NA
+            
+        } else if (three_stars) {
+            
+            paste(df[[var_two]][index], "***")
+            
+        } else if (two_stars) {
+            
+            paste(df[[var_two]][index], "**")
+            
+        } else if (one_stars) {
+            
+            paste(df[[var_two]][index], "*")
+            
+        } else {
+            
+            df[[var_two]][index]
+        }
+    })
+    
+    
+}
+
+
 #####
+
 
 
 ##### Reading data #####
@@ -62,6 +98,7 @@ countries3 <- list(Austria = prgautp1.design,
 #####
 
 
+
 ##### Recoding variables ####
 svy_recode <- function(svy_design, old_varname, new_varname, recode) {
     
@@ -93,6 +130,7 @@ countries3 <- svy_recode(countries3, 'momimmigrant', 'momimmigrant', "'2' = 0; '
 countries3 <- svy_recode(countries3, 'dadimmigrant', 'dadimmigrant', "2 = 0; 1 = 1; else = NA")
 
 #####
+
 
 
 ##### Model Specification #####
@@ -574,54 +612,6 @@ ability_list <-
     })
 
 #####
-
-
-###### confirm if you can delete ####
-# summary_models <-
-# map(1:length(model_lists), function(country) { # loop through each country in model list
-#     
-#     map(model_lists[[country]], function(model) { # The loop through each model inside each country
-#         ind <- grep("adv|disadv", model$term)
-#         new_model <- model[ind, c("term", "estimate", "p.value")]
-#         cbind(new_model, impact = new_model[1, 2] / model[1, 2])
-#     })
-# })
-# 
-# # cbind the two models inside each country
-# merged_models <- map(summary_models, function(model) Reduce(rbind, model))
-# 
-# merged_models <-
-#     map(1:length(model_lists), function(country_index) {
-#     merged_models[[country_index]]$country <- names(model_lists)[country_index]
-#     merged_models[[country_index]]
-#     })
-# 
-# 
-# country_df <-
-#     merged_models %>%
-#     do.call("rbind", .) %>%
-#     mutate(term = rep(c("High ISCED - low cogn", "Low ISCED - High cogn"), nrow(.) / 2),
-#            p.value = round(p.value, 2),
-#            estimate = round(estimate, 2),
-#            impact = round(impact, 2)) %>%
-#     (function(df) {row.names(df) <- 1:nrow(df); df}) %>%
-#     arrange(country)
-# 
-# country_df %>%
-#     ggplot(aes(fct_reorder2(country, term, estimate, .desc = F),
-#                estimate, shape = term, colour = p.value < 0.05)) +
-#     geom_hline(yintercept = 0, alpha = 0.4) +
-#     geom_point(size = 2) +
-#     coord_flip() +
-#     scale_shape_discrete(name = NULL) +
-#     scale_y_continuous(breaks = seq(-2, 2, 0.20)) +
-#     labs(x = NULL, y = "Estimate")
-# 
-# ggsave("estimates_plot2.png")
-#####
-
-# Repeat this for both dependent variables (in section preparing second modeling change
-# dv's)
 
 
 ##### Table 1 ####

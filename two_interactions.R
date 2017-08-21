@@ -140,6 +140,7 @@ star_paster <- function(df, var_one, var_two) {
 
 
 
+
 ##### Recoding variables ####
 svy_recode <- function(svy_design, old_varname, new_varname, recode) {
     
@@ -171,6 +172,7 @@ countries3 <- svy_recode(countries3, 'momimmigrant', 'momimmigrant', "'2' = 0; '
 countries3 <- svy_recode(countries3, 'dadimmigrant', 'dadimmigrant', "2 = 0; 1 = 1; else = NA")
 
 #####
+
 
 ##### Variables #####
 
@@ -231,6 +233,7 @@ x_two <-
     unite(interaction, cogn, noncogn, sep = "*")
 
 #####
+
 
 ##### lm models_upward ####
 dv <- c("long_dist_upward")
@@ -318,6 +321,7 @@ multilevel_upward_table_seven <-
 
 multilevel_upward_table_seven
 #####
+
 
 ##### lm models_downward ####
 dv <- c("long_dist_downward")
@@ -408,6 +412,7 @@ multilevel_downward_table_seven
 
 #####
 
+
 ##### Table seven_forreal! ####
 
 table_seven <- 
@@ -458,6 +463,7 @@ writeDoc(doc, file = "./Tables/table_seven.docx")
 
 #####
 
+
 ##### Interaction for table 7 table #####
 
 variables_interaction <- c("pvnum", "non.cognitive",
@@ -482,6 +488,8 @@ interaction_table_downwards <-
     .[c(1, 2, 5)] %>%
     setNames(c("term", "highisced", "lowisced"))
 
+df <- interaction_table_upwards
+vars_interaction <- variables_interaction
 
 interaction_calculator <- function(df, vars_interaction) {
     new_inter <-
@@ -526,6 +534,7 @@ doc <- addFlexTable(doc,
 writeDoc(doc, file = "./Tables/table_seven.docx")
 
 #####
+
 
 #######################
 
