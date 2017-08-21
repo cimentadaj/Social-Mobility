@@ -474,6 +474,8 @@ interaction_table_downwards <-
     .[c(1, 2, 5)] %>%
     setNames(c("term", "highisced", "lowisced"))
 
+df <- interaction_table_upwards
+vars_interaction <- variables_interaction
 
 interaction_calculator <- function(df, vars_interaction) {
     new_inter <-
@@ -485,12 +487,12 @@ interaction_calculator <- function(df, vars_interaction) {
                       "bottcogn_topnon",
                       "bottcogn_bottnon"),
            highisced = c(sum(new_inter[c(6, 1, 2, 5), 2]),
-                         sum(new_inter[c(6, 1), 2]),
-                         sum(new_inter[c(6, 2), 2]),
+                         sum(new_inter[c(6, 3), 2]),
+                         sum(new_inter[c(6, 4), 2]),
                          sum(new_inter[6, 2])),
            lowisced = c(sum(new_inter[c(6, 1, 2, 5), 3]),
-                        sum(new_inter[c(6, 1), 3]),
-                        sum(new_inter[c(6, 2), 3]),
+                        sum(new_inter[c(6, 3), 3]),
+                        sum(new_inter[c(6, 4), 3]),
                         sum(new_inter[6, 3])))
 }
 
