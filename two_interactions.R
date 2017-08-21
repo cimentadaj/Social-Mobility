@@ -137,24 +137,7 @@ star_paster <- function(df, var_one, var_two) {
     
 }
 
-
-
-
-
 ##### Recoding variables ####
-svy_recode <- function(svy_design, old_varname, new_varname, recode) {
-    
-    svy_design2 <- lapply(svy_design, function(cnt) {
-        for (data in seq_along(cnt$design)) {
-            cnt$designs[[data]]$variables[, new_varname] <-
-                car::recode(cnt$designs[[data]]$variables[, old_varname], recode)
-        }
-        cnt
-    })
-    
-    svy_design2
-    
-}
 
 # New occupation var
 countries3 <- svy_recode(countries3, 'isco', 'occupation_recode', '1:2 = 5; 3 = 4; 4:5 = 3; 6:7 = 2; 8:9 = 1')
@@ -177,7 +160,6 @@ countries3 <- svy_recode(countries3, 'dadimmigrant', 'dadimmigrant', "2 = 0; 1 =
 ##### Variables #####
 
 interaction_vars <- c(
-    "cognitive_top20_bottom40", "noncognitive_top20_bottom40",
     "cognitive_top30_bottom30", "noncognitive_top30_bottom30"
 )
 
@@ -239,7 +221,7 @@ x_two <-
 dv <- c("long_dist_upward")
 titles <- c("Continuous upward")
 
-current_int <- as.character(x_two[2, ])
+current_int <- as.character(x_two[1, ])
 
 standard_covariates <- c("pvnum",
                          "non.cognitive",
@@ -488,8 +470,6 @@ interaction_table_downwards <-
     .[c(1, 2, 5)] %>%
     setNames(c("term", "highisced", "lowisced"))
 
-df <- interaction_table_upwards
-vars_interaction <- variables_interaction
 
 interaction_calculator <- function(df, vars_interaction) {
     new_inter <-
