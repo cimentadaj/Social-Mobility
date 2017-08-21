@@ -33,43 +33,43 @@ source_url(
     prompt = FALSE , 
     echo = FALSE 
 )
- 
- 
+
+
 # # designate the oecd public use file page
- oecd.csv.website <- 'http://vs-web-fs-1.oecd.org/piaac/puf-data/CSV/'
+oecd.csv.website <- 'http://vs-web-fs-1.oecd.org/piaac/puf-data/CSV/'
 # 
 # # download the contents of that page
- csv.page <- readLines( oecd.csv.website )
+csv.page <- readLines( oecd.csv.website )
 # 
 # # figure out all lines on that page with a hyperlink
- csv.links <- unlist( strsplit( csv.page , "<A HREF=\"" ) )
+csv.links <- unlist( strsplit( csv.page , "<A HREF=\"" ) )
 # 
 # # further refine the links to only the ones containing the text `CSV/[something].csv`
- csv.texts <- csv.links[ grep( "(.*)CSV/(.*)\\.csv\">(.*)" , csv.links ) ]
+csv.texts <- csv.links[ grep( "(.*)CSV/(.*)\\.csv\">(.*)" , csv.links ) ]
 # 
 # # figure out the base filename of each csv on the website
- csv.fns <- gsub( "(.*)CSV/(.*)\\.csv\">(.*)" , "\\2" , csv.texts )
+csv.fns <- gsub( "(.*)CSV/(.*)\\.csv\">(.*)" , "\\2" , csv.texts )
 # 
 # # initiate a temporary file on the local computer
- tf <- tempfile()
+tf <- tempfile()
 # 
 
- ####### downloads the data to your working directory and stores each data file in a list
- # links <- character(0)
- # countrylist <- rep(list(list()), length(csv.fns))
- # for (i in 1:length(csv.fns)) {
- #     links <- c(links, paste0(oecd.csv.website, csv.fns[i], ".csv"))
- #     download.file(links[i], destfile =csv.fns[i])
- #     countrylist[[i]] <-  read.csv(csv.fns[i], stringsAsFactors = FALSE)
- # }
- #########################################################################################
- load("countrylist.Rda") # if you commented out the download section, you should have this file
- names(countrylist) <- csv.fns
- 
- # save(countrylist, file="countrylist.Rda") # list contains all the country data frames
- # in your working directory
+####### downloads the data to your working directory and stores each data file in a list
+# links <- character(0)
+# countrylist <- rep(list(list()), length(csv.fns))
+# for (i in 1:length(csv.fns)) {
+#     links <- c(links, paste0(oecd.csv.website, csv.fns[i], ".csv"))
+#     download.file(links[i], destfile =csv.fns[i])
+#     countrylist[[i]] <-  read.csv(csv.fns[i], stringsAsFactors = FALSE)
+# }
+#########################################################################################
+load("countrylist.Rda") # if you commented out the download section, you should have this file
+names(countrylist) <- csv.fns
 
- ##### Data management section ####
+# save(countrylist, file="countrylist.Rda") # list contains all the country data frames
+# in your working directory
+
+##### Data management section ####
 
 vars <- c("ISCO1C","J_Q07b","J_Q06b","J_Q08","J_Q07a","J_Q06a","B_Q01a",
           "VEMETHOD","CNTRYID","GENDER_R","AGE_R","AGEG5LFS","I_Q04l","I_Q04j",
@@ -97,15 +97,15 @@ data.management <- function(x) {
                               bottomthings=I_Q04j,
                               differentideas=I_Q04l,
                               additinfo=I_Q04m)
-
+    
     # this function does two things: if specified character, it will coerce the vector
     # to a character and if specified factor it will coerce the vector to a numeric.
     # It does it so it coerces factors, as well as numeric and character.
     numtrans <- function(x, type=c("character","factor")) {
         if (type == "character") {
-        x <- as.character(x)
+            x <- as.character(x)
         } else {
-        x <- as.numeric(as.character(x))
+            x <- as.numeric(as.character(x))
         }
         return(x)
     }
@@ -119,7 +119,7 @@ data.management <- function(x) {
     
     # Factor loading the three non-cognitive variables
     factor <- fa(x[, c("bottomthings","differentideas","additinfo")],
-                  nfactors = 1,rotate="none", fm="pa", score=T)
+                 nfactors = 1,rotate="none", fm="pa", score=T)
     
     x$non.cognitive <- as.numeric(factor$scores)
     
@@ -238,7 +238,7 @@ data.management <- function(x) {
     
     cognitive_recoder <- function(variable, q) {
         ifelse(as.numeric(scale(x[, variable])) >= q[[2]], 1,
-        ifelse(as.numeric(scale(x[, variable])) <= q[[1]], 0, NA))
+               ifelse(as.numeric(scale(x[, variable])) <= q[[1]], 0, NA))
     }
     
     column_names <- c(
@@ -255,12 +255,12 @@ data.management <- function(x) {
     cognitive_index <- column_names[seq(1, length(column_names), 2)]
     noncognitive_index <- column_names[seq(2, length(column_names), 2)]
     
-    x[cognitive_index] <- lapply(paste0("quant", seq(3, 10, 2)), function(x) {
+    x[cognitive_index] <- lapply(paste0("quant", 3:10), function(x) {
         quan <- get(x)
         cognitive_recoder("PVNUM1", quan)
     })
     
-    x[noncognitive_index] <- lapply(paste0("quant", seq(4, 10, 2)), function(x) {
+    x[noncognitive_index] <- lapply(paste0("quant", 3:10), function(x) {
         quan <- get(x)
         cognitive_recoder("non.cognitive", quan)
     })
@@ -271,14 +271,14 @@ data.management <- function(x) {
 usable.country2 <- lapply(countrylist, data.management)
 
 files_noto_delete <- c("countrylist",
-                     "usable.country2",
-                     "csv.fns",
-                     "csv.links",
-                     "csv.page",
-                     "csv.texts",
-                     "tf",
-                     "csv.fns",
-                     "oldwd")
+                       "usable.country2",
+                       "csv.fns",
+                       "csv.links",
+                       "csv.page",
+                       "csv.texts",
+                       "tf",
+                       "csv.fns",
+                       "oldwd")
 
 rm(list=ls()[!ls() %in% files_noto_delete])
 
@@ -286,124 +286,124 @@ rm(list=ls()[!ls() %in% files_noto_delete])
 pvals <- c( 'pvlit' , 'pvnum' , 'pvpsl' )
 # loop through each downloadable file..
 for ( i in 1:length(csv.fns) ) {
+    
+    # create a filename object, containing the lowercase of the csv filename
+    fn <- tolower( csv.fns[i] )
+    
+    # create a design object name, still just a string.
+    design.name <- paste0( fn , ".design" )
+    
+    # convert all column names to lowercase
+    names( usable.country2[[i]] ) <- tolower( names( usable.country2[[i]] ) )
+    
+    
+    # paste together all of the plausible value variables with the numbers 1 through 10
+    pvars <- outer( pvals , 1:10 , paste0 ) 
+    
+    # figure out which variables in the `x` data.frame object
+    # are not plausible value columns
+    non.pvals <- names( usable.country2[[i]] )[ !( names( usable.country2[[i]] ) %in% pvars ) ]
+    
+    
+    
+    # loop through each of the ten plausible values..
+    for ( k in 1:10 ){
         
-        # create a filename object, containing the lowercase of the csv filename
-        fn <- tolower( csv.fns[i] )
-        
-        # create a design object name, still just a string.
-        design.name <- paste0( fn , ".design" )
-        
-        # convert all column names to lowercase
-        names( usable.country2[[i]] ) <- tolower( names( usable.country2[[i]] ) )
-        
-        
-        # paste together all of the plausible value variables with the numbers 1 through 10
-        pvars <- outer( pvals , 1:10 , paste0 ) 
-        
-        # figure out which variables in the `x` data.frame object
-        # are not plausible value columns
-        non.pvals <- names( usable.country2[[i]] )[ !( names( usable.country2[[i]] ) %in% pvars ) ]
+        # create a new `y` data.frame object containing only the
+        # _current_ plausible value variable (for example: `pvlit4` and `pvnum4` and `pvpsl4`)
+        # and also all of the columns that are not plausible value columns
+        y <- usable.country2[[i]][ , c( non.pvals , paste0( pvals , k ) ) ]
         
         
         
-        # loop through each of the ten plausible values..
-        for ( k in 1:10 ){
+        # inside of that loop..
+        # loop through each of the plausible value variables
+        for ( j in pvals ){
             
-            # create a new `y` data.frame object containing only the
-            # _current_ plausible value variable (for example: `pvlit4` and `pvnum4` and `pvpsl4`)
-            # and also all of the columns that are not plausible value columns
-            y <- usable.country2[[i]][ , c( non.pvals , paste0( pvals , k ) ) ]
+            # within this specific `y` data.frame object
+            
+            # get rid of the number on the end, so
+            # first copy the `pvlit4` to `pvlit` etc. etc.
+            y[ , j ] <- y[ , paste0( j , k ) ]
             
             
             
-            # inside of that loop..
-            # loop through each of the plausible value variables
-            for ( j in pvals ){
-                
-                # within this specific `y` data.frame object
-                
-                # get rid of the number on the end, so
-                # first copy the `pvlit4` to `pvlit` etc. etc.
-                y[ , j ] <- y[ , paste0( j , k ) ]
-                
-                
-                
-                # then delete the `pvlit4` variable etc. etc.
-                y[ , paste0( j , k ) ] <- NULL
-                
-                
-            }
+            # then delete the `pvlit4` variable etc. etc.
+            y[ , paste0( j , k ) ] <- NULL
             
-            # save the current `y` data.frame object as `x#` instead.
-            assign( paste0( 'usable.country2' , k  ) , y )
-            
-            # remove `y` from working memory
-            rm( y )
-            
-            # clear up RAM
-            gc()
             
         }
         
-        # smush all ten of these data.frame objects into one big list object
-        w <- list( usable.country21, usable.country22 , usable.country23 , usable.country24 , usable.country25
-                 , usable.country26 , usable.country27 , usable.country28 , usable.country29 , usable.country210 )
+        # save the current `y` data.frame object as `x#` instead.
+        assign( paste0( 'usable.country2' , k  ) , y )
         
-        # remove the originals from memory
-        rm( list = paste0( "usable.country2" , 1:10 ) )
-        
-        # clear up RAM
-        gc()
-        
-        # note: the piaac requires different survey designs for different countries.  quoting their technical documentation:
-        # "The variable VEMETHOD denoting whether it is the JK1 or JK2 formula that is applicable to different countries must be in the dataset"
-        
-        # figure out jackknife method to use from the original `x` data.frame object
-        
-        # determine the unique values of the `vemethod` column in the current data.frame object
-        jk.method <- unique( usable.country2[[i]]$vemethod )
-        
-        # confirm that they are all the same value.  if there are more than one unique values, this line will crash the program.
-        stopifnot( length( jk.method ) == 1 )
-        
-        # confirm that the jackknife method is one of these.  if it's not, again, crash the program.
-        stopifnot( jk.method %in% c( 'JK1' , 'JK2' ) )
-        
-        # where oecd statisticians say `JK2` the survey package needs a `JKn` instead
-        if ( jk.method == 'JK2' ) jk.method <- 'JKn'
-        
-        # construct the full multiply-imputed, replicate-weighted, complex-sample survey design object
-        
-        # # R will exactly match SUDAAN results and Stata with the MSE option results
-        # options( survey.replicates.mse = TRUE )
-        # # otherwise if it is commented out or set to FALSE
-        z <-
-            svrepdesign( 	
-                weights = ~spfwt0 , 
-                repweights = "spfwt[1-9]" ,
-                rscales = rep( 1 , 80 ) ,
-                scale = ifelse( jk.method == 'JKn' , 1 , 79 / 80 ) ,
-                type = jk.method ,
-                data = imputationList( w ) ,
-                mse = TRUE
-            )
-        
-        # save the originally imported data.frame object `x` to a data.frame named after the original filename
-        assign( fn , usable.country2[[i]] )
-        
-        # save this new survey design object `z` to a survey design named after the original filename
-        assign( design.name , z )
-        
-        # save both objects together into a single `.rda` file
-        save( list = c( fn , design.name ) , file = paste0( fn , ".rda" ) )
-        
-        # now that you've got what you came for, remove everything else from working memory
-        rm( list = c( fn , design.name , "w" , "z" ) )
+        # remove `y` from working memory
+        rm( y )
         
         # clear up RAM
         gc()
         
     }
+    
+    # smush all ten of these data.frame objects into one big list object
+    w <- list( usable.country21, usable.country22 , usable.country23 , usable.country24 , usable.country25
+               , usable.country26 , usable.country27 , usable.country28 , usable.country29 , usable.country210 )
+    
+    # remove the originals from memory
+    rm( list = paste0( "usable.country2" , 1:10 ) )
+    
+    # clear up RAM
+    gc()
+    
+    # note: the piaac requires different survey designs for different countries.  quoting their technical documentation:
+    # "The variable VEMETHOD denoting whether it is the JK1 or JK2 formula that is applicable to different countries must be in the dataset"
+    
+    # figure out jackknife method to use from the original `x` data.frame object
+    
+    # determine the unique values of the `vemethod` column in the current data.frame object
+    jk.method <- unique( usable.country2[[i]]$vemethod )
+    
+    # confirm that they are all the same value.  if there are more than one unique values, this line will crash the program.
+    stopifnot( length( jk.method ) == 1 )
+    
+    # confirm that the jackknife method is one of these.  if it's not, again, crash the program.
+    stopifnot( jk.method %in% c( 'JK1' , 'JK2' ) )
+    
+    # where oecd statisticians say `JK2` the survey package needs a `JKn` instead
+    if ( jk.method == 'JK2' ) jk.method <- 'JKn'
+    
+    # construct the full multiply-imputed, replicate-weighted, complex-sample survey design object
+    
+    # # R will exactly match SUDAAN results and Stata with the MSE option results
+    # options( survey.replicates.mse = TRUE )
+    # # otherwise if it is commented out or set to FALSE
+    z <-
+        svrepdesign( 	
+            weights = ~spfwt0 , 
+            repweights = "spfwt[1-9]" ,
+            rscales = rep( 1 , 80 ) ,
+            scale = ifelse( jk.method == 'JKn' , 1 , 79 / 80 ) ,
+            type = jk.method ,
+            data = imputationList( w ) ,
+            mse = TRUE
+        )
+    
+    # save the originally imported data.frame object `x` to a data.frame named after the original filename
+    assign( fn , usable.country2[[i]] )
+    
+    # save this new survey design object `z` to a survey design named after the original filename
+    assign( design.name , z )
+    
+    # save both objects together into a single `.rda` file
+    save( list = c( fn , design.name ) , file = paste0( fn , ".rda" ) )
+    
+    # now that you've got what you came for, remove everything else from working memory
+    rm( list = c( fn , design.name , "w" , "z" ) )
+    
+    # clear up RAM
+    gc()
+    
+}
 
 # remove the temporary file - where everything's been downloaded - from the hard disk
 file.remove( tf )

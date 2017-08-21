@@ -137,6 +137,7 @@ star_paster <- function(df, var_one, var_two) {
     
 }
 
+
 ##### Recoding variables ####
 
 # New occupation var
@@ -155,6 +156,7 @@ countries3 <- svy_recode(countries3, 'momimmigrant', 'momimmigrant', "'2' = 0; '
 countries3 <- svy_recode(countries3, 'dadimmigrant', 'dadimmigrant', "2 = 0; 1 = 1; else = NA")
 
 #####
+
 
 
 ##### Variables #####
@@ -215,6 +217,7 @@ x_two <-
     unite(interaction, cogn, noncogn, sep = "*")
 
 #####
+
 
 
 ##### lm models_upward ####
@@ -305,11 +308,12 @@ multilevel_upward_table_seven
 #####
 
 
+
 ##### lm models_downward ####
 dv <- c("long_dist_downward")
 titles <- c("Continuous downward")
 
-current_int <- as.character(x_two[2, ])
+current_int <- as.character(x_two[1, ])
 
 standard_covariates <- c("pvnum",
                          "non.cognitive",
@@ -395,6 +399,7 @@ multilevel_downward_table_seven
 #####
 
 
+
 ##### Table seven_forreal! ####
 
 table_seven <- 
@@ -445,8 +450,7 @@ writeDoc(doc, file = "./Tables/table_seven.docx")
 
 #####
 
-
-##### Interaction for table 7 table #####
+##### Table 8 = Interaction for table 7 table #####
 
 variables_interaction <- c("pvnum", "non.cognitive",
                            "cognitive_", "noncognitive_",
@@ -504,6 +508,7 @@ interaction_table_ready <-
                       "Bottom cognitive \n Bottom non cognitive")) %>%
     mutate_if(is_double, round, 2)
 
+doc <- docx()
 doc <- addTitle(doc, "Table interaction")
 doc <- addFlexTable(doc,
                     FlexTable(interaction_table_ready, header.columns = FALSE) %>%
@@ -511,19 +516,21 @@ doc <- addFlexTable(doc,
                                      value = title_columns,
                                      first = TRUE))
 
-writeDoc(doc, file = "./Tables/table_seven.docx")
+writeDoc(doc, file = "./Tables/table_eight.docx")
 
 #####
+
 
 
 #######################
 
 
-##### Table 8 ####
+
+##### Table 9 ####
 
 interaction_calc <- function(interaction_df, df, dv) {
     
-    current_int <- as.character(interaction_df[2, ])
+    current_int <- as.character(interaction_df[1, ])
     
     standard_covariates <- c("pvnum",
                              "non.cognitive",
@@ -599,7 +606,7 @@ can <- c("Canada", "France", "Germany", "Japan", "Netherlands", "Sweden", "Unite
 
 all_models <- list(all, scandinavia, czech, aus, can)
 
-table_eight <-
+table_nine <-
     map(all_models, ~ {
         up <- interaction_calc(x_two, filter(cnt_bind, country %in% .x), "long_dist_upward")[[1]] %>%
             tidy() %>%
@@ -629,9 +636,9 @@ table_eight <-
                     paste(all_models[[5]], collapse = ", ")))
 
 doc <- docx()
-doc <- addTitle(doc, "Table 8")
+doc <- addTitle(doc, "Table 9")
 doc <- addFlexTable(doc, FlexTable(table_eight, header.columns = TRUE))
 
-writeDoc(doc, file = "./Tables/table_eight.docx")
+writeDoc(doc, file = "./Tables/table_nine.docx")
 
 #####
