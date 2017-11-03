@@ -269,13 +269,13 @@ data.management <- function(x, variables) {
     noncognitive_columns <- column_names[noncogn_indx]
     
     # When subsetting quant, 3:10, pick only the cognitive quants
-    x[cognitive_index] <- lapply(paste0("quant", 3:10)[cogn_indx], function(x) {
+    x[cognitive_columns] <- lapply(paste0("quant", 3:10)[cogn_indx], function(x) {
         quan <- get(x)
         cognitive_recoder("PVNUM1", quan)
     })
     
     # When subsetting quant, 3:10, pick only the noncognitive quants
-    x[noncognitive_index] <- lapply(paste0("quant", 3:10)[noncogn_indx], function(x) {
+    x[noncognitive_columns] <- lapply(paste0("quant", 3:10)[noncogn_indx], function(x) {
         quan <- get(x)
         cognitive_recoder("non.cognitive", quan)
     })
@@ -283,7 +283,7 @@ data.management <- function(x, variables) {
     x
 }
 
-usable.country2 <- lapply(countrylist, data.management)
+usable.country2 <- lapply(countrylist, data.management, vars)
 
 files_noto_delete <- c("countrylist",
                        "usable.country2",
