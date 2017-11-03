@@ -22,10 +22,11 @@ setwd("./data/")
 library(survey)			# load survey package (analyzes complex design surveys)
 library(mitools) 		# load mitools package (analyzes multiply-imputed data)
 library(downloader)			# downloads and then runs the source() function on scripts from github
-library(dplyr)
 library(car)
 library(psych)
 library(matrixStats)
+library(dplyr)
+
 
 
 # # # load the download_cached and related functions
@@ -64,6 +65,7 @@ tf <- tempfile()
 #     download.file(links[i], destfile =csv.fns[i])
 #     countrylist[[i]] <-  read.csv(csv.fns[i], stringsAsFactors = FALSE)
 # }
+# save(countrylist, file = "./data/countrylist.Rda")
 #########################################################################################
 load("countrylist.Rda") # if you commented out the download section, you should have this file
 names(countrylist) <- csv.fns
@@ -82,9 +84,9 @@ vars <- c("ISCO1C","J_Q07b","J_Q06b","J_Q08","J_Q07a","J_Q06a","B_Q01a",
 sapply(countrylist, function(x) setdiff(vars, colnames(x))) # check if they're all in each data frame
 
 # This function contains all the data management and will be applied over all data frames in the list
-data.management <- function(x) {
+data.management <- function(x, variables) {
     
-    x <- x[vars] # subsetting the variables
+    x <- x[variables] # subsetting the variables
     x <- tbl_df(x) %>% rename(isco=ISCO1C,
                               dadedu=J_Q07b,
                               momedu=J_Q06b,
@@ -193,7 +195,7 @@ data.management <- function(x) {
     x <- x[!is.na(x$gender), ]
     
     # Recoded the education into three levels: low, mid, high
-    x$eduattain <- car::recode(x$eduattain, "1:3 = 1; 4:10=2; 11:16=3")
+    x$eduattain_three <- car::recode(x$eduattain, "1:3 = 1; 4:10=2; 11:16=3")
     
     ## Recoding the DV (3 levels) into two levels. Comparing the highly educated
     ## vs the middly and low educated
@@ -254,15 +256,23 @@ data.management <- function(x) {
         "noncognitive_top20_bottom40"
     )
     
-    cognitive_index <- column_names[seq(1, length(column_names), 2)]
-    noncognitive_index <- column_names[seq(2, length(column_names), 2)]
+    cogn_indx <- seq(1, length(column_names), 2)
+    noncogn_indx <- seq(2, length(column_names), 2)
     
-    x[cognitive_index] <- lapply(paste0("quant", 3:10), function(x) {
+    # To grab only the columns for cognitive form above
+    cognitive_columns <- column_names[cogn_indx]
+
+    # To grab only the columns for noncognitive form above
+    noncognitive_columns <- column_names[noncogn_indx]
+    
+    # When subsetting quant, 3:10, pick only the cognitive quants
+    x[cognitive_index] <- lapply(paste0("quant", 3:10)[cogn_indx], function(x) {
         quan <- get(x)
         cognitive_recoder("PVNUM1", quan)
     })
     
-    x[noncognitive_index] <- lapply(paste0("quant", 3:10), function(x) {
+    # When subsetting quant, 3:10, pick only the noncognitive quants
+    x[noncognitive_index] <- lapply(paste0("quant", 3:10)[noncogn_indx], function(x) {
         quan <- get(x)
         cognitive_recoder("non.cognitive", quan)
     })
@@ -409,6 +419,7 @@ for ( i in 1:length(csv.fns) ) {
 
 # remove the temporary file - where everything's been downloaded - from the hard disk
 file.remove( tf )
+setwd(oldwd)
 
 rm(list=ls())
 
@@ -416,6 +427,5 @@ rm(list=ls())
 # for each multiply-imputed, replicate-weighted complex-sample survey design object
 # that's one for each available country
 
-setwd(oldwd)
 # print a reminder: set the directory you just saved everything to as read-only!
 message( paste0( "all done.  you should set the directory " , getwd() , " read-only so you don't accidentally alter these tables." ) )
