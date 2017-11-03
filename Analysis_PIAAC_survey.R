@@ -50,27 +50,16 @@ star_paster <- function(df, var_one, var_two) {
 }
 
 
-#####
-
-
-
-
 ##### Reading data #####
-###### THIS IS WHERE YOU CHANGE YOUR WORKING DIRECTORY
-old_dir <- getwd()
 
 # To save tables
 directory <- "./Tables"
 
-setwd("./data/")
-
-walk(list.files(pattern = ".rda"), load, .GlobalEnv)
+walk(list.files("./data/", pattern = ".rda", full.names = TRUE), load, .GlobalEnv)
 
 ls2 <- c(ls()[grepl("*.design", ls())] , "ls2", "directory", "old_dir", "multiplot")
 # Remove everything that is not in ls2 (so the .design )
 rm(list= c(ls()[!ls() %in% ls2]))
-
-setwd(old_dir)
 
 countries3 <- list(Austria = prgautp1.design,
                    `United States` = prgusap1.design,
@@ -97,9 +86,6 @@ countries3 <- list(Austria = prgautp1.design,
 
 # countries3 <- list(Israel = prgisrp1.design)
 #####
-
-
-
 
 ##### Recoding variables ####
 svy_recode <- function(svy_design, old_varname, new_varname, recode) {
@@ -130,11 +116,7 @@ countries3 <- svy_recode(countries3, 'age_categories', 'postwelfare', '1:5 = 1; 
 # These two variables are recoded wrongly. It should be 1 = 0 and 2 = 1.
 countries3 <- svy_recode(countries3, 'momimmigrant', 'momimmigrant', "'2' = 0; '1' = 1; else = NA")
 countries3 <- svy_recode(countries3, 'dadimmigrant', 'dadimmigrant', "2 = 0; 1 = 1; else = NA")
-
 #####
-
-
-
 
 ##### Model Specification #####
 
@@ -157,7 +139,6 @@ usa_secondcovariates <- c("lowmidisced2", all_secondcovariates[-1])
 age <- 1:10
 # 6:10 is prewelfare
 # 1:5 is postwelfare
-
 #####
 
 ##### Modeling for Table 2 and 3 ####
@@ -310,9 +291,7 @@ age <- 1:10
             dir_tables = directory,
             depvar_title = depvar_title)
 #####
-
-
-
+    
 ##### Table 2 and 3 ####
 
 table_generator <- function(list) {
@@ -501,8 +480,6 @@ cnt_bind <-
 
 #####
 
-
-
 ##### Cognitive distribution graphs #####
 cnt_bind %>%
     filter(highedu %in% c(1, 3)) %>%
@@ -528,8 +505,6 @@ cnt_bind %>%
 
 ggsave("noncognitive_distribution.png", path = directory)
 #####
-
-
 
 ##### Extra AGE analysis ####
 
@@ -619,8 +594,6 @@ ability_list <-
     })
 
 #####
-
-
 
 ##### Table 1 ####
 # change to lowerclass to get the other table
@@ -901,8 +874,6 @@ ggsave("high_low_isced_downward.png", path = directory)
 
 #####
 
-
-
 ##### Table 4 ####
 
 dv <- "serviceclass"
@@ -1095,12 +1066,7 @@ writeDoc(doc, file = "./Tables/tables.docx")
 
 #####
 
-
-
-
-# Never really could reproduce table 6
-
-# ##### Table 6 ####
+##### Table 6 ####
 # 
 # dv <- "long_dist_upward"
 # standard_covariates <- c("scale(pvnum)",
@@ -1295,4 +1261,4 @@ writeDoc(doc, file = "./Tables/tables.docx")
 #                "Denmark", "scale(pvnum)", "lowisced")
 # 
 # 
-# #####
+#####
