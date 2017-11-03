@@ -14,7 +14,9 @@
 
 ### THIS IS WHERE YOU INTRODUCE YOUR WORKING DIRECTORY ###
 oldwd <- getwd()
-setwd("/Users/cimentadaj/Downloads/Social_mob_data")
+
+dir.create("./data/")
+setwd("./data/")
 
 
 library(survey)			# load survey package (analyzes complex design surveys)

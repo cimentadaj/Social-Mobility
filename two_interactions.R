@@ -55,7 +55,7 @@ old_dir <- getwd()
 # To save tables
 directory <- "./Tables"
 
-setwd("/Users/cimentadaj/Downloads/Social_mob_data")
+setwd("./data/")
 
 walk(list.files(pattern = ".rda"), load, .GlobalEnv)
 

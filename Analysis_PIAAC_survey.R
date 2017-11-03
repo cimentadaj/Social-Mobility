@@ -62,7 +62,7 @@ old_dir <- getwd()
 # To save tables
 directory <- "./Tables"
 
-setwd("/Users/cimentadaj/Downloads/Social_mob_data")
+setwd("./data/")
 
 walk(list.files(pattern = ".rda"), load, .GlobalEnv)
 
@@ -376,7 +376,6 @@ title_columns <-
       "Non-cognitive meritocracy: \n origin ratio (non-cogn β: (1))")
 
 doc <- docx()
-
 doc <- addTitle(doc, "Table 2")
 doc <- addFlexTable(doc,
              FlexTable(table_two, header.columns = FALSE) %>%
@@ -384,7 +383,6 @@ doc <- addFlexTable(doc,
                               value = title_columns,
                               first = TRUE))
 
-doc <- docx()
 doc <- addTitle(doc, "Table 3")
 doc <- addFlexTable(doc,
                     FlexTable(table_three, header.columns = FALSE) %>%
@@ -751,8 +749,6 @@ doc <- addTitle(doc, "Table 1")
 doc <- addFlexTable(doc, FlexTable(table_one, header.columns = TRUE))
 
 #####
-
-
 
 ##### Modeling figure 1 and 2 ####
 # change to lowerclass to get the other table
