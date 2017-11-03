@@ -198,6 +198,8 @@ data.management <- function(x, variables) {
     x <- x[!is.na(x$gender), ]
     
     # Recoded the education into three levels: low, mid, high
+    x$eduattain <- as.numeric(car::recode(x$eduattain, "c('D', 'N') = NA"))
+    
     x$eduattain_three <- car::recode(x$eduattain, "1:3 = 1; 4:10=2; 11:16=3")
     
     ## Recoding the DV (3 levels) into two levels. Comparing the highly educated
