@@ -10,21 +10,14 @@ library(GGally)
 library(gridExtra)
 library(artyfarty)
 
-###### THIS IS WHERE YOU CHANGE YOUR WORKING DIRECTORY ##############
-old_dir <- getwd()
-
 # To save tables
 directory <- "./Tables"
 
-setwd("./data/")
-
-walk(list.files(pattern = ".rda"), load, .GlobalEnv)
+walk(list.files("./data", pattern = ".rda", full.names = TRUE), load, .GlobalEnv)
 
 ls2 <- c(ls()[grepl("*.design", ls())] , "ls2", "directory", "old_dir", "multiplot")
 # Remove everything that is not in ls2 (so the .design )
 rm(list= c(ls()[!ls() %in% ls2]))
-
-setwd(old_dir)
 
 countries3 <- list(Austria = prgautp1.design,
                    `United States` = prgusap1.design,
