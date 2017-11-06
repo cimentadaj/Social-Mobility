@@ -74,9 +74,9 @@ countries3 <- list(Austria = prgautp1.design,
                    France = prgfrap1.design,
                    `United Kingdom` = prggbrp1.design,
                    Spain = prgespp1.design,
-                   Canada = prgcanp1.design,
+                   # Canada = prgcanp1.design,
                    `Czech Republic`= prgczep1.design,
-                   Estonia = prgestp1.design,
+                   # Estonia = prgestp1.design,
                    Finland = prgfinp1.design,
                    Japan = prgjpnp1.design,
                    Korea = prgkorp1.design,
@@ -104,6 +104,21 @@ svy_recode <- function(svy_design, old_varname, new_varname, recode) {
     
 }
 
+svy_scale <- function(svy_design, dv) {
+    
+    svy_design2 <- lapply(svy_design, function(cnt) {
+        for (data in seq_along(cnt$design)) {
+            cnt$designs[[data]]$variables[, dv] <-
+                scale(cnt$designs[[data]]$variables[, dv], center = TRUE,
+                      scale = TRUE)[,1]
+        }
+        cnt
+    })
+    
+    svy_design2
+}
+
+
 # New occupation var
 countries3 <- svy_recode(countries3, 'isco', 'occupation_recode', '1:2 = 5; 3 = 4; 4:5 = 3; 6:7 = 2; 8:9 = 1')
 countries3 <- svy_recode(countries3, 'isco', 'occupation_recode_rev', '1:2 = 1; 3 = 2; 4:5 = 3; 6:7 = 4; 8:9 = 5')
@@ -118,12 +133,21 @@ countries3 <- svy_recode(countries3, 'age_categories', 'postwelfare', '1:5 = 1; 
 # These two variables are recoded wrongly. It should be 1 = 0 and 2 = 1.
 countries3 <- svy_recode(countries3, 'momimmigrant', 'momimmigrant', "'2' = 0; '1' = 1; else = NA")
 countries3 <- svy_recode(countries3, 'dadimmigrant', 'dadimmigrant', "2 = 0; 1 = 1; else = NA")
+
+countries3 <- svy_recode(countries3, 'eduattain', "university",
+                         "1:11 = 0; c(12, 13, 14, 16) = 1; else = NA")
+
+countries3 <- svy_recode(countries3, "eduattain", "eduattain_reverse",
+                         paste0(1:16, " = ", 16:1, collapse = "; "))
+
 #####
+
 
 
 ##### Model Specification #####
 
-standard_covariates <- c("scale(pvnum)",
+standard_covariates <- c("eduattain",
+                         "scale(pvnum)",
                          "non.cognitive",
                          "postwelfare",
                          "dadimmigrant")
@@ -154,8 +178,11 @@ age <- 1:10
 # other variable models
 
 dv <- c("long_dist_upward")
-depvar_title <- c("Continuous upward class")
 
+# # Standardized DV
+# countries3 <- svy_scale(countries3, dv)
+
+depvar_title <- c("Continuous long distance upward")
 
 out_name <- paste0("-PIAAC-sons-", dv, ".html")
 
@@ -163,6 +190,7 @@ covariate_labels <- c("High ISCED",
                       "High ISCED - Low cogn",
                       "Low ISCED",
                       "Low ISCED - High cogn",
+                      "Edu attainment (cont)",
                       "Cognitive",
                       "Non-cognitive",
                       "Postwelfare",
@@ -180,6 +208,19 @@ warning_message <- function(logical_statement, error_message) {
 # Function does all the modeling. It checks the DV is valid,
 # whether it's a dummy or not (to produce odd ratios or not)
 # and loops through each country and does the modeling.
+
+# df_list = countries3
+# dv = dv
+# firstcovariates = all_firstcovariates
+# usa_secondcovariates = usa_secondcovariates
+# secondcovariates = all_secondcovariates
+# age_subset = age
+# family_models = family_models
+# covariate_labels = covariate_labels
+# digits = digits
+# out_name = out_name
+# dir_tables = directory
+# depvar_title = depvar_title
 
 modeling_function <- function(df_list,
                               dv,
@@ -212,10 +253,10 @@ modeling_function <- function(df_list,
                   dv_length_countries,
                   sample(dv_length_countries, 1))
     
-    stop_message(!all(len == dv_length_countries),
-                 "The length of the dependent variable differs by country")
-    stop_message(!(len >= 2),
-                 "DV has length < 2")
+    # stop_message(!all(len == dv_length_countries),
+    #              "The length of the dependent variable differs by country")
+    # stop_message(!(len >= 2),
+    #              "DV has length < 2")
     
     odd.ratio <- ifelse(family_models == "gaussian", F,
                         unname(ifelse(sample(dv_length_countries, 1) == 2, T, F)))
@@ -228,8 +269,9 @@ modeling_function <- function(df_list,
         if (names(df_list[i]) == "USA") {
             secondcovariates <- usa_secondcovariates
         } else {
-            secondcovariates <- all_secondcovariates }
-        
+            secondcovariates <- all_secondcovariates 
+        }
+
         mod1 <- models(dv, all_firstcovariates,
                        subset(df_list[[i]], gender == 1 & age_categories %in% age_subset),
                        family_models = family_models)
@@ -279,8 +321,8 @@ model_lists <-
         dir_tables = directory,
         depvar_title = depvar_title)
 
-dv <- c("long_dist_downward")
-depvar_title <- c("Continuous downward class")
+dv <- c("eduattain_reverse")
+depvar_title <- c("Continuous downward education")
 out_name <- paste0("-PIAAC-sons-", dv, ".html")
 
 model_lists_downward <-
