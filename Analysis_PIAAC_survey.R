@@ -15,6 +15,20 @@ source("http://peterhaschke.com/Code/multiplot.R")
 dyn.load('/Library/Java/JavaVirtualMachines/jdk1.8.0_131.jdk/Contents/Home/jre/lib/server/libjvm.dylib')
 library(ReporteRs)
 
+#####
+
+
+##### Reading data #####
+
+# To save tables
+directory <- "./Tables"
+
+walk(list.files("./data/", pattern = ".rda", full.names = TRUE), load, .GlobalEnv)
+
+ls2 <- c(ls()[grepl("*.design", ls())] , "ls2", "directory", "old_dir", "multiplot")
+# Remove everything that is not in ls2 (so the .design )
+rm(list= c(ls()[!ls() %in% ls2]))
+
 star_paster <- function(df, var_one, var_two) {
     df[[var_two]] <- round(df[[var_two]], 2)
     sapply(1:nrow(df), function(index) {
@@ -49,19 +63,6 @@ star_paster <- function(df, var_one, var_two) {
     
 }
 
-#####
-
-
-##### Reading data #####
-
-# To save tables
-directory <- "./Tables"
-
-walk(list.files("./data/", pattern = ".rda", full.names = TRUE), load, .GlobalEnv)
-
-ls2 <- c(ls()[grepl("*.design", ls())] , "ls2", "directory", "old_dir", "multiplot")
-# Remove everything that is not in ls2 (so the .design )
-rm(list= c(ls()[!ls() %in% ls2]))
 
 countries3 <- list(Austria = prgautp1.design,
                    `United States` = prgusap1.design,
@@ -74,7 +75,7 @@ countries3 <- list(Austria = prgautp1.design,
                    France = prgfrap1.design,
                    `United Kingdom` = prggbrp1.design,
                    Spain = prgespp1.design,
-                   # Canada = prgcanp1.design,
+                   Canada = prgcanp1.design,
                    `Czech Republic`= prgczep1.design,
                    # Estonia = prgestp1.design,
                    Finland = prgfinp1.design,
@@ -87,7 +88,6 @@ countries3 <- list(Austria = prgautp1.design,
 
 # countries3 <- list(Israel = prgisrp1.design)
 #####
-
 
 ##### Recoding variables ####
 svy_recode <- function(svy_design, old_varname, new_varname, recode) {
@@ -128,7 +128,7 @@ countries3 <- svy_recode(countries3, 'occupation_recode', 'long_dist_upward', '5
 countries3 <- svy_recode(countries3, 'occupation_recode', 'long_dist_downward', '1:2 = 4; 3 = 3; 4 = 2; 5 = 1')
 
 countries3 <- svy_recode(countries3, 'isco', 'lowerclass', '3:9 = 1; 1:2 = 0; else = NA')
-countries3 <- svy_recode(countries3, 'age_categories', 'postwelfare', '1:5 = 1; 6:10 = 0; else = NA')
+countries3 <- svy_recode(countries3, 'age_categories', 'postwelfare', '1:5 = 0; 6:10 = 1; else = NA')
 
 # These two variables are recoded wrongly. It should be 1 = 0 and 2 = 1.
 countries3 <- svy_recode(countries3, 'momimmigrant', 'momimmigrant', "'2' = 0; '1' = 1; else = NA")
@@ -146,8 +146,7 @@ countries3 <- svy_recode(countries3, "eduattain", "eduattain_reverse",
 
 ##### Model Specification #####
 
-standard_covariates <- c("eduattain",
-                         "scale(pvnum)",
+standard_covariates <- c("scale(pvnum)",
                          "non.cognitive",
                          "postwelfare",
                          "dadimmigrant")
@@ -210,7 +209,7 @@ warning_message <- function(logical_statement, error_message) {
 # and loops through each country and does the modeling.
 
 # df_list = countries3
-# dv = dv
+# dv = "long_dist_downward"
 # firstcovariates = all_firstcovariates
 # usa_secondcovariates = usa_secondcovariates
 # secondcovariates = all_secondcovariates
@@ -262,6 +261,7 @@ modeling_function <- function(df_list,
                         unname(ifelse(sample(dv_length_countries, 1) == 2, T, F)))
     
     for (i in 1:length(df_list)) {
+        print(names(df_list[i]))
         
         # The low isced variable for USA combines both low and mid isced
         # Whenever the country is USA, use a different set of covariates
@@ -282,24 +282,23 @@ modeling_function <- function(df_list,
         last_models[[i]][[1]] <- mod1[[length(mod1)]] # length(mod1) to only get the last (complete model)
         last_models[[i]][[2]] <- mod2[[length(mod1)]]
         
-        # Calculate R squared for each model
-        mod1_r <- c("R squared:", paste0(sapply(mod1, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%"))
-        mod2_r <- paste0(sapply(mod2, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%")
-        
-        all.models <- append(mod1, mod2)
-        
-        ## Tables
-        stargazer2(all.models, odd.ratio, type = "html",
-                   title = paste0(names(df_list[i])),
-                   column.labels = rep(depvar_title, 2),
-                   column.separate = rep(length(all_firstcovariates), 2),
-                   dep.var.labels.include = FALSE,
-                   order = c(1, 2, 7, 8),
-                   covariate.labels = covariate_labels,
-                   digits = digits,
-                   out = file.path(dir_tables, paste0(names(df_list[i]), out_name)),
-                   add.lines = list(c(mod1_r, mod2_r))
-        )
+        # # Calculate R squared for each model
+        # mod1_r <- c("R squared:", paste0(sapply(mod1, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%"))
+        # mod2_r <- paste0(sapply(mod2, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%")
+        # 
+        # all.models <- append(mod1, mod2)
+        # 
+        # ## Tables
+        # stargazer2(all.models, odd.ratio, type = "html",
+        #            title = paste0(names(df_list[i])),
+        #            column.labels = rep(depvar_title, 2),
+        #            column.separate = rep(length(all_firstcovariates), 2),
+        #            dep.var.labels.include = FALSE,
+        #            order = c(1, 2, 7, 8),
+        #            covariate.labels = covariate_labels,
+        #            digits = digits,
+        #            out = file.path(dir_tables, paste0(names(df_list[i]), out_name)),
+        #            add.lines = list(c(mod1_r, mod2_r))
     }
     last_models
 }
@@ -321,8 +320,8 @@ model_lists <-
         dir_tables = directory,
         depvar_title = depvar_title)
 
-dv <- c("eduattain_reverse")
-depvar_title <- c("Continuous downward education")
+dv <- c("long_dist_downward")
+depvar_title <- c("Continuous long distance downard")
 out_name <- paste0("-PIAAC-sons-", dv, ".html")
 
 model_lists_downward <-
@@ -344,9 +343,9 @@ model_lists_downward <-
 
 ##### Table 2 and 3 ####
 
-table_generator <- function(list) {
+table_generator <- function(each_model) {
     country_models <-
-        lapply(list, function(list_data) {
+        lapply(each_model, function(list_data) {
             lapply(list_data, function(each_model) {
                 broom::tidy(each_model)[-c(6, 7), c(1, 2, 5)]
             })
@@ -418,6 +417,8 @@ doc <- addFlexTable(doc,
                         addHeaderRow(text.properties = textBold(),
                                      value = title_columns,
                                      first = TRUE))
+
+writeDoc(doc, file = "./Tables/tables.docx")
 
 #####
 
@@ -610,9 +611,10 @@ ability_list <-
                 
                 
                 mod1 <- models(dv, standard_covariates,
-                               subset(df_list[[i]], gender == 1 &
-                                          age_categories %in% age_subset &
-                                          postwelfare == 0),
+                               subset(df_list[[i]],
+                                      gender == 1 &
+                                      age_categories %in% age_subset &
+                                      postwelfare == 0),
                                family_models = family_models)
                 
                 last_models[[i]][[1]] <- mod1[[length(mod1)]] # length(mod1) to only get the last (complete model)
@@ -636,7 +638,7 @@ ability_list <-
         family_models <- "gaussian"
         model_lists <-
             modeling_function(
-                df_list = countries3[c("Estonia", "Italy", "United States")],
+                df_list = countries3[c("Italy", "United States")],
                 dv = dv,
                 standard_covariates = standard_covariates,
                 age_subset = age,
@@ -787,8 +789,7 @@ depvar_title <- "Continuous upward mobility"
 standard_covariates <- c("scale(pvnum)",
                          "non.cognitive",
                          "age_categories",
-                         "postwelfare",
-                         "dadimmigrant")
+                         "postwelfare")
 
 # I'm running two models, one with highisced variables and another
 # with lowisced variables, that's why I'm creating two separate set of
@@ -923,6 +924,125 @@ plot_generator <- function(multilevel, linear, title_graph) {
         theme(axis.text.y=element_text(colour = country_color))
 }
 
+standard_covariates <- c("scale(pvnum)",
+                         "non.cognitive",
+                         "postwelfare")
+
+
+# Finally, USA has a different lowisced variable, so I create a separate vector
+# for US.
+all_firstcovariates <- c("highisced", "adv", standard_covariates)
+all_secondcovariates <- c("lowisced", "disadv", standard_covariates)
+usa_secondcovariates <- c("lowmidisced2", all_secondcovariates[-1])
+
+# I want all ages (categories from 1:10, not ages 1:10)
+age <- 1:10
+# 6:10 is prewelfare
+# 1:5 is postwelfare
+#####
+
+dv <- c("long_dist_upward")
+
+modeling_function_noprint <- function(df_list,
+                              dv,
+                              firstcovariates,
+                              usa_secondcovariates,
+                              secondcovariates,
+                              age_subset,
+                              family_models = "gaussian",
+                              covariate_labels,
+                              digits,
+                              out_name,
+                              dir_tables,
+                              depvar_title) {
+    
+    stop_message(length(df_list) < 1, "df_list is empty")
+    last_models <- rep(list(vector("list", 2)), length(df_list))
+    names(last_models) <- names(df_list)
+    
+    # Odd ratios or not?
+    # This should be done to identify whether DV is a dummy or not
+    dv_length_countries <-
+        map_dbl(df_list, function(.x)
+            unique(.x$designs[[1]]$variables[, dv]) %>%
+                na.omit() %>%
+                length())
+    
+    # If the number of countries equals 1, bring the only length,
+    # if not, sample from all countries
+    len <- ifelse(length(dv_length_countries) == 1,
+                  dv_length_countries,
+                  sample(dv_length_countries, 1))
+    
+    # stop_message(!all(len == dv_length_countries),
+    #              "The length of the dependent variable differs by country")
+    # stop_message(!(len >= 2),
+    #              "DV has length < 2")
+    
+    odd.ratio <- ifelse(family_models == "gaussian", F,
+                        unname(ifelse(sample(dv_length_countries, 1) == 2, T, F)))
+    
+    for (i in 1:length(df_list)) {
+        
+        # The low isced variable for USA combines both low and mid isced
+        # Whenever the country is USA, use a different set of covariates
+        # than with all other countries.
+        if (names(df_list[i]) == "USA") {
+            secondcovariates <- usa_secondcovariates
+        } else {
+            secondcovariates <- all_secondcovariates 
+        }
+        
+        mod1 <- models(dv, all_firstcovariates,
+                       subset(df_list[[i]], gender == 1 & age_categories %in% age_subset),
+                       family_models = family_models)
+        mod2 <- models(dv, secondcovariates,
+                       subset(df_list[[i]], gender == 1 & age_categories %in% age_subset),
+                       family_models = family_models)
+        
+        last_models[[i]][[1]] <- mod1[[length(mod1)]] # length(mod1) to only get the last (complete model)
+        last_models[[i]][[2]] <- mod2[[length(mod1)]]
+    }
+    last_models
+}
+
+family_models <- "gaussian"
+
+model_lists <-
+    modeling_function_noprint(
+        df_list = countries3,
+        dv = dv,
+        firstcovariates = all_firstcovariates,
+        usa_secondcovariates = usa_secondcovariates,
+        secondcovariates = all_secondcovariates,
+        age_subset = age,
+        family_models = family_models,
+        covariate_labels = covariate_labels,
+        digits = digits,
+        out_name = out_name,
+        dir_tables = directory,
+        depvar_title = depvar_title)
+
+dv <- c("eduattain_reverse")
+depvar_title <- c("Continuous downward education")
+out_name <- paste0("-PIAAC-sons-", dv, ".html")
+
+model_lists_downward <-
+    modeling_function(
+        df_list = countries3,
+        dv = dv,
+        firstcovariates = all_firstcovariates,
+        usa_secondcovariates = usa_secondcovariates,
+        secondcovariates = all_secondcovariates,
+        age_subset = age,
+        family_models = family_models,
+        covariate_labels = covariate_labels,
+        digits = digits,
+        out_name = out_name,
+        dir_tables = directory,
+        depvar_title = depvar_title)
+
+
 plot_generator(models_multilevel_service, model_lists, "Chances of upward mobility")
 ggsave("high_low_isced_upward.png", path = directory)
 
@@ -1040,39 +1160,6 @@ models_table_downward_four <-
         age_subset = age,
         family_models = family_models)
 
-star_paster <- function(df, var_one, var_two) {
-    df[[var_two]] <- round(df[[var_two]], 2)
-    sapply(1:nrow(df), function(index) {
-        
-        is_na <- is.na(df[[var_one]][index])
-        three_stars <- df[[var_one]][index] < 0.001
-        two_stars <- df[[var_one]][index] > 0.001 & df[[var_one]][index] <= 0.01
-        one_stars <- df[[var_one]][index] > 0.01 & df[[var_one]][index] <= 0.05
-        
-        if (is_na) {
-            
-            NA
-            
-        } else if (three_stars) {
-            
-            paste(df[[var_two]][index], "***")
-            
-        } else if (two_stars) {
-            
-            paste(df[[var_two]][index], "**")
-            
-        } else if (one_stars) {
-            
-            paste(df[[var_two]][index], "*")
-            
-        } else {
-            
-            df[[var_two]][index]
-        }
-    })
-    
-    
-}
 tabler <- function(model, high = "TRUE") {
     
     metadata <- switch(high,
