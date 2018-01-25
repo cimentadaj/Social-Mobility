@@ -419,7 +419,6 @@ doc <- addFlexTable(doc,
 
 #####
 
-# Not matching
 ##### Descriptives #####
 
 descriptive_table <-
@@ -465,7 +464,6 @@ doc <- addFlexTable(doc,
 writeDoc(doc, file = "./Tables/tables.docx")
 
 #####
-
 
 ##### Preparing second modeling #####
 # I will use all of the variables from the first models from above.
@@ -532,7 +530,6 @@ cnt_bind <-
 
 #####
 
-
 ##### Cognitive distribution graphs #####
 cnt_bind %>%
     filter(highedu %in% c(1, 3)) %>%
@@ -558,7 +555,6 @@ cnt_bind %>%
 
 ggsave("noncognitive_distribution.png", path = directory)
 #####
-
 
 # ##### Extra AGE analysis ####
 # 
@@ -649,7 +645,6 @@ ggsave("noncognitive_distribution.png", path = directory)
 #     })
 # 
 # #####
-
 
 ##### Table 1 ####
 # change to lowerclass to get the other table
