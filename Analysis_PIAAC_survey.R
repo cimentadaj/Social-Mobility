@@ -142,7 +142,6 @@ countries3 <- svy_recode(countries3, "eduattain", "eduattain_reverse",
 
 #####
 
-
 ##### Model Specification #####
 
 standard_covariates <- c("scale(pvnum)",
@@ -168,7 +167,6 @@ age <- 1:10
 # 6:10 is prewelfare
 # 1:5 is postwelfare
 #####
-
 
 ##### Modeling for Table 2 and 3 ####
 
@@ -338,7 +336,6 @@ model_lists_downward <-
         dir_tables = directory,
         depvar_title = depvar_title)
 #####
-
 
 ##### Table 2 and 3 ####
 
@@ -775,7 +772,6 @@ doc <- addFlexTable(doc, FlexTable(table_one, header.columns = TRUE))
 writeDoc(doc, file = "./Tables/tables.docx")
 #####
 
-
 ##### Modeling figure 1 and 2 ####
 # change to lowerclass to get the other table
 dv <- "long_dist_upward"
@@ -783,8 +779,8 @@ depvar_title <- "Continuous upward mobility"
 
 standard_covariates <- c("scale(pvnum)",
                          "non.cognitive",
-                         "age_categories",
-                         "postwelfare")
+                         "postwelfare",
+                         "dadimmigrant")
 
 # I'm running two models, one with highisced variables and another
 # with lowisced variables, that's why I'm creating two separate set of
@@ -918,125 +914,6 @@ plot_generator <- function(multilevel, linear, title_graph) {
         theme_minimal() +
         theme(axis.text.y=element_text(colour = country_color))
 }
-
-standard_covariates <- c("scale(pvnum)",
-                         "non.cognitive",
-                         "postwelfare")
-
-
-# Finally, USA has a different lowisced variable, so I create a separate vector
-# for US.
-all_firstcovariates <- c("highisced", "adv", standard_covariates)
-all_secondcovariates <- c("lowisced", "disadv", standard_covariates)
-usa_secondcovariates <- c("lowmidisced2", all_secondcovariates[-1])
-
-# I want all ages (categories from 1:10, not ages 1:10)
-age <- 1:10
-# 6:10 is prewelfare
-# 1:5 is postwelfare
-#####
-
-dv <- c("long_dist_upward")
-
-modeling_function_noprint <- function(df_list,
-                              dv,
-                              firstcovariates,
-                              usa_secondcovariates,
-                              secondcovariates,
-                              age_subset,
-                              family_models = "gaussian",
-                              covariate_labels,
-                              digits,
-                              out_name,
-                              dir_tables,
-                              depvar_title) {
-    
-    stop_message(length(df_list) < 1, "df_list is empty")
-    last_models <- rep(list(vector("list", 2)), length(df_list))
-    names(last_models) <- names(df_list)
-    
-    # Odd ratios or not?
-    # This should be done to identify whether DV is a dummy or not
-    dv_length_countries <-
-        map_dbl(df_list, function(.x)
-            unique(.x$designs[[1]]$variables[, dv]) %>%
-                na.omit() %>%
-                length())
-    
-    # If the number of countries equals 1, bring the only length,
-    # if not, sample from all countries
-    len <- ifelse(length(dv_length_countries) == 1,
-                  dv_length_countries,
-                  sample(dv_length_countries, 1))
-    
-    # stop_message(!all(len == dv_length_countries),
-    #              "The length of the dependent variable differs by country")
-    # stop_message(!(len >= 2),
-    #              "DV has length < 2")
-    
-    odd.ratio <- ifelse(family_models == "gaussian", F,
-                        unname(ifelse(sample(dv_length_countries, 1) == 2, T, F)))
-    
-    for (i in 1:length(df_list)) {
-        
-        # The low isced variable for USA combines both low and mid isced
-        # Whenever the country is USA, use a different set of covariates
-        # than with all other countries.
-        if (names(df_list[i]) == "USA") {
-            secondcovariates <- usa_secondcovariates
-        } else {
-            secondcovariates <- all_secondcovariates 
-        }
-        
-        mod1 <- models(dv, all_firstcovariates,
-                       subset(df_list[[i]], gender == 1 & age_categories %in% age_subset),
-                       family_models = family_models)
-        mod2 <- models(dv, secondcovariates,
-                       subset(df_list[[i]], gender == 1 & age_categories %in% age_subset),
-                       family_models = family_models)
-        
-        last_models[[i]][[1]] <- mod1[[length(mod1)]] # length(mod1) to only get the last (complete model)
-        last_models[[i]][[2]] <- mod2[[length(mod1)]]
-    }
-    last_models
-}
-
-family_models <- "gaussian"
-
-model_lists <-
-    modeling_function_noprint(
-        df_list = countries3,
-        dv = dv,
-        firstcovariates = all_firstcovariates,
-        usa_secondcovariates = usa_secondcovariates,
-        secondcovariates = all_secondcovariates,
-        age_subset = age,
-        family_models = family_models,
-        covariate_labels = covariate_labels,
-        digits = digits,
-        out_name = out_name,
-        dir_tables = directory,
-        depvar_title = depvar_title)
-
-dv <- c("eduattain_reverse")
-depvar_title <- c("Continuous downward education")
-out_name <- paste0("-PIAAC-sons-", dv, ".html")
-
-model_lists_downward <-
-    modeling_function(
-        df_list = countries3,
-        dv = dv,
-        firstcovariates = all_firstcovariates,
-        usa_secondcovariates = usa_secondcovariates,
-        secondcovariates = all_secondcovariates,
-        age_subset = age,
-        family_models = family_models,
-        covariate_labels = covariate_labels,
-        digits = digits,
-        out_name = out_name,
-        dir_tables = directory,
-        depvar_title = depvar_title)
-
 
 plot_generator(models_multilevel_service, model_lists, "Chances of upward mobility")
 ggsave("high_low_isced_upward.png", path = directory)
