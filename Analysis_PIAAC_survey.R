@@ -128,7 +128,7 @@ countries3 <- svy_recode(countries3, 'occupation_recode', 'long_dist_upward', '5
 countries3 <- svy_recode(countries3, 'occupation_recode', 'long_dist_downward', '1:2 = 4; 3 = 3; 4 = 2; 5 = 1')
 
 countries3 <- svy_recode(countries3, 'isco', 'lowerclass', '3:9 = 1; 1:2 = 0; else = NA')
-countries3 <- svy_recode(countries3, 'age_categories', 'postwelfare', '1:5 = 0; 6:10 = 1; else = NA')
+countries3 <- svy_recode(countries3, 'age_categories', 'postwelfare', '1:5 = 1; 6:10 = 0; else = NA')
 
 # These two variables are recoded wrongly. It should be 1 = 0 and 2 = 1.
 countries3 <- svy_recode(countries3, 'momimmigrant', 'momimmigrant', "'2' = 0; '1' = 1; else = NA")
@@ -141,7 +141,6 @@ countries3 <- svy_recode(countries3, "eduattain", "eduattain_reverse",
                          paste0(1:16, " = ", 16:1, collapse = "; "))
 
 #####
-
 
 
 ##### Model Specification #####
@@ -418,11 +417,9 @@ doc <- addFlexTable(doc,
                                      value = title_columns,
                                      first = TRUE))
 
-writeDoc(doc, file = "./Tables/tables.docx")
-
 #####
 
-
+# Not matching
 ##### Descriptives #####
 
 descriptive_table <-
@@ -438,7 +435,7 @@ descriptive_table$descriptive <-
                       `% Low ISCED` = mean(lowisced, na.rm = T) * 100,
                       `% Dad immigrant` = 100 - (mean(dadimmigrant, na.rm = T) * 100),
                       `Avg numeracy skills` = mean(pvnum, na.rm = T)) %>%
-            map_if(is_numeric, round, 0) %>%
+            map_if(is.numeric, round, 0) %>%
             as_tibble() %>%
             gather(terms, vals, -postwelfare) %>%
             unite(postwelfare, postwelfare, terms , sep = "_") %>%
@@ -464,6 +461,8 @@ doc <- addFlexTable(doc,
                                      colspan = c(1, 5, 5),
                                      first = TRUE)
 )
+
+writeDoc(doc, file = "./Tables/tables.docx")
 
 #####
 
@@ -561,95 +560,95 @@ ggsave("noncognitive_distribution.png", path = directory)
 #####
 
 
-##### Extra AGE analysis ####
-
-# To produce regressions for cognitive and non cognitive against
-# age variable for different categories.
-# For cognitive I ran it for Korea, Italy and Denmark.
-# For non.cognitive I ran it for Estonia, Italy and US
-# Change the countries inside the loop in the modeling_function call.
-
-ability_vars <- c("non.cognitive")
-ability_title <- c("Non cognitive")
-
-ability_list <-
-    map(seq_along(ability_vars), function(index) {
-        
-        dv <- ability_vars[index]
-        depvar_title <- ability_title[index]
-        out_name <- paste0("ability-PIAAC-sons-", ability_vars[index], ".html")
-        age <- 1:10
-        # 6:10 is prewelfare
-        # 1:5 is postwelfare
-        
-        standard_covariates <- c("age_categories")
-        digits <- 2
-        
-        # Function tests the logical statement and if it doesn't equal T, it gives the error_message.
-        stop_message <- function(logical_statement, error_message) {
-            if(logical_statement) stop(error_message, call. = F)
-        }
-        warning_message <- function(logical_statement, error_message) {
-            if(logical_statement) warning(error_message, call. = F)
-        }
-        
-        modeling_function <- function(df_list,
-                                      dv,
-                                      standard_covariates,
-                                      age_subset,
-                                      family_models = "gaussian",
-                                      digits,
-                                      out_name,
-                                      dir_tables,
-                                      depvar_title) {
-            
-            stop_message(length(df_list) < 1, "df_list is empty")
-            last_models <- rep(list(vector("list", 2)), length(df_list))
-            names(last_models) <- names(df_list)
-            
-            for (i in 1:length(df_list)) {
-                
-                
-                mod1 <- models(dv, standard_covariates,
-                               subset(df_list[[i]],
-                                      gender == 1 &
-                                      age_categories %in% age_subset &
-                                      postwelfare == 0),
-                               family_models = family_models)
-                
-                last_models[[i]][[1]] <- mod1[[length(mod1)]] # length(mod1) to only get the last (complete model)
-                
-                # Calculate R squared for each model
-                mod1_r <- c("R squared:", paste0(sapply(mod1, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%"))
-                
-                ## Tables
-                stargazer2(mod1, odd.ratio = F, type = "html",
-                           title = paste0(names(df_list[i])),
-                           column.labels = depvar_title,
-                           column.separate = length(standard_covariates),
-                           dep.var.labels.include = FALSE,
-                           digits = digits,
-                           out = file.path(dir_tables, paste0(names(df_list[i]), out_name)))
-                # add.lines = list(c(mod1_r, mod2_r))
-            }
-            last_models
-        }
-        
-        family_models <- "gaussian"
-        model_lists <-
-            modeling_function(
-                df_list = countries3[c("Italy", "United States")],
-                dv = dv,
-                standard_covariates = standard_covariates,
-                age_subset = age,
-                family_models = family_models,
-                digits = digits,
-                out_name = out_name,
-                dir_tables = directory,
-                depvar_title = depvar_title)
-    })
-
-#####
+# ##### Extra AGE analysis ####
+# 
+# # To produce regressions for cognitive and non cognitive against
+# # age variable for different categories.
+# # For cognitive I ran it for Korea, Italy and Denmark.
+# # For non.cognitive I ran it for Estonia, Italy and US
+# # Change the countries inside the loop in the modeling_function call.
+# 
+# ability_vars <- c("non.cognitive")
+# ability_title <- c("Non cognitive")
+# 
+# ability_list <-
+#     map(seq_along(ability_vars), function(index) {
+#         
+#         dv <- ability_vars[index]
+#         depvar_title <- ability_title[index]
+#         out_name <- paste0("ability-PIAAC-sons-", ability_vars[index], ".html")
+#         age <- 1:10
+#         # 6:10 is prewelfare
+#         # 1:5 is postwelfare
+#         
+#         standard_covariates <- c("age_categories")
+#         digits <- 2
+#         
+#         # Function tests the logical statement and if it doesn't equal T, it gives the error_message.
+#         stop_message <- function(logical_statement, error_message) {
+#             if(logical_statement) stop(error_message, call. = F)
+#         }
+#         warning_message <- function(logical_statement, error_message) {
+#             if(logical_statement) warning(error_message, call. = F)
+#         }
+#         
+#         modeling_function <- function(df_list,
+#                                       dv,
+#                                       standard_covariates,
+#                                       age_subset,
+#                                       family_models = "gaussian",
+#                                       digits,
+#                                       out_name,
+#                                       dir_tables,
+#                                       depvar_title) {
+#             
+#             stop_message(length(df_list) < 1, "df_list is empty")
+#             last_models <- rep(list(vector("list", 2)), length(df_list))
+#             names(last_models) <- names(df_list)
+#             
+#             for (i in 1:length(df_list)) {
+#                 
+#                 
+#                 mod1 <- models(dv, standard_covariates,
+#                                subset(df_list[[i]],
+#                                       gender == 1 &
+#                                       age_categories %in% age_subset &
+#                                       postwelfare == 0),
+#                                family_models = family_models)
+#                 
+#                 last_models[[i]][[1]] <- mod1[[length(mod1)]] # length(mod1) to only get the last (complete model)
+#                 
+#                 # Calculate R squared for each model
+#                 mod1_r <- c("R squared:", paste0(sapply(mod1, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%"))
+#                 
+#                 ## Tables
+#                 stargazer2(mod1, odd.ratio = F, type = "html",
+#                            title = paste0(names(df_list[i])),
+#                            column.labels = depvar_title,
+#                            column.separate = length(standard_covariates),
+#                            dep.var.labels.include = FALSE,
+#                            digits = digits,
+#                            out = file.path(dir_tables, paste0(names(df_list[i]), out_name)))
+#                 # add.lines = list(c(mod1_r, mod2_r))
+#             }
+#             last_models
+#         }
+#         
+#         family_models <- "gaussian"
+#         model_lists <-
+#             modeling_function(
+#                 df_list = countries3[c("Italy", "United States")],
+#                 dv = dv,
+#                 standard_covariates = standard_covariates,
+#                 age_subset = age,
+#                 family_models = family_models,
+#                 digits = digits,
+#                 out_name = out_name,
+#                 dir_tables = directory,
+#                 depvar_title = depvar_title)
+#     })
+# 
+# #####
 
 
 ##### Table 1 ####
@@ -778,6 +777,7 @@ table_one <-
 doc <- addTitle(doc, "Table 1")
 doc <- addFlexTable(doc, FlexTable(table_one, header.columns = TRUE))
 
+writeDoc(doc, file = "./Tables/tables.docx")
 #####
 
 
