@@ -841,7 +841,6 @@ models_multilevel_lower <- map(covariate_list, function(formula) {
 
 #####
 
-
 ##### Figure 1 and 2 ####
 # Repeat for both dependent variables
 
