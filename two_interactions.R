@@ -152,6 +152,7 @@ countries3 <- svy_recode(countries3, 'dadimmigrant', 'dadimmigrant', "'2' = 0; '
 
 
 
+
 ##### Variables #####
 
 interaction_vars <- c(
@@ -210,6 +211,7 @@ x_two <-
     unite(interaction, cogn, noncogn, sep = "*")
 
 #####
+
 
 
 
@@ -300,6 +302,7 @@ multilevel_upward_table_seven <-
 
 multilevel_upward_table_seven
 #####
+
 
 
 
@@ -396,6 +399,7 @@ multilevel_downward_table_seven
 
 
 
+
 ##### Table seven_forreal! ####
 
 table_seven <- 
@@ -443,6 +447,7 @@ doc <- addFlexTable(doc,
                                      first = TRUE))
 
 #####
+
 
 
 ##### Table 8 = Interaction for table 7 table #####
@@ -513,6 +518,7 @@ doc <- addFlexTable(doc,
                                      first = TRUE))
 
 #####
+
 
 
 
