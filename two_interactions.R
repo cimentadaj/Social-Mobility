@@ -216,13 +216,13 @@ x_two <-
 
 
 
-##### lm models_upward ####
-dv <- c("long_dist_upward")
-titles <- c("Continuous upward")
+##### lm models ####
+dv <- c("long_dist_upward", "long_dist_downward")
 
 current_int <- as.character(x_two[1, ])
 
-standard_covariates <- c("pvnum",
+standard_covariates <- c(current_int,
+                         "pvnum",
                          "non.cognitive",
                          "age_categories",
                          "postwelfare",
@@ -230,21 +230,15 @@ standard_covariates <- c("pvnum",
 
 all_firstcovariates <- standard_covariates
 
+covariate_list <- paste(dv, paste0(all_firstcovariates, collapse = " + "), sep = " ~ ")
+
+# If the DV is not binery, run lmer, if it is, then use glmer
+
+type_model <- ifelse(all(sapply(na.omit(unique(cnt_bind[, dv])), length) > 2), "lm", "glm")
+
 iv <- list(all_firstcovariates)[[1]]
 
-covariate_list <-
-    map(list(all_firstcovariates), function(iv) {
-        map(current_int, ~ as.formula(paste(dv, paste(c(.x, iv), collapse = " + "), sep = " ~ ")))
-    }) %>%
-    `c`(recursive = T)
-
-all_firstcovariates <- standard_covariates
-
-# If the DV is not binary, run lm, if it is, then use glm
-type_model <- ifelse(length(na.omit(unique(cnt_bind[, dv]))) > 2, "lm", "glm")
-
 multi_fun <-
-    multi_fun <-
     switch(type_model,
            lm = function(formula, data, subset, ...) {
                m <- match.call()
@@ -262,16 +256,16 @@ multi_fun <-
 models_multilevel1 <- map(covariate_list, function(formula) {
     multi_fun(formula = formula,
               data = cnt_bind,
-              subset = gender == 1 & age_categories %in% age & highisced == 1,
-              weight = spfwt0)
+              subset = gender == 1 & age_categories %in% age & highisced == 1)
 })
+
 models_multilevel2 <- map(covariate_list, function(formula) {
     multi_fun(formula = formula,
               data = cnt_bind,
-              subset = gender == 1 & age_categories %in% age & lowisced == 1,
-              weight = spfwt0)
+              subset = gender == 1 & age_categories %in% age & lowisced == 1)
 })
 
+##### Upward models #####
 models_multilevel_upward <- list(models_multilevel1[[1]], models_multilevel2[[1]])
 
 values_rbind <-
@@ -303,67 +297,8 @@ multilevel_upward_table_seven <-
 multilevel_upward_table_seven
 #####
 
-
-
-
-
-##### lm models_downward ####
-dv <- c("long_dist_downward")
-titles <- c("Continuous downward")
-
-current_int <- as.character(x_two[1, ])
-
-standard_covariates <- c("pvnum",
-                         "non.cognitive",
-                         "age_categories",
-                         "postwelfare",
-                         "dadimmigrant")
-
-all_firstcovariates <- standard_covariates
-
-iv <- list(all_firstcovariates)[[1]]
-
-covariate_list <-
-    map(list(all_firstcovariates), function(iv) {
-        map(current_int, ~ as.formula(paste(dv, paste(c(.x, iv), collapse = " + "), sep = " ~ ")))
-    }) %>%
-    `c`(recursive = T)
-
-all_firstcovariates <- standard_covariates
-
-# If the DV is not binary, run lm, if it is, then use glm
-type_model <- ifelse(length(na.omit(unique(cnt_bind[, dv]))) > 2, "lm", "glm")
-
-multi_fun <-
-    multi_fun <-
-    switch(type_model,
-           lm = function(formula, data, subset, ...) {
-               m <- match.call()
-               m[[1]] <- as.name("lm")
-               eval(m)
-           },
-           glm = function(formula, data, subset, ...) {
-               m <- match.call()
-               m[[1]] <- as.name("glm")
-               eval(m)
-           }
-    )
-
-# Pass that list to the glmer to run two different models and then show table with stargazer
-models_multilevel1 <- map(covariate_list, function(formula) {
-    multi_fun(formula = formula,
-              data = cnt_bind,
-              subset = gender == 1 & age_categories %in% age & highisced == 1,
-              weight = spfwt0)
-})
-models_multilevel2 <- map(covariate_list, function(formula) {
-    multi_fun(formula = formula,
-              data = cnt_bind,
-              subset = gender == 1 & age_categories %in% age & lowisced == 1,
-              weight = spfwt0)
-})
-
-models_multilevel_downward <- list(models_multilevel1[[1]], models_multilevel2[[1]])
+##### Downward models ####
+models_multilevel_downward <- list(models_multilevel1[[2]], models_multilevel2[[2]])
 
 values_rbind <-
     map(models_multilevel_downward, ~ {
@@ -377,7 +312,6 @@ values_rbind <-
     setNames(c("term", "highisced", "", "lowisced")) %>%
     select(-3) %>%
     mutate_if(is_double, function(x) as.character(round(x, 2)))
-
 
 multilevel_downward_table_seven <-
     map(models_multilevel_downward, ~ {
@@ -393,15 +327,9 @@ multilevel_downward_table_seven <-
     bind_rows(values_rbind)
 
 multilevel_downward_table_seven
-
 #####
 
-
-
-
-
-##### Table seven_forreal! ####
-
+#### Table seven ####
 table_seven <- 
     multilevel_upward_table_seven %>%
     bind_cols(multilevel_downward_table_seven) %>%
@@ -446,11 +374,18 @@ doc <- addFlexTable(doc,
                                      value = title_columns,
                                      first = TRUE))
 
+writeDoc(doc, file = "./Tables/second_batch_tables.docx")
 #####
 
-
-
 ##### Table 8 = Interaction for table 7 table #####
+
+modelr::data_grid(cnt_bind, cognitive_top30_bottom30, noncognitive_top30_bottom30,
+                  .model = models_multilevel_upward[[2]]) %>%
+    filter(complete.cases(.)) %>%
+    modelr::add_predictions(models_multilevel_upward[[2]]) %>%
+    select(1:2, 8) %>%
+    slice(c(4, 3, 2, 1))
+
 
 variables_interaction <- c("pvnum", "non.cognitive",
                            "cognitive_", "noncognitive_",
@@ -516,6 +451,7 @@ doc <- addFlexTable(doc,
                         addHeaderRow(text.properties = textBold(),
                                      value = title_columns,
                                      first = TRUE))
+writeDoc(doc, file = "./Tables/second_batch_tables.docx")
 
 #####
 

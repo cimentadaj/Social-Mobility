@@ -82,15 +82,12 @@ titles <- c("Continuous upward", "Continuous downward")
 
 interaction_vars <- c("cognitive_top30_bottom30", "noncognitive_top30_bottom30")
 
-
-
 ##### Change #####
 # Change to 1 for the upward graphs and 2 for the downward graphs
 dv <- variables[2]
-depvar_title <- titles[2]
 
-# Change to 1 for the high/low isced specification and 0 for the opposite
-high_low_isced <- 0
+# Change to 1 for the high graph, 2 for low isced specification
+high_low_isced <- 2
 
 ######
 
@@ -188,28 +185,30 @@ multi_fun <-
          )
 
 # Pass that list to the glmer to run two different models and then show table with stargazer
+
+# This model is for people who are in high isced (0 is actually agaisnt everyone else)
 models_multilevel1 <- map(covariate_list, function(formula) {
             multi_fun(formula = formula,
                       data = cnt_bind,
-                      subset = gender == 1 & age_categories %in% age & highisced == high_low_isced)
+                      subset = gender == 1 & age_categories %in% age & highisced == 1)
         })
 
+# And this model is for lowisced (0 is all other education)
 models_multilevel2 <- map(covariate_list, function(formula) {
             multi_fun(formula = formula,
                       data = cnt_bind,
-                      subset = gender == 1 & age_categories %in% age & lowisced == high_low_isced)
+                      subset = gender == 1 & age_categories %in% age & lowisced == 1)
         })
 
 models_multilevel <- list(models_multilevel1[[1]], models_multilevel2[[1]])
 
-model <- models_multilevel[[1]]
+model <- models_multilevel[[high_low_isced]]
 
 add_predictions_se <- function(data, model) {
     se <- predict(model, newdata = data, se.fit = T, re.form = NA)$se.fit
     data[["se"]] <- se
     data
 }
-
 
 interaction_visual <- function(model) {
     
