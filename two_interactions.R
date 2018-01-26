@@ -144,11 +144,11 @@ countries3 <- svy_recode(countries3, 'occupation_recode', 'long_dist_downward', 
 countries3 <- svy_recode(countries3, 'isco', 'lowerclass', '3:9 = 1; 1:2 = 0; else = NA')
 countries3 <- svy_recode(countries3, 'age_categories', 'postwelfare', '1:5 = 1; 6:10 = 0; else = NA')
 
-# These two variables are recoded wrongly. It should be 1 = 0 and 2 = 1.
 countries3 <- svy_recode(countries3, 'momimmigrant', 'momimmigrant', "'2' = 0; '1' = 1; else = NA")
-countries3 <- svy_recode(countries3, 'dadimmigrant', 'dadimmigrant', "2 = 0; 1 = 1; else = NA")
+countries3 <- svy_recode(countries3, 'dadimmigrant', 'dadimmigrant', "'2' = 0; '1' = 1; else = NA")
 
 #####
+
 
 
 
@@ -210,6 +210,7 @@ x_two <-
     unite(interaction, cogn, noncogn, sep = "*")
 
 #####
+
 
 
 
@@ -299,6 +300,7 @@ multilevel_upward_table_seven <-
 
 multilevel_upward_table_seven
 #####
+
 
 
 
@@ -393,6 +395,7 @@ multilevel_downward_table_seven
 
 
 
+
 ##### Table seven_forreal! ####
 
 table_seven <- 
@@ -440,6 +443,7 @@ doc <- addFlexTable(doc,
                                      first = TRUE))
 
 #####
+
 
 ##### Table 8 = Interaction for table 7 table #####
 
@@ -512,7 +516,9 @@ doc <- addFlexTable(doc,
 
 
 
+
 #######################
+
 
 
 
