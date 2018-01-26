@@ -279,23 +279,23 @@ modeling_function <- function(df_list,
         last_models[[i]][[1]] <- mod1[[length(mod1)]] # length(mod1) to only get the last (complete model)
         last_models[[i]][[2]] <- mod2[[length(mod1)]]
         
-        # # Calculate R squared for each model
-        # mod1_r <- c("R squared:", paste0(sapply(mod1, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%"))
-        # mod2_r <- paste0(sapply(mod2, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%")
-        # 
-        # all.models <- append(mod1, mod2)
-        # 
-        # ## Tables
-        # stargazer2(all.models, odd.ratio, type = "html",
-        #            title = paste0(names(df_list[i])),
-        #            column.labels = rep(depvar_title, 2),
-        #            column.separate = rep(length(all_firstcovariates), 2),
-        #            dep.var.labels.include = FALSE,
-        #            order = c(1, 2, 7, 8),
-        #            covariate.labels = covariate_labels,
-        #            digits = digits,
-        #            out = file.path(dir_tables, paste0(names(df_list[i]), out_name)),
-        #            add.lines = list(c(mod1_r, mod2_r))
+        # Calculate R squared for each model
+        mod1_r <- c("R squared:", paste0(sapply(mod1, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%"))
+        mod2_r <- paste0(sapply(mod2, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%")
+
+        all.models <- append(mod1, mod2)
+
+        ## Tables
+        stargazer2(all.models, odd.ratio, type = "html",
+                   title = paste0(names(df_list[i])),
+                   column.labels = rep(depvar_title, 2),
+                   column.separate = rep(length(all_firstcovariates), 2),
+                   dep.var.labels.include = FALSE,
+                   order = c(1, 2, 7, 8),
+                   covariate.labels = covariate_labels,
+                   digits = digits,
+                   out = file.path(dir_tables, paste0(names(df_list[i]), out_name)),
+                   add.lines = list(c(mod1_r, mod2_r)))
     }
     last_models
 }
