@@ -375,6 +375,105 @@ doc <- addFlexTable(doc,
                                      first = TRUE))
 #####
 
+#### Models for table seven_two ####
+
+cnt_bind$high_low <- with(cnt_bind,
+                          ifelse(highisced == 1, 1,
+                          ifelse(lowisced == 1, 0, NA)))
+
+cnt_bind$three_interaction <-
+    with(cnt_bind,
+         as.numeric(cognitive_top30_bottom30) * 
+             as.numeric(noncognitive_top30_bottom30) *
+             high_low)
+
+up_for <-
+    long_dist_upward ~
+    pvnum + 
+    non.cognitive +
+    age_categories +
+    postwelfare +
+    dadimmigrant +
+    three_interaction
+
+do_for <-
+    long_dist_downward ~
+    pvnum + 
+    non.cognitive +
+    age_categories +
+    postwelfare +
+    dadimmigrant +
+    three_interaction
+
+mod1 <-
+    lm(up_for,
+    data = cnt_bind,
+    subset = gender == 1 & age_categories %in% age)
+
+mod2 <-
+    lm(do_for,
+       data = cnt_bind,
+       subset = gender == 1 & age_categories %in% age)
+
+
+values_rbind <-
+    map(list(mod1, mod2), ~ {
+        n_obs <- nobs(.x)
+        rsq <- summary(.x)$adj.r.squared
+        rse <- summary(.x)$sigma
+        
+        data.frame(term = c("N", "R squared", "Residual s.e"), vals = c(n_obs, rsq, rse))
+    }) %>%
+    reduce(bind_cols) %>%
+    setNames(c("term", "highisced", "", "lowisced")) %>%
+    select(-3) %>%
+    mutate_if(is_double, function(x) as.character(round(x, 2)))
+
+multilevel_seven_two <-
+    map(list(mod1, mod2), ~ {
+        tidy(.x) %>%
+            .[c(2:7, 1), c("term", "estimate", "p.value")]
+    }) %>%
+    reduce(cbind) %>%
+    .[-4] %>%
+    transmute(term,
+              estimate = star_paster(., "p.value", "estimate"),
+              estimate_one = star_paster(., "p.value.1", "estimate.1")) %>%
+    setNames(c("term", "highisced", "lowisced")) %>%
+    bind_rows(values_rbind)
+
+multilevel_seven_two$term <- c(
+    "Cognitive skills",
+    "Non-cognitive skills",
+    "Age",
+    "Cohort",
+    "Dad immigrant",
+    "Cognitive dummy * Non cognitive dummy * High/low ISCED",
+    "Constant",
+    "N",
+    "R-squared",
+    "Residual s.e"
+)
+
+title_columns <- c(
+    "",
+    "Upward Mobility",
+    "Downward mobility"
+    )
+
+doc <- addTitle(doc, "Appendix table 3")
+doc <- addFlexTable(doc,
+                    FlexTable(multilevel_seven_two, header.columns = FALSE) %>%
+                        addHeaderRow(text.properties = textBold(),
+                                     value = title_columns,
+                                     first = TRUE))
+
+writeDoc(doc, file = "./Tables/second_batch_tables.docx")
+
+####
+
+####
+
 ##### Table 8 = Interaction for table 7 table #####
 
 modelr::data_grid(cnt_bind, cognitive_top30_bottom30, noncognitive_top30_bottom30,

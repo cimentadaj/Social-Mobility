@@ -244,5 +244,4 @@ interaction_visual(model)
 
 file_name <- paste0(dv, "_for_", ifelse(high_low_isced, "highisced", "lowisced"), "_interaction.png")
 
-ggsave(filename = file_name,
-       path = directory)
+ggsave(filename = file_name, path = directory)
