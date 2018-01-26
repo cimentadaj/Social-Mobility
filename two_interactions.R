@@ -147,6 +147,9 @@ countries3 <- svy_recode(countries3, 'age_categories', 'postwelfare', '1:5 = 1; 
 countries3 <- svy_recode(countries3, 'momimmigrant', 'momimmigrant', "'2' = 0; '1' = 1; else = NA")
 countries3 <- svy_recode(countries3, 'dadimmigrant', 'dadimmigrant', "'2' = 0; '1' = 1; else = NA")
 
+countries3 <- svy_recode(countries3, 'eduattain', "university",
+                         "1:11 = 0; c(12, 13, 14, 16) = 1; else = NA")
+
 #####
 
 
@@ -174,6 +177,7 @@ standard_covariates <- c(interaction_vars,
                          "gender",
                          "highisced",
                          "lowisced",
+                         "university",
                          "spfwt0",
                          "long_dist_downward",
                          "long_dist_upward")
@@ -264,6 +268,7 @@ models_multilevel2 <- map(covariate_list, function(formula) {
               data = cnt_bind,
               subset = gender == 1 & age_categories %in% age & lowisced == 1)
 })
+
 
 ##### Upward models #####
 models_multilevel_upward <- list(models_multilevel1[[1]], models_multilevel2[[1]])
@@ -474,15 +479,8 @@ writeDoc(doc, file = "./Tables/second_batch_tables.docx")
 
 ####
 
+
 ##### Table 8 = Interaction for table 7 table #####
-
-modelr::data_grid(cnt_bind, cognitive_top30_bottom30, noncognitive_top30_bottom30,
-                  .model = models_multilevel_upward[[2]]) %>%
-    filter(complete.cases(.)) %>%
-    modelr::add_predictions(models_multilevel_upward[[2]]) %>%
-    select(1:2, 8) %>%
-    slice(c(4, 3, 2, 1))
-
 
 variables_interaction <- c("pvnum", "non.cognitive",
                            "cognitive_", "noncognitive_",
@@ -667,5 +665,72 @@ doc <- addTitle(doc, "Table 9")
 doc <- addFlexTable(doc, FlexTable(table_nine, header.columns = TRUE))
 
 writeDoc(doc, file = "./Tables/second_batch_tables.docx")
+
+#####
+
+
+#### Extra work
+
+add_predictions_se <- function(data, model) {
+    se <- predict(model, newdata = data, se.fit = T, re.form = NA)$se.fit
+    data[["se"]] <- se
+    data
+}
+
+interaction_visual <- function(model, title) {
+    
+    modelr::data_grid(cnt_bind, cognitive_top30_bottom30, noncognitive_top30_bottom30, .model = model) %>%
+        filter(complete.cases(.)) %>%
+        modelr::add_predictions(model) %>%
+        add_predictions_se(model) %>%
+        select(1:2, pred, se) %>%
+        mutate(lower = pred - 2 * se,
+               upper = pred + 2 * se) %>%
+        ggplot(aes(cognitive_top30_bottom30, pred,
+                   shape = noncognitive_top30_bottom30,
+                   colour = noncognitive_top30_bottom30)) +
+        geom_line(aes(group = noncognitive_top30_bottom30)) +
+        geom_point(size = 3) +
+        geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.05) +
+        scale_y_continuous(paste("Predicted probability of tertiary")) +
+        scale_x_discrete(name = "Cognitive", labels = c("Bottom 30%", "Top 30%")) +
+        scale_color_manual(name = "Non cognitive",
+                           labels = c("Bottom 30%", "Top 30%"),
+                           values = c("red", "blue")) +
+        scale_shape_manual(name = "Non cognitive",
+                           labels = c("Bottom 30%", "Top 30%"),
+                           values = c(16, 17)) +
+        ggtitle(paste(title)) +
+        theme_minimal(base_size = 13)
+}
+
+
+cnt_bind <- cnt_bind %>% as_tibble()
+
+mod1 <-
+    glm(university ~
+            pvnum +
+            non.cognitive +
+            cognitive_top30_bottom30 * noncognitive_top30_bottom30 +
+            age_categories +
+            dadimmigrant,
+    data = subset(cnt_bind, highisced == 1))
+
+mod2 <-
+    glm(university ~
+            pvnum +
+            non.cognitive +
+            cognitive_top30_bottom30 * noncognitive_top30_bottom30 +
+            age_categories +
+            dadimmigrant,
+        data = subset(cnt_bind, lowisced == 1))
+
+
+mod1 %>%
+    interaction_visual("Predicted probability of tertiary education for High ISCED sons") %>%
+    ggsave("Tables/tertiary_interaction_highisced.png", plot = .)
+
+mod2 %>% interaction_visual("Predicted probability of tertiary education for Low ISCED sons") %>%
+    ggsave("Tables/tertiary_interaction_lowisced.png", plot = .)
 
 #####
