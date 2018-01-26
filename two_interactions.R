@@ -373,8 +373,6 @@ doc <- addFlexTable(doc,
                         addHeaderRow(text.properties = textBold(),
                                      value = title_columns,
                                      first = TRUE))
-
-writeDoc(doc, file = "./Tables/second_batch_tables.docx")
 #####
 
 ##### Table 8 = Interaction for table 7 table #####
@@ -451,15 +449,8 @@ doc <- addFlexTable(doc,
                         addHeaderRow(text.properties = textBold(),
                                      value = title_columns,
                                      first = TRUE))
-writeDoc(doc, file = "./Tables/second_batch_tables.docx")
-
 #####
 
-
-
-
-
-#######################
 
 
 
