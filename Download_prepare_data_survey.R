@@ -281,7 +281,6 @@ data.management <- function(x, variables) {
         quan <- get(x)
         cognitive_recoder("non.cognitive", quan)
     })
-    
     x
 }
 

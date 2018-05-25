@@ -12,10 +12,9 @@ library(ggthemes)
 library(lme4)
 library(MuMIn)
 source("http://peterhaschke.com/Code/multiplot.R")
-dyn.load('/Library/Java/JavaVirtualMachines/jdk1.8.0_131.jdk/Contents/Home/jre/lib/server/libjvm.dylib')
+Sys.setenv(JAVA_HOME="C:/Program Files/Java/jre1.8.0_171/")
+#dyn.load('/Library/Java/JavaVirtualMachines/jdk1.8.0_131.jdk/Contents/Home/jre/lib/server/libjvm.dylib')
 library(ReporteRs)
-
-#####
 
 
 ##### Reading data #####
@@ -142,6 +141,44 @@ countries3 <- svy_recode(countries3, "eduattain", "eduattain_reverse",
 
 #####
 
+
+##### Table 1 ####
+table_one <-
+  map(countries3, ~ {
+    .x$designs[[1]]$variables %>%
+      select(differentideas, bottomthings, additinfo) %>% 
+      psy::cronbach() %>% 
+      as_tibble() %>% 
+      select(alpha)
+  }) %>% enframe() %>% unnest()
+
+all_rsq <-
+  map(countries3, ~ {
+    .x$designs[[1]]$variables %>%
+      select(differentideas, bottomthings, additinfo) %>% 
+      psych::fa() %>% 
+      .[["R2.scores"]] %>% 
+      as_tibble() %>% 
+      set_names("R-squared")
+  }) %>% enframe() %>% unnest()
+
+table_one <- left_join(table_one, all_rsq)
+
+table_one <- mutate_if(table_one, is.numeric, round, 2)
+
+doc <- docx()
+doc <- addTitle(doc, "Table 1")
+doc <- addFlexTable(doc,
+                    FlexTable(table_one, header.columns = FALSE) %>%
+                      addHeaderRow(text.properties = textBold(),
+                                   value = c("Country", "Internal Consistency", "R-squared of Factor Analysis"),
+                                   first = TRUE))
+
+writeDoc(doc, file = "./Tables/tables_one.docx")
+
+#####
+
+
 ##### Model Specification #####
 
 standard_covariates <- c("scale(pvnum)",
@@ -168,7 +205,9 @@ age <- 1:10
 # 1:5 is postwelfare
 #####
 
-##### Modeling for Table 2 and 3 ####
+
+
+##### Modeling for Table 3 and 4 ####
 
 # Change for long_dist_upward/long_dist_downward and the title to produce models for the
 # other variable models
@@ -265,11 +304,9 @@ modeling_function <- function(df_list,
         # than with all other countries.
         if (names(df_list[i]) == "USA") {
             secondcovariates <- usa_secondcovariates
-        } else {
-            secondcovariates <- all_secondcovariates 
         }
 
-        mod1 <- models(dv, all_firstcovariates,
+        mod1 <- models(dv, firstcovariates,
                        subset(df_list[[i]], gender == 1 & age_categories %in% age_subset),
                        family_models = family_models)
         mod2 <- models(dv, secondcovariates,
@@ -337,7 +374,8 @@ model_lists_downward <-
         depvar_title = depvar_title)
 #####
 
-##### Table 2 and 3 ####
+
+##### Table 3 and 4 ####
 
 table_generator <- function(each_model) {
     country_models <-
@@ -390,8 +428,8 @@ table_generator <- function(each_model) {
     
 }
 
-table_two <- table_generator(model_lists)
-table_three <- table_generator(model_lists_downward)
+table_three <- table_generator(model_lists)
+table_four <- table_generator(model_lists_downward)
 
 title_columns <-
     c("","High SES \n origin β \n \n (1)", "High-SES, \n bottom 1/3rd β \n \n (2)",
@@ -400,13 +438,6 @@ title_columns <-
       "Non-cognitive meritocracy: \n origin ratio (non-cogn β: (1))")
 
 doc <- docx()
-doc <- addTitle(doc, "Table 2")
-doc <- addFlexTable(doc,
-                    FlexTable(table_two, header.columns = FALSE) %>%
-                        addHeaderRow(text.properties = textBold(),
-                                     value = title_columns,
-                                     first = TRUE))
-
 doc <- addTitle(doc, "Table 3")
 doc <- addFlexTable(doc,
                     FlexTable(table_three, header.columns = FALSE) %>%
@@ -414,7 +445,15 @@ doc <- addFlexTable(doc,
                                      value = title_columns,
                                      first = TRUE))
 
+doc <- addTitle(doc, "Table 4")
+doc <- addFlexTable(doc,
+                    FlexTable(table_four, header.columns = FALSE) %>%
+                        addHeaderRow(text.properties = textBold(),
+                                     value = title_columns,
+                                     first = TRUE))
+
 #####
+
 
 ##### Descriptives #####
 
@@ -459,6 +498,185 @@ doc <- addFlexTable(doc,
 )
 
 writeDoc(doc, file = "./Tables/tables.docx")
+
+#####
+
+
+##### Second descriptives #####
+
+# Same function as before, but commenting out
+# the stargazer part in order not to save tables!
+modeling_function <- function(df_list,
+                              dv,
+                              firstcovariates,
+                              usa_secondcovariates,
+                              secondcovariates,
+                              age_subset,
+                              family_models = "gaussian",
+                              covariate_labels,
+                              digits,
+                              out_name,
+                              dir_tables,
+                              depvar_title) {
+  
+  stop_message(length(df_list) < 1, "df_list is empty")
+  last_models <- rep(list(vector("list", 2)), length(df_list))
+  names(last_models) <- names(df_list)
+  
+  # Odd ratios or not?
+  # This should be done to identify whether DV is a dummy or not
+  dv_length_countries <-
+    map_dbl(df_list, function(.x)
+      unique(.x$designs[[1]]$variables[, dv]) %>%
+        na.omit() %>%
+        length())
+  
+  # If the number of countries equals 1, bring the only length,
+  # if not, sample from all countries
+  len <- ifelse(length(dv_length_countries) == 1,
+                dv_length_countries,
+                sample(dv_length_countries, 1))
+  
+  # stop_message(!all(len == dv_length_countries),
+  #              "The length of the dependent variable differs by country")
+  # stop_message(!(len >= 2),
+  #              "DV has length < 2")
+  
+  odd.ratio <- ifelse(family_models == "gaussian", F,
+                      unname(ifelse(sample(dv_length_countries, 1) == 2, T, F)))
+  
+  for (i in 1:length(df_list)) {
+    print(names(df_list[i]))
+    
+    # The low isced variable for USA combines both low and mid isced
+    # Whenever the country is USA, use a different set of covariates
+    # than with all other countries.
+    if (names(df_list[i]) == "USA") {
+      secondcovariates <- usa_secondcovariates
+    }
+    
+    mod1 <- models(dv, firstcovariates,
+                   subset(df_list[[i]], gender == 1 & age_categories %in% age_subset),
+                   family_models = family_models)
+    mod2 <- models(dv, secondcovariates,
+                   subset(df_list[[i]], gender == 1 & age_categories %in% age_subset),
+                   family_models = family_models)
+    
+    last_models[[i]][[1]] <- mod1[[length(mod1)]] # length(mod1) to only get the last (complete model)
+    last_models[[i]][[2]] <- mod2[[length(mod1)]]
+    
+    # Calculate R squared for each model
+    mod1_r <- c("R squared:", paste0(sapply(mod1, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%"))
+    mod2_r <- paste0(sapply(mod2, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%")
+    
+    all.models <- append(mod1, mod2)
+    
+    # ## Tables
+    # stargazer2(all.models, odd.ratio, type = "html",
+    #            title = paste0(names(df_list[i])),
+    #            column.labels = rep(depvar_title, 2),
+    #            column.separate = rep(length(all_firstcovariates), 2),
+    #            dep.var.labels.include = FALSE,
+    #            order = c(1, 2, 7, 8),
+    #            covariate.labels = covariate_labels,
+    #            digits = digits,
+    #            out = file.path(dir_tables, paste0(names(df_list[i]), out_name)),
+    #            add.lines = list(c(mod1_r, mod2_r)))
+  }
+  last_models
+}
+
+
+# I rerun this model only to have pvnum without scaled
+# to be able to get descriptives of pvnum unscaled
+# as it is in the original descriptives table
+
+
+models_unscaled <-
+  modeling_function(
+    df_list = countries3,
+    dv = dv,
+    firstcovariates = gsub("scale\\(|\\)", "", all_firstcovariates),
+    usa_secondcovariates = gsub("scale\\(|\\)", "", usa_secondcovariates),
+    secondcovariates = gsub("scale\\(|\\)", "", all_secondcovariates),
+    age_subset = age,
+    family_models = family_models,
+    covariate_labels = covariate_labels,
+    digits = digits,
+    out_name = out_name,
+    dir_tables = directory,
+    depvar_title = depvar_title)
+
+second_descriptives <-
+  map(countries3, ~ {
+    .x$designs[[1]]$variables %>% select(isco,
+                                         lowisced,
+                                         disadv,
+                                         pvnum,
+                                         non.cognitive,
+                                         postwelfare,
+                                         dadimmigrant) %>% 
+      summarize_all(function(x) mean(is.na(x)))
+  }) %>% 
+  enframe() %>% 
+  unnest() %>% 
+  mutate(total_miss = rowSums(select(., -name))) %>% 
+  mutate_if(is.numeric, round, 2)
+
+third_descriptives <-
+  map(models_unscaled, function(.x) {
+    lowisced_table <-
+      .x[[2]]$model %>%
+      group_by(postwelfare) %>%
+      summarize(`% Low ISCED` = mean(lowisced, na.rm = T) * 100) %>%
+      mutate_if(is.numeric, round, 0) %>%
+      gather(terms, vals, -postwelfare) %>%
+      unite(postwelfare, postwelfare, terms , sep = "_") %>%
+      spread(postwelfare, vals)
+    
+    almost_table <-
+      .x[[1]]$model %>%
+      group_by(postwelfare) %>%
+      summarize(`Sample size` = n(),
+                `% High ISCED` = mean(highisced, na.rm = T) * 100,
+                `% Dad immigrant` = 100 - (mean(dadimmigrant, na.rm = T) * 100),
+                `Avg numeracy skills` = mean(pvnum, na.rm = T)) %>%
+      map_if(is.numeric, round, 0) %>%
+      as_tibble() %>% 
+      gather(terms, vals, -postwelfare) %>%
+      unite(postwelfare, postwelfare, terms , sep = "_") %>%
+      spread(postwelfare, vals) 
+    
+    final_table <-
+      almost_table %>% 
+      add_column(`0_% Low ISCED` = lowisced_table[[1]], .after = 2) %>% 
+      add_column(`1_% Low ISCED` = lowisced_table[[2]], .after = 7)
+    
+    final_table
+  }) %>% 
+  enframe() %>% 
+  unnest()
+
+descriptive_table <-
+  third_descriptives %>%
+  setNames(c("Country",
+             rep(c("% Dad immigrant",
+                   "% High ISCED",
+                   "% Low ISCED",
+                   "Avg numeracy skills",
+                   "Sample size"), 2)))
+
+doc <- docx()
+doc <- addTitle(doc, "Descriptives after sample selection")
+doc <- addFlexTable(doc,
+                    FlexTable(descriptive_table) %>%
+                      addHeaderRow(text.properties = textBold(),
+                                   value = c("", "Pre-welfare cohort", "Post-welfare cohort"),
+                                   colspan = c(1, 5, 5),
+                                   first = TRUE)
+)
+
+writeDoc(doc, file = "./Tables/descriptves_finalsample.docx")
 
 #####
 
@@ -527,6 +745,7 @@ cnt_bind <-
 
 #####
 
+
 ##### Cognitive distribution graphs #####
 cnt_bind %>%
     filter(highedu %in% c(1, 3)) %>%
@@ -552,6 +771,7 @@ cnt_bind %>%
 
 ggsave("noncognitive_distribution.png", path = directory)
 #####
+
 
 # ##### Extra AGE analysis ####
 # 
@@ -643,7 +863,8 @@ ggsave("noncognitive_distribution.png", path = directory)
 # 
 # #####
 
-##### Table 1 ####
+
+##### Table 2 ####
 # change to lowerclass to get the other table
 dv <- "long_dist_upward"
 depvar_title <- "Continuous upward mobility"
@@ -761,16 +982,17 @@ table_converter <- function(models) {
     table_ready
 }
 
-table_one <-
+table_two <-
     table_converter(models_upward) %>%
     bind_cols(table_converter(models_lower) %>% select(-term)) %>%
     setNames(c("", rep(c("Service class", "Working class"), each = 2)))
 
-doc <- addTitle(doc, "Table 1")
-doc <- addFlexTable(doc, FlexTable(table_one, header.columns = TRUE))
+doc <- addTitle(doc, "Table 2")
+doc <- addFlexTable(doc, FlexTable(table_two, header.columns = TRUE))
 
 writeDoc(doc, file = "./Tables/tables.docx")
 #####
+
 
 ##### Modeling figure 1 and 2 ####
 # change to lowerclass to get the other table
@@ -840,6 +1062,7 @@ models_multilevel_lower <- map(covariate_list, function(formula) {
 })
 
 #####
+
 
 ##### Figure 1 and 2 ####
 # Repeat for both dependent variables
@@ -923,7 +1146,8 @@ ggsave("high_low_isced_downward.png", path = directory)
 #####
 
 
-##### Table 4 ####
+
+##### Table 5 ####
 
 dv <- "serviceclass"
 depvar_title <- "Continuous upward class"
@@ -1055,7 +1279,7 @@ tabler <- function(model, high = "TRUE") {
 }
 
 
-table_four <-
+table_five <-
     tabler(models_table_service_four, "TRUE") %>%
     arrange(country) %>%
     bind_cols(tabler(models_table_downward_four, "FALSE") %>%
@@ -1070,9 +1294,9 @@ title_columns <-
       "Working class \n High-SES sons* \n Low cognitive \n score"
     )
 
-doc <- addTitle(doc, "Table 4")
+doc <- addTitle(doc, "Table 5")
 doc <- addFlexTable(doc,
-                    FlexTable(table_four, header.columns = FALSE) %>%
+                    FlexTable(table_five, header.columns = FALSE) %>%
                         addHeaderRow(text.properties = textBold(),
                                      value = title_columns,
                                      first = TRUE))
@@ -1083,7 +1307,8 @@ writeDoc(doc, file = "./Tables/tables.docx")
 #####
 
 
-##### Table 6 ####
+
+##### Table 7 ####
 # 
 # dv <- "long_dist_upward"
 # standard_covariates <- c("scale(pvnum)",
