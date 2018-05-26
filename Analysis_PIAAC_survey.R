@@ -12,8 +12,8 @@ library(ggthemes)
 library(lme4)
 library(MuMIn)
 source("http://peterhaschke.com/Code/multiplot.R")
-Sys.setenv(JAVA_HOME="C:/Program Files/Java/jre1.8.0_171/")
-#dyn.load('/Library/Java/JavaVirtualMachines/jdk1.8.0_131.jdk/Contents/Home/jre/lib/server/libjvm.dylib')
+# Sys.setenv(JAVA_HOME="C:/Program Files/Java/jre1.8.0_171/")
+dyn.load('/Library/Java/JavaVirtualMachines/jdk1.8.0_131.jdk/Contents/Home/jre/lib/server/libjvm.dylib')
 library(ReporteRs)
 
 
@@ -35,8 +35,7 @@ star_paster <- function(df, var_one, var_two) {
         is_na <- is.na(df[[var_one]][index])
         three_stars <- df[[var_one]][index] < 0.001
         two_stars <- df[[var_one]][index] > 0.001 & df[[var_one]][index] <= 0.01
-        one_stars <- df[[var_one]][index] > 0.01 & df[[var_one]][index] <= 0.05
-        
+
         if (is_na) {
             
             NA
@@ -46,12 +45,7 @@ star_paster <- function(df, var_one, var_two) {
             paste(df[[var_two]][index], "***")
             
         } else if (two_stars) {
-            
             paste(df[[var_two]][index], "**")
-            
-        } else if (one_stars) {
-            
-            paste(df[[var_two]][index], "*")
             
         } else {
             
@@ -607,11 +601,10 @@ models_unscaled <-
     dir_tables = directory,
     depvar_title = depvar_title)
 
-second_descriptives <-
+missing_descriptives <-
   map(countries3, ~ {
     .x$designs[[1]]$variables %>% select(isco,
                                          lowisced,
-                                         disadv,
                                          pvnum,
                                          non.cognitive,
                                          postwelfare,
@@ -623,7 +616,27 @@ second_descriptives <-
   mutate(total_miss = rowSums(select(., -name))) %>% 
   mutate_if(is.numeric, round, 2)
 
-third_descriptives <-
+
+doc <- docx()
+doc <- addTitle(doc, "Descriptives of missing values")
+doc <- addFlexTable(doc,
+                    FlexTable(missing_descriptives,
+                              header.columns = FALSE) %>%
+                        addHeaderRow(text.properties = textBold(),
+                                     value = c("Country",
+                                               "Parental occupation",
+                                               "Low ISCED",
+                                               "Numeracy Skill",
+                                               "Non cognitive",
+                                               "Pre/Post welfare",
+                                               "Dad immigrant",
+                                               "Total missing value"))
+                    )
+
+writeDoc(doc, file = "./Tables/descriptves_missing.docx")
+
+
+second_descriptives <-
   map(models_unscaled, function(.x) {
     lowisced_table <-
       .x[[2]]$model %>%
@@ -658,7 +671,7 @@ third_descriptives <-
   unnest()
 
 descriptive_table <-
-  third_descriptives %>%
+  second_descriptives %>%
   setNames(c("Country",
              rep(c("% Dad immigrant",
                    "% High ISCED",
