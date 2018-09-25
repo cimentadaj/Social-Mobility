@@ -1,4 +1,4 @@
-# IMPORTANTE
+# IMPORTANT
 This replication file is correct but the README is a bit out of date. 
 
 # Social mobility analysis
