@@ -1,3 +1,6 @@
+# IMPORTANTE
+This replication file is correct but the README is a bit out of date. 
+
 # Social mobility analysis
 ***
 This is a project I've been working at the Pompeu Fabra University on the estimation of upwards mobility for the PIAAC and IALS data. This README reproduces the analysis until now. This was my first R project so the analysis is very dirty.
