@@ -1,4 +1,4 @@
-# IMPORTANT
+# Reproduction
 
 These are the replication files to reproduce the paper 'Esping-Andersen, G. & Cimentada, J. (2018).  Ability and mobility:  The relative influence of skills and social origin on social mobility.  Social Science Research, Volume 75, Pages 13-31.'. It can be accessed freely [here](https://www.researchgate.net/publication/325919720_Ability_and_mobility_The_relative_influence_of_skills_and_social_origin_on_social_mobility)
 
@@ -13,5 +13,7 @@ Below is a description of each of the files used to reproduce the paper.
 7. Install all packages from script `./analysis_3.R` and run it to get tables 7-9.
 
 All tables (saved as `.docx`) and plots will be in the `./Tables` folder.
+
+IGNORE file `interaction_graph_custom.R` which was experimental code for creating interaction graphs. We're keeping it for historical purposes.
 
 DISCLAIMER: This was our first project in R and the code is really messy. Hopefully anyone who is interested can still reproduce this. We are sorry for the messy code.
