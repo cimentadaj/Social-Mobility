@@ -12,11 +12,19 @@ library(ggthemes)
 library(lme4)
 library(MuMIn)
 source("http://peterhaschke.com/Code/multiplot.R")
-# Sys.setenv(JAVA_HOME="C:/Program Files/Java/jre1.8.0_171/")
-dyn.load('/Library/Java/JavaVirtualMachines/jdk1.8.0_131.jdk/Contents/Home/jre/lib/server/libjvm.dylib')
+
+# Before installing ReporteRs, install rJava by following this tutorial:
+# https://cimentadaj.github.io/blog/2018-05-25-installing-rjava-on-windows-10/installing-rjava-on-windows-10/
+
+# Then install ReporteRs with:
+# devtools::install_github('davidgohel/ReporteRsjars')
+# devtools::install_github('davidgohel/ReporteRs')
+
+# If you get any errors, follow this: https://davidgohel.github.io/ReporteRs/articles/faq.html
+
+# Some environmental variables to load ReporteRs. Change at your discretion
+Sys.setenv(JAVA_HOME="C:\\Program Files\\Java\\jre1.8.0_201")
 library(ReporteRs)
-
-
 ##### Reading data #####
 
 # To save tables
@@ -1319,201 +1327,3 @@ writeDoc(doc, file = "./Tables/tables.docx")
 
 #####
 
-
-
-##### Table 7 ####
-# 
-# dv <- "long_dist_upward"
-# standard_covariates <- c("scale(pvnum)",
-#                          "non.cognitive",
-#                          "dadimmigrant",
-#                          "age_categories")
-# 
-# all_firstcovariates <- c("highisced", "adv", standard_covariates)
-# all_secondcovariates <- c("lowisced", "disadv", standard_covariates)
-# usa_secondcovariates <- c("lowmidisced2", all_secondcovariates[-1])
-# 
-# modeling_function_f <- function(df_list,
-#                               dv,
-#                               firstcovariates,
-#                               usa_secondcovariates,
-#                               secondcovariates,
-#                               age_subset,
-#                               family_models = "gaussian") {
-#     
-#     stop_message(length(df_list) < 1, "df_list is empty")
-#     last_models <- rep(list(vector("list", 2)), length(df_list))
-#     names(last_models) <- names(df_list)
-#     
-#     # Odd ratios or not?
-#     # This should be done to identify whether DV is a dummy or not
-#     dv_length_countries <-
-#         map_dbl(df_list, function(.x)
-#             unique(.x$designs[[1]]$variables[, dv]) %>%
-#                 na.omit() %>%
-#                 length())
-#     
-#     # If the number of countries equals 1, bring the only length,
-#     # if not, sample from all countries
-#     len <- ifelse(length(dv_length_countries) == 1,
-#                   dv_length_countries,
-#                   sample(dv_length_countries, 1))
-#     
-#     stop_message(!all(len == dv_length_countries),
-#                  "The length of the dependent variable differs by country")
-#     stop_message(!(len >= 2),
-#                  "DV has length < 2")
-#     
-#     odd.ratio <- ifelse(family_models == "gaussian", F,
-#                         unname(ifelse(sample(dv_length_countries, 1) == 2, T, F)))
-#     
-#     for (i in 1:length(df_list)) {
-#         
-#         # The low isced variable for USA combines both low and mid isced
-#         # Whenever the country is USA, use a different set of covariates
-#         # than with all other countries.
-#         if (names(df_list[i]) == "USA") {
-#             secondcovariates <- usa_secondcovariates
-#         } else {
-#             secondcovariates <- all_secondcovariates }
-#         
-#         mod1 <- models(dv, all_firstcovariates,
-#                        subset(df_list[[i]], gender == 1 &
-#                                   postwelfare == 0),
-#                        family_models = family_models)
-#         
-#         mod2 <- models(dv, secondcovariates,
-#                        subset(df_list[[i]], gender == 1 &
-#                                   postwelfare == 0),
-#                        family_models = family_models)
-#         
-#         last_models[[i]][[1]] <- mod1[[length(mod1)]] # length(mod1) to only get the last (complete model)
-#         last_models[[i]][[2]] <- mod2[[length(mod1)]]
-#         
-#         # Calculate R squared for each model
-#         # mod1_r <- c("R squared:", paste0(sapply(mod1, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%"))
-#         # mod2_r <- paste0(sapply(mod2, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%")
-#         
-#     }
-#     last_models
-# }
-# 
-# modeling_function_t <- function(df_list,
-#                               dv,
-#                               firstcovariates,
-#                               usa_secondcovariates,
-#                               secondcovariates,
-#                               age_subset,
-#                               family_models = "gaussian") {
-#     
-#     stop_message(length(df_list) < 1, "df_list is empty")
-#     last_models <- rep(list(vector("list", 2)), length(df_list))
-#     names(last_models) <- names(df_list)
-#     
-#     # Odd ratios or not?
-#     # This should be done to identify whether DV is a dummy or not
-#     dv_length_countries <-
-#         map_dbl(df_list, function(.x)
-#             unique(.x$designs[[1]]$variables[, dv]) %>%
-#                 na.omit() %>%
-#                 length())
-#     
-#     # If the number of countries equals 1, bring the only length,
-#     # if not, sample from all countries
-#     len <- ifelse(length(dv_length_countries) == 1,
-#                   dv_length_countries,
-#                   sample(dv_length_countries, 1))
-#     
-#     stop_message(!all(len == dv_length_countries),
-#                  "The length of the dependent variable differs by country")
-#     stop_message(!(len >= 2),
-#                  "DV has length < 2")
-#     
-#     odd.ratio <- ifelse(family_models == "gaussian", F,
-#                         unname(ifelse(sample(dv_length_countries, 1) == 2, T, F)))
-#     
-#     for (i in 1:length(df_list)) {
-#         
-#         # The low isced variable for USA combines both low and mid isced
-#         # Whenever the country is USA, use a different set of covariates
-#         # than with all other countries.
-#         if (names(df_list[i]) == "USA") {
-#             secondcovariates <- usa_secondcovariates
-#         } else {
-#             secondcovariates <- all_secondcovariates }
-#         
-#         mod1 <- models(dv, all_firstcovariates,
-#                        subset(df_list[[i]], gender == 1 &
-#                                   postwelfare == 1),
-#                        family_models = family_models)
-#         
-#         mod2 <- models(dv, secondcovariates,
-#                        subset(df_list[[i]], gender == 1 &
-#                                   postwelfare == 1),
-#                        family_models = family_models)
-#         
-#         last_models[[i]][[1]] <- mod1[[length(mod1)]] # length(mod1) to only get the last (complete model)
-#         last_models[[i]][[2]] <- mod2[[length(mod1)]]
-#         
-#         # Calculate R squared for each model
-#         # mod1_r <- c("R squared:", paste0(sapply(mod1, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%"))
-#         # mod2_r <- paste0(sapply(mod2, function(x) floor((1-x$deviance/x$null.deviance) * 100)), "%")
-#         
-#     }
-#     last_models
-# }
-# 
-# family_models <- "gaussian"
-# 
-# selected_countries <- c(
-#     "Austria",
-#     "Belgium",
-#     "Denmark",
-#     "Finland",
-#     "Germany"
-# )
-# 
-# countries_prewelfare <-
-#     modeling_function_f(
-#         df_list = countries3[selected_countries],
-#         dv = dv,
-#         firstcovariates = all_firstcovariates,
-#         usa_secondcovariates = usa_secondcovariates,
-#         secondcovariates = all_secondcovariates,
-#         age_subset = age,
-#         family_models = family_models)
-# 
-# countries_postwelfare <-
-#     modeling_function_t(
-#         df_list = countries3[selected_countries],
-#         dv = dv,
-#         firstcovariates = all_firstcovariates,
-#         usa_secondcovariates = usa_secondcovariates,
-#         secondcovariates = all_secondcovariates,
-#         age_subset = age,
-#         family_models = family_models)
-# 
-# pre_post_table <- function(pre_mod, post_mod, country, num, den) {
-#     pre <- tidy(pre_mod[[country]][[2]]) %>%
-#         filter(term %in% c(num, den)) %>%
-#         select(term, estimate) %>%
-#         spread(term, estimate) %>%
-#         setNames(c("num", "den")) %>%
-#         summarize(pre = (abs(num) / den))
-#     
-#     post <- tidy(post_mod[[country]][[2]]) %>%
-#         filter(term %in% c(num, den)) %>%
-#         select(term, estimate) %>%
-#         spread(term, estimate) %>%
-#         setNames(c("num", "den")) %>%
-#         summarize(post = (abs(num) / den))
-# 
-#     cbind(post, pre)
-# }
-# 
-# pre_post_table(countries_prewelfare,
-#                countries_postwelfare,
-#                "Denmark", "scale(pvnum)", "lowisced")
-# 
-# 
-#####

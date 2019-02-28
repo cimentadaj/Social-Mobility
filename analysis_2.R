@@ -1,7 +1,7 @@
 # Script to get the interaction plots (figure 3-6), run this code and change all combinations
 # from section: CHANGE
 
-# Another problem. The interaction table 7 was produced with the quantiles 20-40
+# The interaction table 7 was produced with the quantiles 20-40
 # for top and bottom cogn/non-cognitive. Here the interaction is calculated with
 # the 30-30 quantiles.
 
