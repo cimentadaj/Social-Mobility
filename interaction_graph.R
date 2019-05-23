@@ -130,7 +130,7 @@ cnts <- map2(countries3, names(countries3), function(data, names) {
         data$designs[[1]]$variables %>%
             mutate(country = names,
                    cohort = ifelse(age_categories <= 5, "post", "pre")) %>%
-            select_(.dots = map(c(vars_subset, dv, "country"), as.name))
+            select(c(vars_subset, dv, "country"))
     })
 
 # country_subset <- c("United Kingdom", "Korea", "Estonia", "Austria", "Belgium")
@@ -210,15 +210,20 @@ add_predictions_se <- function(data, model) {
     data
 }
 
+convert_probabilities(tst$pred)
+
 interaction_visual <- function(model) {
+    # To convert the above intro probabilities (the once supplied for the Caixa Article)
+    # Rule of three. Because 100 is the same as 5 (the highest number of categories in the long_dist_upward/downward)
+    convert_probabilities <- function(x) (x * 100) / 5
     
-    title <- ifelse(grepl("upward", as.character(attr(model$terms, "variables"))[2]),
-                    "upward", "downward")
-    
+    title <- ifelse(grepl("upward", as.character(attr(model$terms, "variables"))[2]), "upward", "downward")
     modelr::data_grid(cnt_bind, cognitive_top30_bottom30, noncognitive_top30_bottom30, .model = model) %>%
     filter(complete.cases(.)) %>%
     modelr::add_predictions(model) %>%
+    # mutate(pred = convert_probabilities(pred)) %>% 
     add_predictions_se(model) %>%
+    # mutate(se = convert_probabilities(se)) %>% 
     select(1:2, pred, se) %>%
     mutate(lower = pred - 2 * se,
            upper = pred + 2 * se) %>%
@@ -245,3 +250,14 @@ interaction_visual(model)
 file_name <- paste0(dv, "_for_", ifelse(high_low_isced, "highisced", "lowisced"), "_interaction.png")
 
 ggsave(filename = file_name, path = directory)
+
+# To convert the above intro probabilities (the once supplied for the Caixa Article)
+# Rule of three. Because 100 is the same as 5 (the highest number of categories in the long_dist_upward/downward)
+convert_probabilities <- function(x) (x * 100) / 5
+
+tst <- 
+    modelr::data_grid(cnt_bind, cognitive_top30_bottom30, noncognitive_top30_bottom30, .model = model) %>%
+    filter(complete.cases(.)) %>% 
+    modelr::add_predictions(model)
+
+ cat(convert_probabilities(tst$pred), sep = "\n")

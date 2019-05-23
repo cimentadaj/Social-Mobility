@@ -127,8 +127,7 @@ countries3 <- svy_recode(countries3, 'age_categories', 'postwelfare', '1:5 = 1; 
 countries3 <- svy_recode(countries3, 'momimmigrant', 'momimmigrant', "'2' = 0; '1' = 1; else = NA")
 countries3 <- svy_recode(countries3, 'dadimmigrant', 'dadimmigrant', "2 = 0; 1 = 1; else = NA")
 
-countries3 <- svy_recode(countries3, 'eduattain', "university",
-                         "1:11 = 0; c(12, 13, 14, 16) = 1; else = NA")
+countries3 <- svy_recode(countries3, 'eduattain', "university", "1:11 = 0; c(12, 13, 14, 16) = 1; else = NA")
 
 countries3 <- svy_recode(countries3, "eduattain", "eduattain_reverse",
                          paste0(1:16, " = ", 16:1, collapse = "; "))
@@ -945,10 +944,10 @@ table_converter <- function(models) {
     coef_table <- map(models, tidy)
     
     table_one <-
-        map(coef_table, ~ .x[!grepl("isced|adv", .x$term), -c(3, 4, 6)]) %>%
+        map(coef_table, ~ select(.x, -std.error, -statistic) %>% filter(!grepl("isced|adv", .x$term))) %>%
         reduce(cbind)
     
-    table_one_separate <- map(coef_table, ~ .x[grepl("isced|adv", .x$term), -c(3, 4, 6)])
+    table_one_separate <- map(coef_table, ~ select(.x, -std.error, -statistic) %>% filter(grepl("isced|adv", .x$term)))
     
     names(table_one_separate[[1]])[2:3] <- c("estimate_high", "p.val_high")
     table_one_separate[[1]]$estimate_low <- NA
@@ -1005,6 +1004,31 @@ doc <- addFlexTable(doc, FlexTable(table_two, header.columns = TRUE))
 
 writeDoc(doc, file = "./Tables/tables.docx")
 #####
+
+##### Predicted probabilities using the final two models from above #####
+
+subset_df <- cnt_bind %>% filter(gender == 1, age_categories %in% age)
+
+# For predicted values in upward mobility for High and Low SES respectively
+# 1)
+df_predict <- modelr::data_grid(subset_df, highisced, adv, .model = models_upward[[1]]) %>% drop_na()
+broom::augment(models_upward[[1]], newdata = df_predict)
+
+# 2)
+df_predict <- modelr::data_grid(subset_df, lowisced, disadv, .model = models_upward[[2]]) %>% drop_na()
+broom::augment(models_upward[[2]], newdata = df_predict)
+
+# For predicted values in downward mobility for High and Low SES respectively
+# 1)
+df_predict <- modelr::data_grid(subset_df, highisced, adv, .model = models_lower[[1]]) %>% drop_na()
+broom::augment(models_lower[[1]], newdata = df_predict)
+
+# 2)
+df_predict <- modelr::data_grid(subset_df, lowisced, disadv, .model = models_lower[[2]]) %>% drop_na()
+broom::augment(models_lower[[2]], newdata = df_predict)
+
+
+####
 
 
 ##### Modeling figure 1 and 2 ####
