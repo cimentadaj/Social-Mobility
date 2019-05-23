@@ -1,7 +1,7 @@
 # Script to get the interaction plots (figure 3-6), run this code and change all combinations
 # from section: CHANGE
 
-# Another problem. The interaction table 7 was produced with the quantiles 20-40
+# The interaction table 7 was produced with the quantiles 20-40
 # for top and bottom cogn/non-cognitive. Here the interaction is calculated with
 # the 30-30 quantiles.
 
@@ -77,7 +77,7 @@ countries3 <- svy_recode(countries3, 'isco', 'lowerclass', '3:9 = 1; 1:2 = 0; el
 countries3 <- svy_recode(countries3, 'age_categories', 'postwelfare', '1:5 = 1; 6:10 = 0; else = NA')
 countries3 <- svy_recode(countries3, 'dadimmigrant', 'dadimmigrant', "2 = 0; 1 = 1; else = NA")
 
-variables <- c("long_dist_upward", "long_dist_downward")
+variables <- c("serviceclass", "lowerclass")
 titles <- c("Continuous upward", "Continuous downward")
 
 interaction_vars <- c("cognitive_top30_bottom30", "noncognitive_top30_bottom30")
@@ -106,9 +106,9 @@ standard_covariates <- c(interaction_vars,
                              "highisced",
                              "lowisced",
                              "dadimmigrant",
-                             "spfwt0",
-                             "long_dist_upward",
-                             "long_dist_downward")
+                             "spfwt0")
+                             ## "long_dist_upward",
+                             ## "long_dist_downward")
     
 all_firstcovariates <- standard_covariates
     
@@ -247,7 +247,8 @@ interaction_visual <- function(model) {
 
 interaction_visual(model)
 
-file_name <- paste0(dv, "_for_", ifelse(high_low_isced, "highisced", "lowisced"), "_interaction.png")
+
+file_name <- paste0(dv, "_for_", ifelse(high_low_isced == 1, "highisced", "lowisced"), "_interaction.png")
 
 ggsave(filename = file_name, path = directory)
 

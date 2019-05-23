@@ -81,8 +81,6 @@ countries3 <- list(Austria = prgautp1.design,
                    `Slovak Republic` = prgsvkp1.design
 )
 
-# countries3 <- list(Israel = prgisrp1.design)
-
 svy_recode <- function(svy_design, old_varname, new_varname, recode) {
     
     svy_design2 <- lapply(svy_design, function(cnt) {
