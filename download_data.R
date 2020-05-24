@@ -42,7 +42,8 @@ library(dplyr)
 
 
 # # designate the oecd public use file page
-oecd.csv.website <- 'http://vs-web-fs-1.oecd.org/piaac/puf-data/CSV/'
+oecd.csv.website <- "https://webfs.oecd.org/piaac/puf-data/CSV/"
+
 # 
 # # download the contents of that page
 csv.page <- readLines( oecd.csv.website )
@@ -68,10 +69,12 @@ for (i in 1:length(csv.fns)) {
     download.file(links[i], destfile =csv.fns[i])
     countrylist[[i]] <-  read.csv(csv.fns[i], stringsAsFactors = FALSE)
 }
-save(countrylist, file = "./data/countrylist.Rda")
+
+# Saved by default in data directory
+save(countrylist, file = "countrylist.Rda")
 #########################################################################################
-load("countrylist.Rda") # if you commented out the download section, you should have this file
-names(countrylist) <- csv.fns
+## load("countrylist.Rda") # if you commented out the download section, you should have this file
+## names(countrylist) <- csv.fns
 
 
 ##### Data management section ####

@@ -31,7 +31,6 @@ library(ReporteRs)
 directory <- "./Tables"
 
 walk(list.files("./data/", pattern = ".rda", full.names = TRUE), load, .GlobalEnv)
-
 ls2 <- c(ls()[grepl("*.design", ls())] , "ls2", "directory", "old_dir", "multiplot")
 # Remove everything that is not in ls2 (so the .design )
 rm(list= c(ls()[!ls() %in% ls2]))
@@ -90,6 +89,9 @@ countries3 <- list(Austria = prgautp1.design,
 # countries3 <- list(Israel = prgisrp1.design)
 #####
 
+ls3 <- ls(pattern = "design")
+rm(list = ls3)
+
 ##### Recoding variables ####
 svy_recode <- function(svy_design, old_varname, new_varname, recode) {
     
@@ -139,9 +141,7 @@ countries3 <- svy_recode(countries3, 'eduattain', "university", "1:11 = 0; c(12,
 
 countries3 <- svy_recode(countries3, "eduattain", "eduattain_reverse",
                          paste0(1:16, " = ", 16:1, collapse = "; "))
-
 #####
-
 
 ##### Table 1 ####
 table_one <-
@@ -1041,7 +1041,7 @@ broom::augment(models_lower[[2]], newdata = df_predict)
 
 ##### Modeling figure 1 and 2 ####
 # change to lowerclass to get the other table
-dv <- "long_dist_upward"
+dv <- "serviceclass"
 depvar_title <- "Continuous upward mobility"
 
 standard_covariates <- c("scale(pvnum)",
@@ -1079,7 +1079,7 @@ multi_fun <-
            glmer = function(formula, data, subset, ...) {
                glmer(formula = formula,
                      data = subset(data, eval(parse(text = subset))),
-                     family = "gaussian", ...)
+                     family = "binomial", ...)
            })
 
 # Pass that list to the glmer to run two different models and then show table with stargazer
@@ -1279,7 +1279,7 @@ family_models <- "gaussian"
 
 models_table_service_four <-
     modeling_function_two(
-        df_list = countries3,
+        df_list = countries3["Austria"],
         dv = dv,
         firstcovariates = all_firstcovariates,
         usa_secondcovariates = usa_secondcovariates,
@@ -1351,3 +1351,89 @@ writeDoc(doc, file = "./Tables/tables.docx")
 
 #####
 
+
+class_pred <- map(countries3,  ~ {
+  data1 <-
+    .x$design[[10]]$variables %>%
+    filter(gender == 1 & age_categories %in% 1:10) %>%
+    as_tibble()
+
+  mod1 <-
+    glm(serviceclass ~
+          highisced +
+          adv +
+          scale(pvnum) +
+          non.cognitive +
+          postwelfare +
+          dadimmigrant,
+        family = "binomial",
+        data = data1)
+
+  mod2 <-
+    glm(lowerclass ~
+          lowisced +
+          disadv +
+          scale(pvnum) +
+          non.cognitive +
+          postwelfare +
+          dadimmigrant,
+        family = "binomial",
+        data = data1)
+
+  highisced_pred <-
+    modelr::data_grid(data1, highisced, .model = mod1) %>%
+    modelr::add_predictions(model = mod1, type = "response") %>%
+    pivot_wider(names_from = highisced, values_from = pred) %>% 
+    rename(highisced = `1`,
+           lowisced = `0`) %>%
+    select(ends_with("isced"))
+
+  lowisced_pred <-
+    modelr::data_grid(data1, lowisced, .model = mod2) %>%
+    modelr::add_predictions(model = mod2, type = "response") %>%
+    pivot_wider(names_from = lowisced, values_from = pred) %>% 
+    rename(lowisced = `1`,
+           highisced = `0`) %>%
+    select(ends_with("isced"))
+    
+
+  list(highisced_pred, lowisced_pred)
+}) %>%
+  transpose() %>%
+  map(~ unnest(enframe(.x)))
+
+serviceclass_pred <- class_pred[[1]]
+lowerclass_pred <- class_pred[[2]]
+
+library(writexl)
+write_xlsx(serviceclass_pred, "./data/serviceclass_attainment.xlsx")
+write_xlsx(lowerclass_pred, "./data/lowerclass_attainment.xlsx")
+
+
+non_ordered <-
+  serviceclass_pred %>%
+  mutate(difference = highisced - lowisced)
+
+non_ordered %>%
+  arrange(difference) %>%
+  mutate(name = factor(name, levels = .$name)) %>%
+  ggplot(aes(name, difference)) +
+  geom_col(alpha = .5) +
+  ylab("Estimated slope with 95% uncertainty intervals") +
+  ggtitle("My title") +
+  coord_flip() +
+  theme_minimal()
+
+non_ordered <-
+  lowerclass_pred %>%
+  mutate(difference = highisced - lowisced)
+
+non_ordered %>%
+  arrange(difference) %>%
+  mutate(name = factor(name, levels = .$name)) %>%
+  ggplot(aes(name, difference)) +
+  geom_col(alpha = .5) +
+  ylab("Estimated slope with 95% uncertainty intervals") +
+  ggtitle("My title") +
+  coord_flip() +
+  theme_minimal()
